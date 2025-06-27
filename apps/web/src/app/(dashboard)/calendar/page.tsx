@@ -9,7 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
 import { 
-  Calendar, Plus, Link, Users, Clock, CheckCircle2, 
+  Calendar, Plus, LinkIcon, Users, Clock, CheckCircle2, 
   XCircle, AlertCircle, TrendingUp, BarChart3, Settings,
   Eye, Edit, Trash2, Copy, ExternalLink, Mail, Phone,
   MapPin, Globe, RefreshCw, CalendarDays, Video, User
@@ -290,7 +290,7 @@ export default function CalendarDashboard() {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Booking Pages</CardTitle>
-            <Link className="h-4 w-4 text-muted-foreground" />
+            <LinkIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{bookingPages.length}</div>
@@ -461,7 +461,7 @@ export default function CalendarDashboard() {
                   
                   {bookingPages.filter(p => p.is_active).length === 0 && (
                     <div className="text-center py-8 text-muted-foreground">
-                      <Link className="w-12 h-12 mx-auto mb-2 opacity-50" />
+                      <LinkIcon className="w-12 h-12 mx-auto mb-2 opacity-50" />
                       <p>No active booking pages</p>
                       <Link href="/calendar/booking-pages/new">
                         <Button variant="outline" size="sm" className="mt-2">
