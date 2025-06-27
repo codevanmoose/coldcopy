@@ -1,0 +1,98 @@
+# Van Moose Project Development Standards
+
+## Technology Stack
+
+### Core Infrastructure
+- **Frontend**: Vercel for all frontend deployments
+- **Backend**: DigitalOcean for backend hosting and APIs
+- **Database & Auth**: Supabase for real-time database, authentication, and storage
+- **Version Control**: GitHub for all code and documentation
+
+## Repository Architecture
+
+### Monorepo Structure (Preferred)
+Use a single repository with modular folder organization:
+
+```
+project-name/
+├── frontend/
+├── backend/
+├── mobile/
+├── docs/
+├── shared/     # shared utilities, types, constants
+└── README.md
+```
+
+### Benefits of Monorepo Approach
+- **Unified versioning**: Single source of truth for releases and tags
+- **Atomic commits**: Related changes across stack stay together
+- **Streamlined CI/CD**: One pipeline manages all builds and deployments
+- **Seamless refactoring**: Easy code movement between components
+- **Simplified dependency management**: Shared packages and utilities
+
+### When to Consider Multiple Repositories
+- Teams require complete autonomy with independent release cycles
+- Components need to be open-sourced separately
+- Repository size impacts performance (cloning, CI/CD)
+- Strict access control requirements for different teams
+
+### Monorepo Tooling
+For complex projects requiring repo splitting:
+- Use **Nx**, **Lerna**, or **Rush** for monorepo management
+- Consider git submodules for linking related repositories
+
+## Development Standards
+
+### Environment Configuration
+- Frontend: Store variables in `.env.local`
+- Backend: Store variables in `.env`
+- Never commit sensitive data to repositories
+
+### Project Management
+- Use GitHub Issues and Projects for task tracking
+- Maintain semantic versioning
+- Follow conventional commits specification
+- Enable CI/CD with preview environments for PRs
+
+### Documentation Requirements
+Every project must include:
+- **README.md**: Setup instructions, deployment guide, troubleshooting
+- **claude.md**: Current state, progress, decisions, comprehensive TODO list
+- **CONTRIBUTING.md**: For projects accepting contributions
+- **CODE_STYLE.md**: Project-specific conventions (if applicable)
+
+### Code Quality
+- Implement Prettier and ESLint across all codebases
+- Write unit tests for critical logic
+- Use Playwright or Cypress for E2E testing
+- Run automated tests on all pull requests via GitHub Actions
+- Enable Dependabot for dependency management
+
+### Security Protocols
+- Store secrets using GitHub Secrets and secure environment variables
+- Enable 2FA on all GitHub accounts
+- Set all repositories to **private** by default
+- Do not apply open-source licenses without explicit approval
+
+### Deployment & Monitoring
+- Configure preview deployments for all PRs
+- Monitor services with UptimeRobot or Sentry
+- Utilize Supabase dashboards for database and auth metrics
+- Implement proper error tracking and logging
+
+### Component Sharing
+- Develop shared component libraries where applicable
+- Maintain consistent design patterns across projects
+- Document component usage and API
+
+## Best Practices Summary
+1. Start with monorepo unless you have specific reasons not to
+2. Keep documentation current and comprehensive
+3. Automate everything possible (testing, deployment, dependency updates)
+4. Prioritize security and never expose sensitive information
+5. Maintain consistent coding standards across the entire project
+6. Use the claude.md file as a living development journal
+
+---
+
+*Note: This approach is proven by major tech companies (Google, Meta, Microsoft) and provides the optimal balance between modularity and maintainability.*

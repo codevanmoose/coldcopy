@@ -1,0 +1,8 @@
+{
+  "name": "coldcopy-api",
+  "version": "1.0.0",
+  "description": "This is a Python API - ignore this package.json",
+  "engines": {
+    "node": "IGNORE_THIS_FILE"
+  }
+}
