@@ -2,7 +2,8 @@ spec:
   name: coldcopy-api
   region: nyc
   services:
-  - dockerfile_path: apps/api/Dockerfile
+  - build_command: cd apps/api && pip install -r requirements-do.txt
+    environment_slug: python
     github:
       branch: main
       deploy_on_push: true
@@ -11,4 +12,5 @@ spec:
     instance_count: 1
     instance_size_slug: basic-xxs
     name: coldcopy
+    run_command: cd apps/api && uvicorn main_simple:app --host 0.0.0.0 --port 8000
     source_dir: /
