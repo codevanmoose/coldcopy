@@ -62,3 +62,4 @@ apps/api/venv/
 apps/api/__pycache__/
 apps/api/*.pyc
 apps/api/.pytest_cache/
+.env.claude
