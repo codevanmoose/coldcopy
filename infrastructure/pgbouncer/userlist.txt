@@ -1,0 +1,22 @@
+;; PgBouncer user authentication file
+;; Format: "username" "password" "pool_mode"
+;; Passwords should be MD5 hashed with username
+
+;; Application users
+"app_user" "md5hash_of_password" ""
+"analytics_user" "md5hash_of_password" ""
+"job_runner" "md5hash_of_password" ""
+
+;; Admin users
+"postgres" "md5hash_of_password" ""
+"admin" "md5hash_of_password" ""
+
+;; Monitoring users
+"stats" "md5hash_of_password" "stats"
+"monitoring" "md5hash_of_password" "stats"
+
+;; Read-only users for analytics
+"readonly_user" "md5hash_of_password" ""
+
+;; Migration user
+"migration_user" "md5hash_of_password" ""

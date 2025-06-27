@@ -1,0 +1,66 @@
+version: '3.8'
+
+services:
+  pgbouncer:
+    image: pgbouncer/pgbouncer:1.22.0
+    container_name: coldcopy-pgbouncer
+    restart: unless-stopped
+    
+    ports:
+      - "6432:6432"
+    
+    volumes:
+      - ./pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./userlist.txt:/etc/pgbouncer/userlist.txt:ro
+      - ./certs:/etc/pgbouncer/certs:ro
+      - pgbouncer-logs:/var/log/pgbouncer
+    
+    environment:
+      # These will be used to generate userlist.txt if it doesn't exist
+      - DATABASES_HOST=${SUPABASE_DB_HOST}
+      - DATABASES_PORT=5432
+      - DATABASES_USER=${SUPABASE_DB_USER}
+      - DATABASES_PASSWORD=${SUPABASE_DB_PASSWORD}
+      - DATABASES_DBNAME=postgres
+      
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -p 6432"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    
+    networks:
+      - coldcopy-network
+    
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+  
+  # PgBouncer monitoring with pgbouncer_exporter for Prometheus
+  pgbouncer-exporter:
+    image: prometheuscommunity/pgbouncer-exporter:v0.7.0
+    container_name: coldcopy-pgbouncer-exporter
+    restart: unless-stopped
+    
+    environment:
+      - DATA_SOURCE_URI=localhost:6432/pgbouncer?sslmode=disable
+      - DATA_SOURCE_USER=stats_collector
+      - DATA_SOURCE_PASS=${PGBOUNCER_STATS_PASSWORD}
+    
+    ports:
+      - "9127:9127"
+    
+    depends_on:
+      - pgbouncer
+    
+    networks:
+      - coldcopy-network
+
+networks:
+  coldcopy-network:
+    driver: bridge
+
+volumes:
+  pgbouncer-logs:

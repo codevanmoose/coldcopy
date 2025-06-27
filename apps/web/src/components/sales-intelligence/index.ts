@@ -1,0 +1,1 @@
+export { IntentDashboard } from './IntentDashboard';

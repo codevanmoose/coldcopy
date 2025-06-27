@@ -1,0 +1,364 @@
+name: Performance Tests
+
+on:
+  # Run on every PR to main
+  pull_request:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'package.json'
+      - 'package-lock.json'
+  
+  # Run on main branch commits
+  push:
+    branches: [ main ]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+  
+  # Allow manual triggering
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of performance test to run'
+        required: true
+        default: 'moderate'
+        type: choice
+        options:
+          - light
+          - moderate
+          - heavy
+          - spike
+          - soak
+      environment:
+        description: 'Environment to test against'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+  
+  # Scheduled performance tests
+  schedule:
+    # Run full performance suite nightly at 2 AM UTC
+    - cron: '0 2 * * *'
+
+env:
+  NODE_VERSION: '18'
+  K6_VERSION: '0.46.0'
+
+jobs:
+  # Light performance tests for PRs
+  pr-performance-check:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    environment: staging
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Setup K6
+        uses: grafana/setup-k6-action@v1
+        with:
+          version: ${{ env.K6_VERSION }}
+      
+      - name: Wait for staging deployment
+        uses: lewagon/wait-on-check-action@v1.3.1
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          check-name: 'staging-deployment'
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+          wait-interval: 30
+      
+      - name: Run light performance tests
+        env:
+          BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+          TEST_TYPE: 'light'
+          ENVIRONMENT: 'staging'
+          GIT_BRANCH: ${{ github.head_ref }}
+          GIT_COMMIT: ${{ github.event.pull_request.head.sha }}
+          BUILD_ID: ${{ github.run_id }}
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+          WORKSPACE_ID: ${{ secrets.TEST_WORKSPACE_ID }}
+        run: |
+          cd tests/load
+          k6 run --out json=results.json run-tests.js
+      
+      - name: Upload performance results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: pr-performance-results
+          path: |
+            tests/load/performance-report.html
+            tests/load/performance-results.json
+            tests/load/performance-metrics.csv
+            tests/load/results.json
+          retention-days: 30
+      
+      - name: Comment PR with performance results
+        uses: actions/github-script@v6
+        if: always()
+        with:
+          script: |
+            const fs = require('fs');
+            
+            try {
+              const resultsPath = 'tests/load/performance-results.json';
+              if (fs.existsSync(resultsPath)) {
+                const results = JSON.parse(fs.readFileSync(resultsPath, 'utf8'));
+                const analysis = results.performance_analysis;
+                
+                const comment = `## 🔄 Performance Test Results
+                
+                **Performance Score:** ${analysis.report.summary.performance_score.toFixed(1)}/100
+                
+                **Key Metrics:**
+                - API Response Time (P95): ${analysis.report.key_metrics.api_response_time_p95 || 'N/A'}ms
+                - Database Query Time (P95): ${analysis.report.key_metrics.db_query_time_p95 || 'N/A'}ms
+                - Error Rate: ${((analysis.report.key_metrics.api_error_rate || 0) * 100).toFixed(2)}%
+                - Throughput: ${analysis.report.key_metrics.requests_per_second || 'N/A'} req/s
+                
+                **Issues Found:**
+                - ${analysis.report.regressions.length} performance regressions
+                - ${analysis.report.recommendations.length} scalability recommendations
+                
+                ${analysis.buildDecision.should_fail ? '❌ **Performance test failed - build should not be merged**' : '✅ **Performance test passed**'}
+                
+                [View detailed report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})`;
+                
+                github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: comment
+                });
+              }
+            } catch (error) {
+              console.log('Could not post performance results:', error);
+            }
+      
+      - name: Fail if performance regression detected
+        run: |
+          if [ -f "tests/load/performance-results.json" ]; then
+            SHOULD_FAIL=$(node -e "
+              const results = require('./tests/load/performance-results.json');
+              console.log(results.performance_analysis.buildDecision.should_fail);
+            ")
+            
+            if [ "$SHOULD_FAIL" = "true" ]; then
+              echo "Performance regression detected - failing build"
+              exit 1
+            fi
+          fi
+
+  # Full performance tests for main branch
+  main-performance-test:
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    environment: staging
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Setup K6
+        uses: grafana/setup-k6-action@v1
+        with:
+          version: ${{ env.K6_VERSION }}
+      
+      - name: Run comprehensive performance tests
+        env:
+          BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+          TEST_TYPE: 'moderate'
+          ENVIRONMENT: 'staging'
+          GIT_BRANCH: ${{ github.ref_name }}
+          GIT_COMMIT: ${{ github.sha }}
+          BUILD_ID: ${{ github.run_id }}
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+          WORKSPACE_ID: ${{ secrets.TEST_WORKSPACE_ID }}
+          DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+        run: |
+          cd tests/load
+          k6 run --out json=results.json run-tests.js
+      
+      - name: Upload performance results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: main-performance-results
+          path: |
+            tests/load/performance-report.html
+            tests/load/performance-results.json
+            tests/load/performance-metrics.csv
+            tests/load/results.json
+          retention-days: 90
+      
+      - name: Send Slack notification on regression
+        if: failure()
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: "Performance regression detected on main branch"
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  # Scheduled comprehensive performance tests
+  scheduled-performance-test:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    environment: production
+    
+    strategy:
+      matrix:
+        test_type: [moderate, heavy, soak]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Setup K6
+        uses: grafana/setup-k6-action@v1
+        with:
+          version: ${{ env.K6_VERSION }}
+      
+      - name: Run scheduled performance tests
+        env:
+          BASE_URL: ${{ secrets.PRODUCTION_BASE_URL }}
+          TEST_TYPE: ${{ matrix.test_type }}
+          ENVIRONMENT: 'production'
+          GIT_BRANCH: ${{ github.ref_name }}
+          GIT_COMMIT: ${{ github.sha }}
+          BUILD_ID: ${{ github.run_id }}
+          TEST_USER_EMAIL: ${{ secrets.PROD_TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.PROD_TEST_USER_PASSWORD }}
+          WORKSPACE_ID: ${{ secrets.PROD_TEST_WORKSPACE_ID }}
+          DATADOG_API_KEY: ${{ secrets.DATADOG_API_KEY }}
+          ELASTIC_URL: ${{ secrets.ELASTIC_URL }}
+          ELASTIC_API_KEY: ${{ secrets.ELASTIC_API_KEY }}
+        run: |
+          cd tests/load
+          k6 run --out json=results-${{ matrix.test_type }}.json run-tests.js
+      
+      - name: Upload scheduled test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: scheduled-performance-results-${{ matrix.test_type }}
+          path: |
+            tests/load/performance-report.html
+            tests/load/performance-results.json
+            tests/load/performance-metrics.csv
+            tests/load/results-${{ matrix.test_type }}.json
+          retention-days: 365
+      
+      - name: Generate performance trend report
+        run: |
+          cd tests/load
+          node generate-trend-report.js ${{ matrix.test_type }}
+      
+      - name: Send performance summary to team
+        uses: 8398a7/action-slack@v3
+        with:
+          status: custom
+          custom_payload: |
+            {
+              text: "Scheduled performance test completed",
+              attachments: [{
+                color: "good",
+                fields: [{
+                  title: "Test Type",
+                  value: "${{ matrix.test_type }}",
+                  short: true
+                }, {
+                  title: "Environment",
+                  value: "production",
+                  short: true
+                }]
+              }]
+            }
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  # Manual performance test execution
+  manual-performance-test:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment: ${{ github.event.inputs.environment }}
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Setup K6
+        uses: grafana/setup-k6-action@v1
+        with:
+          version: ${{ env.K6_VERSION }}
+      
+      - name: Run manual performance tests
+        env:
+          BASE_URL: ${{ github.event.inputs.environment == 'production' && secrets.PRODUCTION_BASE_URL || secrets.STAGING_BASE_URL }}
+          TEST_TYPE: ${{ github.event.inputs.test_type }}
+          ENVIRONMENT: ${{ github.event.inputs.environment }}
+          GIT_BRANCH: ${{ github.ref_name }}
+          GIT_COMMIT: ${{ github.sha }}
+          BUILD_ID: ${{ github.run_id }}
+          TEST_USER_EMAIL: ${{ github.event.inputs.environment == 'production' && secrets.PROD_TEST_USER_EMAIL || secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ github.event.inputs.environment == 'production' && secrets.PROD_TEST_USER_PASSWORD || secrets.TEST_USER_PASSWORD }}
+          WORKSPACE_ID: ${{ github.event.inputs.environment == 'production' && secrets.PROD_TEST_WORKSPACE_ID || secrets.TEST_WORKSPACE_ID }}
+        run: |
+          cd tests/load
+          k6 run --out json=results-manual.json run-tests.js
+      
+      - name: Upload manual test results
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: manual-performance-results-${{ github.event.inputs.test_type }}-${{ github.event.inputs.environment }}
+          path: |
+            tests/load/performance-report.html
+            tests/load/performance-results.json
+            tests/load/performance-metrics.csv
+            tests/load/results-manual.json
+          retention-days: 90

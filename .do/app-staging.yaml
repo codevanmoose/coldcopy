@@ -1,0 +1,124 @@
+name: coldcopy-staging
+region: nyc
+features:
+  - buildpack-stack=ubuntu-22
+
+services:
+  - name: api
+    dockerfile_path: apps/api/Dockerfile
+    source_dir: /
+    github:
+      branch: main
+      deploy_on_push: true
+      repo: $GITHUB_REPOSITORY
+    http_port: 8000
+    instance_count: 1
+    instance_size_slug: professional-xs
+    routes:
+      - path: /
+    health_check:
+      http_path: /health
+      initial_delay_seconds: 10
+      period_seconds: 10
+      timeout_seconds: 5
+      success_threshold: 1
+      failure_threshold: 3
+    envs:
+      - key: ENVIRONMENT
+        value: staging
+      - key: DATABASE_URL
+        value: ${DATABASE_URL}
+        type: SECRET
+      - key: REDIS_URL
+        value: ${REDIS_URL}
+        type: SECRET
+      - key: SECRET_KEY
+        value: ${SECRET_KEY}
+        type: SECRET
+      - key: SUPABASE_URL
+        value: ${SUPABASE_URL}
+      - key: SUPABASE_ANON_KEY
+        value: ${SUPABASE_ANON_KEY}
+        type: SECRET
+      - key: SUPABASE_SERVICE_ROLE_KEY
+        value: ${SUPABASE_SERVICE_ROLE_KEY}
+        type: SECRET
+      - key: AWS_ACCESS_KEY_ID
+        value: ${AWS_ACCESS_KEY_ID}
+        type: SECRET
+      - key: AWS_SECRET_ACCESS_KEY
+        value: ${AWS_SECRET_ACCESS_KEY}
+        type: SECRET
+      - key: OPENAI_API_KEY
+        value: ${OPENAI_API_KEY}
+        type: SECRET
+      - key: ANTHROPIC_API_KEY
+        value: ${ANTHROPIC_API_KEY}
+        type: SECRET
+      - key: STRIPE_SECRET_KEY
+        value: ${STRIPE_SECRET_KEY}
+        type: SECRET
+      - key: STRIPE_WEBHOOK_SECRET
+        value: ${STRIPE_WEBHOOK_SECRET}
+        type: SECRET
+    run_command: |
+      python manage.py migrate --no-input
+      gunicorn main:app --workers 2 --worker-class uvicorn.workers.UvicornWorker --bind 0.0.0.0:8000
+
+workers:
+  - name: celery
+    dockerfile_path: apps/api/Dockerfile
+    source_dir: /
+    github:
+      branch: main
+      deploy_on_push: true
+      repo: $GITHUB_REPOSITORY
+    instance_count: 1
+    instance_size_slug: professional-xs
+    run_command: celery -A tasks worker --loglevel=info --concurrency=2
+    envs:
+      - key: ENVIRONMENT
+        value: staging
+      - key: DATABASE_URL
+        value: ${DATABASE_URL}
+        type: SECRET
+      - key: REDIS_URL
+        value: ${REDIS_URL}
+        type: SECRET
+
+  - name: celery-beat
+    dockerfile_path: apps/api/Dockerfile
+    source_dir: /
+    github:
+      branch: main
+      deploy_on_push: true
+      repo: $GITHUB_REPOSITORY
+    instance_count: 1
+    instance_size_slug: professional-xs
+    run_command: celery -A tasks beat --loglevel=info
+    envs:
+      - key: ENVIRONMENT
+        value: staging
+      - key: DATABASE_URL
+        value: ${DATABASE_URL}
+        type: SECRET
+      - key: REDIS_URL
+        value: ${REDIS_URL}
+        type: SECRET
+
+databases:
+  - name: redis
+    engine: REDIS
+    version: "7"
+    size: db-s-1vcpu-1gb
+    num_nodes: 1
+
+alerts:
+  - rule: DEPLOYMENT_FAILED
+  - rule: DOMAIN_FAILED
+  - rule: CPU_UTILIZATION
+    value: 80
+    window: FIVE_MINUTES
+  - rule: MEM_UTILIZATION
+    value: 80
+    window: FIVE_MINUTES

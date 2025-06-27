@@ -1,0 +1,198 @@
+name: Deploy ColdCopy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+env:
+  DOCKER_REGISTRY: registry.digitalocean.com/coldcopy
+  NODE_VERSION: '18'
+  PYTHON_VERSION: '3.11'
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Run tests
+        run: npm test
+      
+      - name: Run type check
+        run: npm run typecheck
+      
+      - name: Run linting
+        run: npm run lint
+
+  build-api:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      
+      - name: Login to Digital Ocean Registry
+        uses: docker/login-action@v2
+        with:
+          registry: registry.digitalocean.com
+          username: ${{ secrets.DO_REGISTRY_TOKEN }}
+          password: ${{ secrets.DO_REGISTRY_TOKEN }}
+      
+      - name: Build and push API image
+        uses: docker/build-push-action@v4
+        with:
+          context: ./apps/api
+          push: true
+          tags: |
+            ${{ env.DOCKER_REGISTRY }}/api:${{ github.sha }}
+            ${{ env.DOCKER_REGISTRY }}/api:latest
+          cache-from: type=registry,ref=${{ env.DOCKER_REGISTRY }}/api:buildcache
+          cache-to: type=registry,ref=${{ env.DOCKER_REGISTRY }}/api:buildcache,mode=max
+
+  deploy-database:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Supabase CLI
+        uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      
+      - name: Deploy database migrations
+        run: |
+          supabase link --project-ref ${{ secrets.SUPABASE_PROJECT_REF }}
+          supabase db push --password ${{ secrets.SUPABASE_DB_PASSWORD }}
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+
+  deploy-api:
+    needs: [build-api, deploy-database]
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        server: [coldcopy-api-1, coldcopy-api-2, coldcopy-api-3]
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_ACCESS_TOKEN }}
+      
+      - name: Deploy to ${{ matrix.server }}
+        run: |
+          doctl compute ssh ${{ matrix.server }} --ssh-command "
+            cd /home/coldcopy/app &&
+            docker-compose pull api &&
+            docker-compose up -d api --no-deps &&
+            docker system prune -f
+          "
+      
+      - name: Health check
+        run: |
+          sleep 30
+          curl -f https://api.coldcopy.io/health || exit 1
+
+  deploy-workers:
+    needs: [build-api, deploy-database]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DO_ACCESS_TOKEN }}
+      
+      - name: Deploy workers
+        run: |
+          doctl compute ssh coldcopy-api-1 --ssh-command "
+            cd /home/coldcopy/app &&
+            docker-compose pull celery-worker celery-beat &&
+            docker-compose up -d celery-worker celery-beat --no-deps
+          "
+
+  deploy-frontend:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+      
+      - name: Deploy to Vercel
+        run: |
+          cd apps/web
+          vercel --token=${{ secrets.VERCEL_TOKEN }} --prod --yes
+        env:
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+  post-deployment:
+    needs: [deploy-api, deploy-workers, deploy-frontend]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      
+      - name: Purge Cloudflare cache
+        run: |
+          curl -X POST "https://api.cloudflare.com/client/v4/zones/${{ secrets.CLOUDFLARE_ZONE_ID }}/purge_cache" \
+            -H "Authorization: Bearer ${{ secrets.CLOUDFLARE_API_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            --data '{"purge_everything":true}'
+      
+      - name: Notify deployment
+        run: |
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "text": "🚀 ColdCopy deployed successfully!",
+              "attachments": [{
+                "color": "good",
+                "fields": [
+                  {"title": "Version", "value": "'${{ github.sha }}'", "short": true},
+                  {"title": "Environment", "value": "'${{ inputs.environment || 'production' }}'", "short": true},
+                  {"title": "Deployed by", "value": "'${{ github.actor }}'", "short": true},
+                  {"title": "Branch", "value": "'${{ github.ref_name }}'", "short": true}
+                ]
+              }]
+            }'
+      
+      - name: Create Sentry release
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: coldcopy
+          SENTRY_PROJECT: coldcopy-api
+        with:
+          environment: ${{ inputs.environment || 'production' }}
+          version: ${{ github.sha }}

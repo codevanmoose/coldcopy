@@ -1,0 +1,193 @@
+name: Release Management
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+          - prerelease
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Determine version bump
+        id: version
+        run: |
+          # Get current version from package.json
+          CURRENT_VERSION=$(node -p "require('./package.json').version")
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          
+          # Determine bump type
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            BUMP_TYPE="${{ github.event.inputs.release_type }}"
+          else
+            # Analyze commit messages to determine bump type
+            COMMITS=$(git log $(git describe --tags --abbrev=0 2>/dev/null || echo "")..HEAD --pretty=format:"%s")
+            
+            if echo "$COMMITS" | grep -q "BREAKING CHANGE:\|!:"; then
+              BUMP_TYPE="major"
+            elif echo "$COMMITS" | grep -q "^feat"; then
+              BUMP_TYPE="minor"
+            else
+              BUMP_TYPE="patch"
+            fi
+          fi
+          
+          echo "bump_type=$BUMP_TYPE" >> $GITHUB_OUTPUT
+
+      - name: Bump version
+        id: bump
+        run: |
+          # Bump version in package.json files
+          npm version ${{ steps.version.outputs.bump_type }} --no-git-tag-version
+          NEW_VERSION=$(node -p "require('./package.json').version")
+          
+          # Update version in all workspace packages
+          cd apps/web && npm version $NEW_VERSION --no-git-tag-version && cd ../..
+          
+          echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+
+      - name: Generate changelog
+        id: changelog
+        uses: TriPSs/conventional-changelog-action@v5
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          version-file: './package.json'
+          preset: 'conventionalcommits'
+          skip-version-file: true
+          skip-commit: true
+          git-push: false
+
+      - name: Create Pull Request
+        id: pr
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "chore(release): v${{ steps.bump.outputs.new_version }}"
+          title: "Release v${{ steps.bump.outputs.new_version }}"
+          body: |
+            ## 🚀 Release v${{ steps.bump.outputs.new_version }}
+            
+            ### Changes
+            ${{ steps.changelog.outputs.clean_changelog }}
+            
+            ### Version Bump
+            - Previous: v${{ steps.version.outputs.current_version }}
+            - New: v${{ steps.bump.outputs.new_version }}
+            - Type: ${{ steps.version.outputs.bump_type }}
+            
+            ---
+            
+            This PR was automatically created by the release workflow.
+            Merging this PR will:
+            1. Update version numbers
+            2. Update CHANGELOG.md
+            3. Create a new GitHub release
+            4. Trigger deployment workflows
+          branch: release/v${{ steps.bump.outputs.new_version }}
+          delete-branch: true
+          labels: |
+            release
+            automated
+
+      - name: Auto-merge PR (for patch releases)
+        if: steps.version.outputs.bump_type == 'patch' && steps.pr.outputs.pull-request-number
+        run: |
+          gh pr merge ${{ steps.pr.outputs.pull-request-number }} \
+            --auto \
+            --merge \
+            --delete-branch
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create Release Tag
+        if: steps.pr.outputs.pull-request-merged == 'true'
+        run: |
+          git tag -a "v${{ steps.bump.outputs.new_version }}" \
+            -m "Release v${{ steps.bump.outputs.new_version }}"
+          git push origin "v${{ steps.bump.outputs.new_version }}"
+
+      - name: Create GitHub Release
+        if: steps.pr.outputs.pull-request-merged == 'true'
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.bump.outputs.new_version }}
+          release_name: v${{ steps.bump.outputs.new_version }}
+          body: |
+            ## What's Changed
+            ${{ steps.changelog.outputs.clean_changelog }}
+            
+            **Full Changelog**: https://github.com/${{ github.repository }}/compare/v${{ steps.version.outputs.current_version }}...v${{ steps.bump.outputs.new_version }}
+          draft: false
+          prerelease: ${{ steps.version.outputs.bump_type == 'prerelease' }}
+
+  # Update documentation
+  update-docs:
+    name: Update Documentation
+    runs-on: ubuntu-latest
+    needs: release
+    if: needs.release.result == 'success'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Update version in documentation
+        run: |
+          # Update version references in documentation
+          find docs -name "*.md" -type f -exec sed -i "s/v${{ needs.release.outputs.current_version }}/v${{ needs.release.outputs.new_version }}/g" {} +
+          
+          # Update README badges
+          sed -i "s/version-v[0-9.]*-/version-v${{ needs.release.outputs.new_version }}-/g" README.md
+
+      - name: Create documentation update PR
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: "docs: update version to v${{ needs.release.outputs.new_version }}"
+          title: "docs: update version references to v${{ needs.release.outputs.new_version }}"
+          body: |
+            Updates documentation to reference the latest version v${{ needs.release.outputs.new_version }}
+            
+            This is an automated PR created after the release.
+          branch: docs/update-version-${{ needs.release.outputs.new_version }}
+          labels: |
+            documentation
+            automated

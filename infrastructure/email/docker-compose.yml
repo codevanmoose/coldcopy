@@ -1,0 +1,100 @@
+version: '3.8'
+
+services:
+  # Reputation monitoring dashboard
+  reputation-monitor:
+    build: .
+    container_name: coldcopy-reputation-monitor
+    command: python reputation_monitor.py
+    ports:
+      - "8091:8091"
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION:-us-east-1}
+      - AWS_BACKUP_REGIONS=${AWS_BACKUP_REGIONS:-eu-west-1}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+    depends_on:
+      - redis
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8091/api/metrics/current"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Event processor (webhook handler)
+  event-processor:
+    build: .
+    container_name: coldcopy-event-processor
+    command: python event_processor.py
+    ports:
+      - "8092:8092"
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - DB_HOST=${DB_HOST}
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME}
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # IP warmup scheduler
+  warmup-scheduler:
+    build: .
+    container_name: coldcopy-warmup-scheduler
+    command: python -c "from warmup_manager import *; import asyncio; asyncio.run(warmup_scheduler(WarmupManager(SESConfig(aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'), aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY')))))"
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - ALERT_EMAIL=${ALERT_EMAIL}
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # Email queue processor
+  email-queue-processor:
+    build: .
+    container_name: coldcopy-email-queue
+    command: python -c "from ses_manager import *; import asyncio; asyncio.run(SESManager(SESConfig(aws_access_key_id=os.getenv('AWS_ACCESS_KEY_ID'), aws_secret_access_key=os.getenv('AWS_SECRET_ACCESS_KEY'))).process_email_queue())"
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+    depends_on:
+      - redis
+    restart: unless-stopped
+    deploy:
+      replicas: 2  # Run multiple queue processors
+
+  # Redis for caching and queuing
+  redis:
+    image: redis:7-alpine
+    container_name: coldcopy-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+
+  # Nginx reverse proxy (optional, for production)
+  nginx:
+    image: nginx:alpine
+    container_name: coldcopy-email-nginx
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - reputation-monitor
+      - event-processor
+    restart: unless-stopped
+
+volumes:
+  redis-data:

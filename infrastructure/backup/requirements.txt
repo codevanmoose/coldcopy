@@ -1,0 +1,8 @@
+boto3==1.28.84
+psycopg2-binary==2.9.9
+schedule==1.2.0
+flask==3.0.0
+prometheus-client==0.19.0
+pydantic==2.5.0
+python-dotenv==1.0.0
+cryptography==41.0.7

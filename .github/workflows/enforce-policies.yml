@@ -1,0 +1,162 @@
+name: Enforce Policies
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches:
+      - main
+      - develop
+
+jobs:
+  check-commit-messages:
+    name: Check Commit Messages
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check commit messages
+        run: |
+          # Get all commit messages in this PR
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            COMMITS=$(git log --format=%s origin/${{ github.base_ref }}..HEAD)
+          else
+            COMMITS=$(git log --format=%s -1)
+          fi
+          
+          # Check each commit message
+          echo "$COMMITS" | while read -r commit; do
+            if [[ ! "$commit" =~ ^(feat|fix|docs|style|refactor|perf|test|build|ci|chore|revert)(\(.+\))?: .{1,50} ]]; then
+              echo "❌ Invalid commit message: $commit"
+              echo "Commit messages must follow Conventional Commits format:"
+              echo "  <type>(<scope>): <subject>"
+              echo "  Example: feat(auth): add login functionality"
+              exit 1
+            fi
+          done
+          
+          echo "✅ All commit messages are valid"
+
+  check-file-size:
+    name: Check File Sizes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check for large files
+        run: |
+          # Find files larger than 10MB
+          large_files=$(find . -type f -size +10M -not -path "./.git/*" | head -20)
+          
+          if [ -n "$large_files" ]; then
+            echo "❌ Large files detected (>10MB):"
+            echo "$large_files"
+            echo ""
+            echo "Please use Git LFS for large files or reduce file size"
+            exit 1
+          fi
+          
+          echo "✅ No large files detected"
+
+  check-secrets:
+    name: Check for Secrets
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run TruffleHog
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          head: HEAD
+          extra_args: --debug --only-verified
+
+  check-dependencies:
+    name: Check Dependencies
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Check for security vulnerabilities
+        run: |
+          npm audit --audit-level=high
+          
+      - name: Check for outdated dependencies
+        run: |
+          npx npm-check-updates --errorLevel 2 || true
+
+  enforce-pr-labels:
+    name: Enforce PR Labels
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Check PR has labels
+        uses: mheap/github-action-required-labels@v5
+        with:
+          mode: minimum
+          count: 1
+          labels: |
+            bug
+            enhancement
+            documentation
+            breaking-change
+            dependencies
+            ci/cd
+            refactor
+            performance
+
+  enforce-pr-size:
+    name: Enforce PR Size
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check PR size
+        run: |
+          # Get diff stats
+          git fetch origin ${{ github.base_ref }}
+          CHANGES=$(git diff --shortstat origin/${{ github.base_ref }}...HEAD)
+          
+          # Extract numbers
+          INSERTIONS=$(echo "$CHANGES" | grep -oE '[0-9]+ insertion' | grep -oE '[0-9]+' || echo 0)
+          DELETIONS=$(echo "$CHANGES" | grep -oE '[0-9]+ deletion' | grep -oE '[0-9]+' || echo 0)
+          TOTAL=$((INSERTIONS + DELETIONS))
+          
+          echo "📊 PR Statistics:"
+          echo "  Insertions: $INSERTIONS"
+          echo "  Deletions: $DELETIONS"
+          echo "  Total changes: $TOTAL"
+          
+          # Warn if PR is too large
+          if [ $TOTAL -gt 1000 ]; then
+            echo "⚠️ This PR contains $TOTAL changes. Consider breaking it into smaller PRs."
+            echo "Large PRs are harder to review and more likely to introduce bugs."
+          fi
+
+  lint-branch-name:
+    name: Lint Branch Name
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Check branch name
+        run: |
+          BRANCH_NAME="${{ github.head_ref }}"
+          
+          # Check branch naming convention
+          if [[ ! "$BRANCH_NAME" =~ ^(feature|bugfix|hotfix|release|chore)/.+ ]]; then
+            echo "❌ Invalid branch name: $BRANCH_NAME"
+            echo "Branch names must follow the pattern: <type>/<description>"
+            echo "Valid types: feature, bugfix, hotfix, release, chore"
+            echo "Example: feature/add-user-authentication"
+            exit 1
+          fi
+          
+          echo "✅ Branch name is valid: $BRANCH_NAME"

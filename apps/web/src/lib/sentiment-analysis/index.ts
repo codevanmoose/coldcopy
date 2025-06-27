@@ -1,0 +1,20 @@
+export { SentimentAnalysisService } from './service';
+export type {
+  ConversationThread,
+  MessageSentiment,
+  SentimentAlert,
+  SentimentRule,
+  SentimentBenchmark,
+  AnalyzeConversationRequest,
+  SentimentAnalysisResponse,
+  SentimentDashboardData,
+  SentimentLevel,
+  SentimentTrend,
+  EngagementLevel,
+  RiskLevel,
+  AlertType,
+  AlertSeverity,
+  AlertStatus,
+  ResponseTimeTrend,
+  UrgencyLevel,
+} from './types';

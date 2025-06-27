@@ -1,0 +1,556 @@
+# Product Requirements Document: coldcopy.cc
+
+## 1. Product Overview
+
+**coldcopy.cc** is an AI-powered cold outreach automation platform that enables agencies and founders to generate, send, and track highly personalized cold emails at scale. By leveraging advanced language models like GPT-4 and Claude, the platform transforms generic outreach into personalized conversations that convert. Users can import leads, create AI-generated email campaigns, manage email warm-up, and track engagement metrics through an intuitive dashboard—all while maintaining high deliverability rates.
+
+### Target Audience
+- **Primary:** Digital agencies running outreach campaigns for clients
+- **Secondary:** B2B SaaS founders and sales teams
+- **Tertiary:** Freelancers and consultants seeking new clients
+
+### Unique Selling Points (USPs)
+- **AI-Native Personalization:** Deep integration with GPT-4/Claude for context-aware email generation
+- **Full White-Label Platform:** Complete branding control for agencies
+- **Shared Team Inboxes:** Collaborative response management
+- **Built-in Lead Enrichment:** No third-party fees for data enhancement
+- **Van Moose Ecosystem:** Native integration with Trunctus and NetSlurf
+- **Usage-Based AI Pricing:** Pay only for what you use
+
+## 2. Monetization Strategy & Revenue Projections
+
+### Pricing Structure
+
+#### Base Plans (Per Seat Pricing)
+
+**Starter - $97/seat/month**
+- 1 user minimum
+- Includes 1,000 emails/month per seat
+- Basic lead enrichment (500 enrichments/month)
+- 1 sender email per seat
+- Email tracking & analytics
+- Target: Freelancers, consultants
+
+**Growth - $297/seat/month**
+- 3 users minimum
+- Includes 5,000 emails/month per seat
+- Advanced lead enrichment (2,500 enrichments/month)
+- 3 sender emails per seat
+- Shared team inbox
+- A/B testing
+- Target: Small agencies
+
+**Scale - $797/seat/month**
+- 5 users minimum
+- Includes 15,000 emails/month per seat
+- Unlimited lead enrichment
+- Unlimited sender emails
+- Full white labeling
+- API access
+- Priority support
+- Target: Growing agencies
+
+**Enterprise - Custom pricing**
+- 20+ users
+- Custom email volumes
+- Dedicated infrastructure
+- Custom integrations
+- SLA guarantee
+- Target: Large agencies
+
+#### Usage-Based Pricing
+
+**Email Credits**
+- Included in plan: See above
+- Overage: $10 per 1,000 emails
+- Bulk packages:
+  - 10,000 emails: $80 (20% discount)
+  - 50,000 emails: $350 (30% discount)
+  - 100,000 emails: $600 (40% discount)
+
+**AI Token Credits (Prepaid)**
+- $20 = 1M tokens (~2,000 personalized emails)
+- $90 = 5M tokens (~10,000 personalized emails) - 10% discount
+- $400 = 25M tokens (~50,000 personalized emails) - 20% discount
+- $1,500 = 100M tokens (~200,000 personalized emails) - 25% discount
+
+#### Annual Pricing
+- **Seats:** 50% discount (6 months free)
+- **Email Credits:** Purchase upfront at bulk rates
+- **AI Tokens:** Purchase upfront with volume discounts
+
+### Revenue Projections & Growth Plan
+
+#### Month 1-3: Foundation Phase
+- **Goal:** 50 paying customers (150 seats)
+- **Strategy:** 
+  - 14-day free trial (no credit card)
+  - Launch on Product Hunt
+  - Direct outreach to agencies
+  - Case studies from beta users
+- **MRR Target:** $25,000
+
+#### Month 4-6: Growth Phase
+- **Goal:** 200 customers (800 seats)
+- **Strategy:**
+  - Affiliate program (30% recurring for 12 months)
+  - YouTube channel with tutorials
+  - Webinar series for agencies
+  - Google Ads + Facebook retargeting
+- **MRR Target:** $120,000
+
+#### Month 7-12: Scale Phase
+- **Goal:** 500 customers (2,500 seats)
+- **Strategy:**
+  - White-label partner program
+  - Integration marketplace launch
+  - Industry conference presence
+  - Content marketing machine
+- **MRR Target:** $400,000
+
+#### Year 2 Target
+- 1,500 customers (10,000 seats)
+- $1.5M MRR
+- 25% using white-label features
+
+### Quick Path to Revenue
+1. **Pre-launch:** Beta program with 20 agencies
+2. **Week 1:** Launch with founding customer discount (30% off for life)
+3. **Week 2:** Product Hunt launch with exclusive deal
+4. **Month 2:** Partner with 3 agency communities
+5. **Month 3:** Launch affiliate program
+6. **Month 4:** First white-label partnership
+
+## 3. Design Philosophy & UI/UX
+
+### Design Principles
+- **Agency-First Design:** Built for teams, not individuals
+- **Data Density with Clarity:** Show everything without overwhelming
+- **Dark Mode Default:** Professional aesthetic that reduces eye strain
+- **Responsive Everything:** Desktop-first but mobile-ready
+- **White-Label Ready:** Every element customizable
+
+### Progressive Web App (PWA) Architecture
+- **Offline Support:** View campaigns and leads without connection
+- **Push Notifications:** Real-time reply alerts
+- **App-Like Experience:** Installable on mobile devices
+- **Fast Loading:** Service worker caching
+- **Responsive Design:** Optimized for all screen sizes
+
+### User Dashboard Design
+
+#### Visual Style
+- **Default Theme:**
+  - Primary: #6366F1 (Indigo)
+  - Success: #10B981 (Emerald)
+  - Warning: #F59E0B (Amber)
+  - Danger: #EF4444 (Red)
+  - Background: #0F172A (Slate-900)
+  - Surface: #1E293B (Slate-800)
+- **White-Label:** Complete theme customization
+
+#### Layout Structure
+- **Top Bar:**
+  - Workspace/Client switcher
+  - Global search (Cmd+K)
+  - Notification center
+  - User menu
+
+- **Left Sidebar:**
+  - Campaign navigator
+  - Quick stats widgets
+  - Team activity feed
+  - Settings access
+
+- **Main Content Area:**
+  - **Campaign Overview:** Metrics cards with real-time updates
+  - **Lead Management:** Advanced data table with inline editing
+  - **Email Composer:** Split-screen preview
+  - **Analytics Dashboard:** Interactive charts
+
+- **Right Panel (Context-Sensitive):**
+  - Lead details
+  - Email thread view
+  - AI suggestions
+  - Quick actions
+
+### Shared Inbox Design
+- **Unified View:** All team replies in one place
+- **Assignment System:** Claim conversations to avoid conflicts
+- **Collision Detection:** Warning when teammate is typing
+- **Reply Templates:** Shared team templates
+- **Internal Notes:** Private team comments on threads
+- **Activity Timeline:** Who did what and when
+
+### Admin Dashboard Design
+- **Multi-Client Overview:** Kanban board of all client campaigns
+- **Team Performance:** Individual and team metrics
+- **Revenue Analytics:** MRR by client, usage trends
+- **System Health:** Deliverability scores, API usage
+- **White-Label Manager:** Theme editor, domain configuration
+
+## 4. Goals & Non-goals
+
+### Goals (MVP)
+- Build custom lead enrichment engine
+- Full white-label platform from day one
+- Progressive Web App with offline support
+- Shared team inbox functionality
+- Native CRM integrations (HubSpot, Pipedrive)
+- Usage-based billing for seats and emails
+- Prepaid AI token system
+- 14-day free trial flow
+- Amazon SES integration
+- Basic GDPR compliance
+
+### Non-goals (MVP)
+- Native mobile apps (iOS/Android)
+- Full GDPR suite (data portability, right to deletion)
+- LinkedIn/WhatsApp integration
+- AI-powered reply generation
+- Salesforce integration
+- Video in emails
+- Calendar booking automation
+- Email templates marketplace
+
+## 5. Core Features (MVP)
+
+### Lead Enrichment Engine (Built In-House)
+Custom enrichment system with no per-lead fees:
+- **Data Sources:**
+  - Public APIs (clearbit-like approach)
+  - Web scraping (company websites)
+  - Social media profiles
+  - DNS/WHOIS records
+- **Enriched Fields:**
+  - Company size and industry
+  - Technology stack
+  - Social media presence
+  - Key personnel
+  - Recent news/funding
+- **Smart Caching:** Store enriched data for 30 days
+- **Bulk Processing:** Enrich 1,000 leads in <60 seconds
+- **Enrichment Credits:** Included in each plan tier
+
+### Full White-Label Platform
+Complete branding control for agencies:
+- **Custom Domains:**
+  - App domain (app.agencyname.com)
+  - Tracking domain (track.agencyname.com)
+  - Email sending domain (mail.agencyname.com)
+- **Visual Customization:**
+  - Logo upload and favicon
+  - Complete color scheme
+  - Custom CSS injection
+  - Email template branding
+- **Client Isolation:**
+  - Separate workspaces per client
+  - No coldcopy.cc branding visible
+  - Custom email headers
+- **Setup Wizard:** Guided DNS configuration
+
+### Shared Team Inbox
+Collaborative email management:
+- **Unified Inbox View:** All campaign replies in one place
+- **Smart Assignment:**
+  - Auto-assign based on rules
+  - Manual claim system
+  - Round-robin distribution
+- **Collision Prevention:**
+  - Real-time typing indicators
+  - Lock conversation when replying
+  - Merge concurrent edits
+- **Team Features:**
+  - @mention teammates
+  - Internal notes/comments
+  - Shared templates
+  - Reply approval workflow
+- **Permissions:** Control who can see/reply to what
+
+### Campaign Creation & Management
+- **Multi-Step Campaigns:** Initial email + unlimited follow-ups
+- **Smart Scheduling:**
+  - Timezone-aware sending
+  - Optimal time detection
+  - Daily/weekly limits
+  - Pause on replies
+- **Dynamic Variables:** Pull from lead data + enrichment
+- **Campaign Templates:** Save and reuse successful campaigns
+- **Client Assignment:** Campaigns belong to client workspaces
+
+### AI Email Generation
+- **Token-Based System:** Pay-as-you-go pricing
+- **Model Options:** GPT-4, Claude, GPT-3.5 (cheaper)
+- **Personalization Depth:**
+  - Level 1: Basic merge fields
+  - Level 2: Company context
+  - Level 3: Deep personalization with enrichment
+- **Bulk Generation:** Queue system for large batches
+- **Token Tracking:** Real-time usage dashboard
+- **Prompt Builder:** Visual interface for prompt engineering
+
+### Native CRM Integrations
+
+#### HubSpot Integration
+- **Two-Way Sync:** Contacts, companies, deals
+- **Activity Logging:** Email opens, clicks, replies
+- **Custom Properties:** Map coldcopy fields
+- **Workflow Triggers:** Update based on email events
+
+#### Pipedrive Integration  
+- **Lead/Deal Creation:** Auto-create from positive replies
+- **Activity Timeline:** Full email history
+- **Pipeline Updates:** Move deals based on engagement
+- **Custom Fields:** Flexible mapping
+
+### Email Infrastructure (Amazon SES)
+- **Multi-Region Setup:** US-East-1 primary, EU-West-1 backup
+- **Configuration Sets:** Separate for marketing/transactional
+- **IP Warm-Up:** Gradual volume increase
+- **Reputation Monitoring:** Real-time dashboard
+- **Bounce Handling:** Automatic suppression
+- **DNS Automation:** API-driven DKIM/SPF setup
+
+### Lead Dashboard
+- **Advanced Filtering:**
+  - Multi-condition filters
+  - Saved filter sets
+  - Quick filter chips
+- **Bulk Operations:**
+  - Status updates
+  - Campaign moves
+  - Tag management
+  - Export subsets
+- **Lead Timeline:** Complete interaction history
+- **Custom Views:** Per-user saved layouts
+
+### Analytics & Reporting
+- **Campaign Metrics:**
+  - Open/click/reply rates
+  - Best performing subjects
+  - Optimal send times
+  - Revenue attribution
+- **Team Performance:**
+  - Emails sent per user
+  - Reply handling time
+  - Conversion rates
+- **Client Reporting:** White-labeled PDF exports
+
+## 6. User Roles & Permissions
+
+### Super Admin (Agency Owner)
+- Manage all client workspaces
+- Global billing and usage view
+- White-label configuration
+- Team member management
+- API key administration
+
+### Workspace Admin (Client Account)
+- Full access within workspace
+- Manage workspace users
+- Configure integrations
+- View workspace analytics
+- Export all data
+
+### Campaign Manager
+- Create/edit campaigns
+- Manage team inbox
+- View all analytics
+- Cannot modify billing
+- Cannot delete workspace
+
+### Outreach Specialist
+- Execute assigned campaigns
+- Respond to assigned leads
+- View own performance
+- Limited analytics access
+
+## 7. Technical Architecture
+
+### Frontend (Vercel)
+- **Framework:** Next.js 14 with App Router
+- **PWA Setup:**
+  - Service Worker for offline
+  - Web App Manifest
+  - Push Notifications API
+- **State Management:** Zustand + React Query
+- **UI Library:** Shadcn/ui with custom components
+- **Real-time:** Supabase Realtime subscriptions
+- **Performance:** 
+  - Code splitting
+  - Image optimization
+  - Edge caching
+
+### Backend (Digital Ocean)
+- **API:** FastAPI with async support
+- **Workers:** Celery for background jobs
+- **Caching:** Redis for hot data
+- **File Storage:** DO Spaces
+- **Monitoring:** Prometheus + Grafana
+- **Logging:** Structured logs to DO
+
+### Database Architecture (Supabase)
+```sql
+-- Optimized schema for lead engagement storage
+-- Using PostgreSQL with strategic partitioning
+
+-- Main tables with JSONB for flexibility
+leads (
+  id, email, workspace_id, 
+  enrichment_data JSONB,
+  custom_fields JSONB,
+  created_at, updated_at
+)
+
+-- Partitioned by month for scalability
+email_events (
+  id, lead_id, campaign_id,
+  event_type, metadata JSONB,
+  created_at
+) PARTITION BY RANGE (created_at);
+
+-- Materialized view for fast analytics
+lead_engagement_summary MATERIALIZED VIEW
+```
+
+### Data Architecture Decision
+**Recommended Approach: PostgreSQL + Materialized Views**
+- **Reasoning:** 
+  - Keeps everything in Supabase (simpler)
+  - Materialized views for fast analytics
+  - Table partitioning for scale
+  - JSONB for flexible schema
+- **Performance Optimizations:**
+  - Partition email_events by month
+  - Index on (lead_id, created_at)
+  - Async refresh of materialized views
+  - Archive old partitions to cold storage
+
+### Lead Enrichment Architecture
+- **Data Pipeline:**
+  1. API calls to public sources
+  2. Web scraping with Playwright
+  3. Data normalization
+  4. Cache in PostgreSQL
+- **Sources:**
+  - Company websites
+  - LinkedIn public profiles
+  - GitHub organizations
+  - Crunchbase basics
+  - DNS records
+
+### Development Workflow
+- **Monorepo Structure:** Frontend + Backend
+- **CI/CD:** GitHub Actions
+- **Environments:** Dev, Staging, Production
+- **Feature Flags:** LaunchDarkly for gradual rollouts
+- **Testing:** 
+  - Unit tests (Jest/Pytest)
+  - E2E tests (Playwright)
+  - Load tests (K6)
+
+## 8. Compliance & Security
+
+### Basic GDPR Compliance (MVP)
+- **Unsubscribe Links:** One-click unsubscribe
+- **Data Export:** User can export all their data
+- **Privacy Policy:** Clear data usage terms
+- **Cookie Consent:** For tracking pixels
+- **Suppression Lists:** Global and per-workspace
+
+### Security Measures
+- **Encryption:** At rest and in transit
+- **API Security:** Rate limiting, API keys
+- **Access Control:** Row-level security
+- **Audit Logs:** Track all data access
+- **PII Handling:** Encrypted fields for sensitive data
+
+### Future GDPR Suite (Post-MVP)
+- Data Processing Agreements (DPA)
+- Right to deletion automation
+- Data portability API
+- Consent management
+- EU data residency option
+
+## 9. Implementation Timeline
+
+### Phase 1: Foundation (Weeks 1-4)
+- Set up infrastructure (Vercel, DO, Supabase)
+- Basic authentication and workspaces
+- Lead import and management
+- Simple email sending via SES
+
+### Phase 2: Core Features (Weeks 5-8)
+- AI email generation with token tracking
+- Campaign builder with follow-ups
+- Shared team inbox
+- Basic analytics dashboard
+
+### Phase 3: Enrichment & Tracking (Weeks 9-12)
+- Build enrichment engine
+- Email tracking (opens, clicks)
+- Reply detection
+- Performance optimization
+
+### Phase 4: White Label & Integrations (Weeks 13-16)
+- Full white-label system
+- HubSpot integration
+- Pipedrive integration
+- PWA features
+- Billing integration
+
+### Phase 5: Polish & Launch (Weeks 17-20)
+- UI/UX refinement
+- Load testing
+- Documentation
+- Onboarding flow
+- Launch preparation
+
+## 10. Success Metrics
+
+### Technical KPIs
+- Page load time <2s
+- API response time <200ms
+- 99.9% uptime SLA
+- Email delivery rate >95%
+- Enrichment success rate >80%
+
+### Business KPIs
+- Trial to paid conversion >25%
+- Monthly churn <5%
+- Seat expansion rate >20%
+- White-label adoption >30%
+- NPS score >50
+
+### Usage Metrics
+- Emails sent per seat
+- AI tokens consumed per customer
+- Active campaigns per workspace
+- Team inbox response time
+- Integration usage rates
+
+## 11. Launch Strategy
+
+### Beta Phase (Month -1)
+- Recruit 20 agency beta testers
+- Iterate based on feedback
+- Create case studies
+- Build knowledge base
+
+### Launch Sequence
+1. **Week 1:** Soft launch to waitlist
+2. **Week 2:** Product Hunt launch
+3. **Week 3:** Agency community outreach
+4. **Week 4:** Paid acquisition starts
+
+### Growth Tactics
+- Affiliate program with recurring commissions
+- White-label partner program
+- Content marketing (SEO focus)
+- YouTube tutorial series
+- Agency-focused webinars
+- Strategic partnerships
+
+---
+
+*This PRD incorporates all strategic decisions and positions coldcopy.cc as a premium, agency-focused platform. The combination of usage-based pricing, white-labeling, and team collaboration features creates multiple revenue streams and strong differentiation in the market.*

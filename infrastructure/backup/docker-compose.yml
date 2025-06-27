@@ -1,0 +1,81 @@
+version: '3.8'
+
+services:
+  backup-scheduler:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: coldcopy-backup-scheduler
+    restart: unless-stopped
+    environment:
+      # Database connection
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      
+      # Digital Ocean Spaces
+      DO_SPACES_KEY: ${DO_SPACES_KEY}
+      DO_SPACES_SECRET: ${DO_SPACES_SECRET}
+      DO_SPACES_BUCKET: ${DO_SPACES_BUCKET:-coldcopy-backups}
+      DO_SPACES_REGION: ${DO_SPACES_REGION:-nyc3}
+      DO_SPACES_ENDPOINT: ${DO_SPACES_ENDPOINT:-https://nyc3.digitaloceanspaces.com}
+      
+      # Alert configuration
+      ALERT_EMAIL: ${ALERT_EMAIL}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      
+      # Encryption
+      BACKUP_ENCRYPTION_KEY: ${BACKUP_ENCRYPTION_KEY}
+      
+    volumes:
+      - /var/log/coldcopy:/var/log/coldcopy
+      - backup-temp:/tmp/coldcopy_backups
+      - wal-archive:/var/lib/postgresql/wal_archive
+    
+    command: ["python", "backup_manager.py", "schedule"]
+    
+    healthcheck:
+      test: ["CMD", "python", "backup_manager.py", "status"]
+      interval: 5m
+      timeout: 30s
+      retries: 3
+      start_period: 30s
+
+  backup-monitor:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: coldcopy-backup-monitor
+    restart: unless-stopped
+    environment:
+      # Same environment variables as backup-scheduler
+      DB_HOST: ${DB_HOST}
+      DB_PORT: ${DB_PORT:-5432}
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DO_SPACES_KEY: ${DO_SPACES_KEY}
+      DO_SPACES_SECRET: ${DO_SPACES_SECRET}
+      DO_SPACES_BUCKET: ${DO_SPACES_BUCKET:-coldcopy-backups}
+      DO_SPACES_REGION: ${DO_SPACES_REGION:-nyc3}
+      DO_SPACES_ENDPOINT: ${DO_SPACES_ENDPOINT:-https://nyc3.digitaloceanspaces.com}
+      ALERT_EMAIL: ${ALERT_EMAIL}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+    
+    ports:
+      - "8090:8090"
+    
+    command: ["python", "backup_monitor.py"]
+    
+    depends_on:
+      - backup-scheduler
+
+volumes:
+  backup-temp:
+  wal-archive:

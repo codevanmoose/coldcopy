@@ -1,0 +1,2460 @@
+# The Complete Guide to Supercharging Windsurf/Claude Code Projects
+
+## 🚀 Executive Summary
+
+This guide transforms your Windsurf/Claude Code development experience from basic code generation to a full-stack, automated development powerhouse. By implementing these patterns, Claude Code can:
+
+- Automatically test your deployed applications
+- Diagnose issues across your entire infrastructure
+- Access and interact with web dashboards
+- Perform visual regression testing
+- Self-correct based on real user feedback
+
+## 📋 Table of Contents
+
+1. [Core Concepts](#core-concepts)
+2. [Essential Setup](#essential-setup)
+3. [Automated Testing Framework](#automated-testing-framework)
+4. [Production Monitoring](#production-monitoring)
+5. [Web UI Automation](#web-ui-automation)
+6. [Visual Analysis](#visual-analysis)
+7. [Deployment Diagnostics](#deployment-diagnostics)
+8. [Best Practices](#best-practices)
+9. [Quick Start Templates](#quick-start-templates)
+
+## 🎯 Core Concepts
+
+### The Problem
+Traditional Claude Code is limited to:
+- Writing code
+- Running terminal commands
+- Reading files
+- Basic API calls
+
+### The Solution
+We extend Claude Code's capabilities by creating bridges to:
+- Browser automation (Playwright)
+- Visual analysis tools
+- Platform CLIs (Vercel, GitHub, DigitalOcean)
+- Custom diagnostic scripts
+
+### The Philosophy
+**"Give Claude eyes and hands, not just a brain"**
+
+## 🛠️ Essential Setup
+
+### 1. Project Structure
+
+```
+your-project/
+├── .env.development
+├── .env.production
+├── .env.secure           # Encrypted credentials
+├── playwright.config.ts
+├── package.json
+├── tools/               # Claude's extended capabilities
+│   ├── browser-controller.ts
+│   ├── visual-analyzer.ts
+│   ├── dashboard-api.ts
+│   └── web-access.ts
+├── scripts/             # Automation scripts
+│   ├── diagnose-deployment.js
+│   ├── monitor-production.js
+│   └── run-tests.js
+├── tests/
+│   ├── e2e/            # End-to-end tests
+│   ├── health/         # Health check tests
+│   └── visual/         # Visual regression tests
+└── reports/            # Generated reports
+```
+
+### 2. Core Dependencies
+
+```json
+{
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "playwright": "^1.40.0",
+    "commander": "^11.0.0",
+    "chalk": "^5.3.0",
+    "dotenv": "^16.0.0",
+    "tesseract.js": "^5.0.0",
+    "pixelmatch": "^5.3.0",
+    "pngjs": "^7.0.0",
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0",
+    "ts-node": "^10.0.0"
+  },
+  "scripts": {
+    "setup": "npm install && npx playwright install",
+    "test:e2e": "playwright test",
+    "test:prod": "BASE_URL=$FRONTEND_URL npm run test:e2e",
+    "diagnose": "node scripts/diagnose-deployment.js",
+    "monitor": "node scripts/monitor-production.js",
+    "web:access": "ts-node tools/web-access.ts",
+    "health-check": "playwright test tests/health/"
+  }
+}
+```
+
+### 3. Environment Configuration
+
+Create `.env.template`:
+
+```bash
+# Application URLs
+FRONTEND_URL=https://your-app.vercel.app
+API_URL=https://api.your-backend.com
+
+# Service Tokens
+VERCEL_TOKEN=
+VERCEL_PROJECT_ID=
+GITHUB_TOKEN=
+DIGITALOCEAN_TOKEN=
+DO_APP_ID=
+
+# Test Credentials
+TEST_USER_EMAIL=test@example.com
+TEST_USER_PASSWORD=
+
+# Monitoring
+SLACK_WEBHOOK=
+ERROR_THRESHOLD=5
+```
+
+## 🧪 Automated Testing Framework
+
+### 1. Playwright Configuration
+
+```typescript
+// playwright.config.ts
+import { defineConfig, devices } from '@playwright/test';
+import dotenv from 'dotenv';
+
+// Load environment variables
+dotenv.config({ path: '.env.production' });
+
+export default defineConfig({
+  testDir: './tests',
+  timeout: 30 * 1000,
+  expect: { timeout: 5000 },
+  fullyParallel: true,
+  retries: process.env.CI ? 2 : 0,
+  
+  reporter: [
+    ['html'],
+    ['json', { outputFile: 'test-results.json' }],
+    ['list'],
+    ['./custom-reporter.ts'] // Custom reporter for Claude
+  ],
+  
+  use: {
+    baseURL: process.env.BASE_URL || 'http://localhost:3000',
+    trace: 'on-first-retry',
+    screenshot: 'only-on-failure',
+    video: 'retain-on-failure',
+    
+    // Custom test attributes
+    testIdAttribute: 'data-testid',
+  },
+
+  projects: [
+    {
+      name: 'Desktop Chrome',
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'Mobile Safari',
+      use: { ...devices['iPhone 13'] },
+    },
+    {
+      name: 'Desktop Firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+  ],
+
+  webServer: process.env.CI ? undefined : {
+    command: 'npm run dev',
+    port: 3000,
+    reuseExistingServer: true,
+  },
+});
+```
+
+### 2. Test Helpers and Utilities
+
+```typescript
+// tests/helpers/test-utils.ts
+import { Page, expect, Locator } from '@playwright/test';
+import fs from 'fs/promises';
+
+export class TestHelpers {
+  constructor(private page: Page) {}
+
+  async login(email: string, password: string) {
+    await this.page.goto('/login');
+    await this.page.fill('[name="email"]', email);
+    await this.page.fill('[name="password"]', password);
+    await this.page.click('button[type="submit"]');
+    await this.page.waitForURL('/dashboard');
+  }
+
+  async waitForAPIResponse(urlPattern: string | RegExp) {
+    return this.page.waitForResponse(response => 
+      urlPattern instanceof RegExp 
+        ? urlPattern.test(response.url())
+        : response.url().includes(urlPattern)
+    );
+  }
+
+  async checkAccessibility() {
+    const violations = await this.page.evaluate(() => {
+      // Simple accessibility checks
+      const issues = [];
+      
+      // Check for alt text
+      const imagesWithoutAlt = document.querySelectorAll('img:not([alt])');
+      if (imagesWithoutAlt.length > 0) {
+        issues.push(`${imagesWithoutAlt.length} images without alt text`);
+      }
+      
+      // Check for form labels
+      const inputsWithoutLabels = document.querySelectorAll('input:not([aria-label]):not([id])');
+      if (inputsWithoutLabels.length > 0) {
+        issues.push(`${inputsWithoutLabels.length} inputs without labels`);
+      }
+      
+      return issues;
+    });
+    
+    return violations;
+  }
+
+  async measurePerformance() {
+    const metrics = await this.page.evaluate(() => ({
+      navigation: performance.getEntriesByType('navigation')[0],
+      paint: performance.getEntriesByType('paint'),
+      resources: performance.getEntriesByType('resource').length,
+    }));
+    
+    return metrics;
+  }
+
+  async saveTestArtifacts(testName: string) {
+    const timestamp = new Date().toISOString().replace(/:/g, '-');
+    const artifactDir = `./test-artifacts/${testName}-${timestamp}`;
+    
+    await fs.mkdir(artifactDir, { recursive: true });
+    
+    // Save screenshot
+    await this.page.screenshot({ 
+      path: `${artifactDir}/screenshot.png`,
+      fullPage: true 
+    });
+    
+    // Save HTML
+    const html = await this.page.content();
+    await fs.writeFile(`${artifactDir}/page.html`, html);
+    
+    // Save console logs
+    const logs = await this.page.evaluate(() => {
+      return window.__consoleLogs || [];
+    });
+    await fs.writeFile(`${artifactDir}/console.json`, JSON.stringify(logs, null, 2));
+    
+    return artifactDir;
+  }
+}
+
+// Custom assertions
+export const customExpect = {
+  async toHaveNoConsoleErrors(page: Page) {
+    const errors = await page.evaluate(() => window.__consoleErrors || []);
+    expect(errors).toHaveLength(0);
+  },
+  
+  async toLoadWithinTime(page: Page, maxTime: number) {
+    const loadTime = await page.evaluate(() => {
+      const nav = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+      return nav.loadEventEnd - nav.fetchStart;
+    });
+    expect(loadTime).toBeLessThan(maxTime);
+  }
+};
+```
+
+### 3. Comprehensive Test Suite
+
+```typescript
+// tests/e2e/critical-user-flows.spec.ts
+import { test, expect } from '@playwright/test';
+import { TestHelpers, customExpect } from '../helpers/test-utils';
+
+test.describe('Critical User Flows', () => {
+  let helpers: TestHelpers;
+  
+  test.beforeEach(async ({ page }) => {
+    helpers = new TestHelpers(page);
+    
+    // Inject console tracking
+    await page.addInitScript(() => {
+      window.__consoleLogs = [];
+      window.__consoleErrors = [];
+      
+      const originalLog = console.log;
+      const originalError = console.error;
+      
+      console.log = (...args) => {
+        window.__consoleLogs.push(args);
+        originalLog(...args);
+      };
+      
+      console.error = (...args) => {
+        window.__consoleErrors.push(args);
+        originalError(...args);
+      };
+    });
+  });
+
+  test('complete user journey', async ({ page }) => {
+    // 1. Landing page performance
+    await page.goto('/');
+    await customExpect.toLoadWithinTime(page, 3000);
+    
+    // 2. Sign up flow
+    await page.click('a[href="/signup"]');
+    await page.fill('[name="email"]', `test-${Date.now()}@example.com`);
+    await page.fill('[name="password"]', 'SecurePass123!');
+    await page.fill('[name="confirmPassword"]', 'SecurePass123!');
+    
+    // Wait for API call
+    const responsePromise = helpers.waitForAPIResponse('/api/auth/signup');
+    await page.click('button[type="submit"]');
+    const response = await responsePromise;
+    
+    expect(response.status()).toBe(201);
+    
+    // 3. Onboarding
+    await expect(page).toHaveURL('/onboarding');
+    await page.fill('[name="companyName"]', 'Test Company');
+    await page.selectOption('[name="companySize"]', '10-50');
+    await page.click('button:has-text("Complete Setup")');
+    
+    // 4. Dashboard interaction
+    await expect(page).toHaveURL('/dashboard');
+    await expect(page.locator('h1')).toContainText('Welcome');
+    
+    // 5. Create first project
+    await page.click('[data-testid="create-project"]');
+    await page.fill('[name="projectName"]', 'Test Project');
+    await page.click('button:has-text("Create")');
+    
+    // 6. Verify no console errors
+    await customExpect.toHaveNoConsoleErrors(page);
+    
+    // 7. Check accessibility
+    const accessibilityIssues = await helpers.checkAccessibility();
+    expect(accessibilityIssues).toHaveLength(0);
+    
+    // 8. Save artifacts for Claude to analyze
+    await helpers.saveTestArtifacts('user-journey');
+  });
+
+  test('error handling and recovery', async ({ page }) => {
+    // Test network failure
+    await page.route('**/api/**', route => route.abort());
+    
+    await page.goto('/dashboard');
+    await page.click('[data-testid="create-project"]');
+    
+    // Should show error message
+    await expect(page.locator('[role="alert"]')).toBeVisible();
+    await expect(page.locator('[role="alert"]')).toContainText('network');
+    
+    // Restore network
+    await page.unroute('**/api/**');
+    
+    // Retry action
+    await page.click('button:has-text("Retry")');
+    await expect(page.locator('[role="alert"]')).not.toBeVisible();
+  });
+});
+```
+
+## 📊 Production Monitoring
+
+### 1. Comprehensive Diagnostic Script
+
+```javascript
+// scripts/diagnose-deployment.js
+const { exec } = require('child_process');
+const util = require('util');
+const fs = require('fs').promises;
+const path = require('path');
+const execPromise = util.promisify(exec);
+
+class DeploymentDiagnostics {
+  constructor() {
+    this.results = {
+      timestamp: new Date().toISOString(),
+      frontend: {},
+      backend: {},
+      database: {},
+      ci: {},
+      monitoring: {},
+      errors: [],
+      warnings: [],
+      suggestions: []
+    };
+  }
+
+  async runDiagnostics() {
+    console.log('🔍 Starting comprehensive diagnostics...\n');
+    
+    await this.checkFrontend();
+    await this.checkBackend();
+    await this.checkDatabase();
+    await this.checkCI();
+    await this.checkMonitoring();
+    await this.runE2ETests();
+    await this.analyzeResults();
+    
+    return this.results;
+  }
+
+  async checkFrontend() {
+    console.log('📱 Checking Frontend (Vercel)...');
+    
+    try {
+      // Get deployment status
+      const { stdout: deployments } = await execPromise('vercel ls --json');
+      const deploymentList = JSON.parse(deployments);
+      
+      this.results.frontend.deployments = deploymentList.deployments.slice(0, 5);
+      this.results.frontend.latestDeployment = deploymentList.deployments[0];
+      
+      // Check for errors in recent deployment
+      if (this.results.frontend.latestDeployment?.state === 'ERROR') {
+        const { stdout: logs } = await execPromise(
+          `vercel logs ${this.results.frontend.latestDeployment.url} --since 1h`
+        );
+        
+        this.results.frontend.errorLogs = logs;
+        this.results.errors.push({
+          service: 'frontend',
+          message: 'Latest deployment failed',
+          details: logs
+        });
+      }
+      
+      // Performance check
+      const { stdout: lighthouse } = await execPromise(
+        `npx lighthouse ${process.env.FRONTEND_URL} --output=json --quiet`
+      );
+      
+      const lhResults = JSON.parse(lighthouse);
+      this.results.frontend.performance = {
+        score: lhResults.categories.performance.score * 100,
+        metrics: lhResults.audits.metrics.details.items[0]
+      };
+      
+      if (this.results.frontend.performance.score < 70) {
+        this.results.warnings.push({
+          service: 'frontend',
+          message: `Low performance score: ${this.results.frontend.performance.score}`,
+          suggestion: 'Consider optimizing bundle size and lazy loading'
+        });
+      }
+      
+    } catch (error) {
+      this.results.errors.push({
+        service: 'frontend',
+        message: error.message
+      });
+    }
+  }
+
+  async checkBackend() {
+    console.log('\n🖥️  Checking Backend (DigitalOcean)...');
+    
+    try {
+      // Get app status
+      const { stdout: apps } = await execPromise('doctl apps list --output json');
+      const appList = JSON.parse(apps);
+      
+      this.results.backend.apps = appList;
+      
+      for (const app of appList) {
+        // Check app health
+        const { stdout: appSpec } = await execPromise(`doctl apps get ${app.id} --output json`);
+        const appDetails = JSON.parse(appSpec);
+        
+        if (appDetails.phase !== 'ACTIVE') {
+          this.results.errors.push({
+            service: 'backend',
+            message: `App ${app.spec.name} is not active: ${appDetails.phase}`
+          });
+        }
+        
+        // Get recent logs
+        const { stdout: logs } = await execPromise(
+          `doctl apps logs ${app.id} --tail 100 | grep -i error || true`
+        );
+        
+        if (logs.trim()) {
+          this.results.backend.recentErrors = logs.split('\n').slice(0, 10);
+        }
+        
+        // Check resource usage
+        const { stdout: metrics } = await execPromise(
+          `doctl monitoring droplet get ${app.id} --resource-type droplet --start-time "$(date -u -d '1 hour ago' +%s)" --end-time "$(date +%s)"`
+        );
+        
+        this.results.backend.metrics = metrics;
+      }
+      
+      // API health check
+      const apiHealthUrl = `${process.env.API_URL}/health`;
+      const { stdout: healthCheck } = await execPromise(`curl -s ${apiHealthUrl}`);
+      
+      try {
+        this.results.backend.health = JSON.parse(healthCheck);
+      } catch {
+        this.results.errors.push({
+          service: 'backend',
+          message: 'API health check failed',
+          details: healthCheck
+        });
+      }
+      
+    } catch (error) {
+      this.results.errors.push({
+        service: 'backend',
+        message: error.message
+      });
+    }
+  }
+
+  async checkDatabase() {
+    console.log('\n💾 Checking Database...');
+    
+    try {
+      // Check database cluster
+      const { stdout: databases } = await execPromise('doctl databases list --output json');
+      const dbList = JSON.parse(databases);
+      
+      this.results.database.clusters = dbList;
+      
+      for (const db of dbList) {
+        // Check connection pool
+        const { stdout: pools } = await execPromise(
+          `doctl databases pool list ${db.id} --output json`
+        );
+        
+        this.results.database.connectionPools = JSON.parse(pools);
+        
+        // Check for slow queries (if PostgreSQL)
+        if (db.engine === 'pg') {
+          // This would require actual DB connection
+          this.results.database.slowQueries = 'Check manually via DB console';
+        }
+      }
+      
+    } catch (error) {
+      this.results.warnings.push({
+        service: 'database',
+        message: 'Could not check database status',
+        details: error.message
+      });
+    }
+  }
+
+  async checkCI() {
+    console.log('\n🔧 Checking CI/CD (GitHub Actions)...');
+    
+    try {
+      // Get recent workflow runs
+      const { stdout: runs } = await execPromise(
+        'gh run list --limit 10 --json status,name,conclusion,createdAt'
+      );
+      
+      const runList = JSON.parse(runs);
+      this.results.ci.recentRuns = runList;
+      
+      // Check for failures
+      const failedRuns = runList.filter(run => run.conclusion === 'failure');
+      
+      if (failedRuns.length > 0) {
+        for (const run of failedRuns.slice(0, 3)) {
+          const { stdout: logs } = await execPromise(`gh run view ${run.databaseId} --log-failed`);
+          
+          this.results.errors.push({
+            service: 'ci',
+            message: `Workflow "${run.name}" failed`,
+            details: logs.slice(0, 500)
+          });
+        }
+      }
+      
+      // Check deployment frequency
+      const deploymentRuns = runList.filter(run => run.name.includes('deploy'));
+      const daysSinceLastDeploy = deploymentRuns.length > 0
+        ? (Date.now() - new Date(deploymentRuns[0].createdAt).getTime()) / (1000 * 60 * 60 * 24)
+        : Infinity;
+      
+      if (daysSinceLastDeploy > 7) {
+        this.results.warnings.push({
+          service: 'ci',
+          message: `No deployments in ${Math.floor(daysSinceLastDeploy)} days`,
+          suggestion: 'Consider more frequent deployments'
+        });
+      }
+      
+    } catch (error) {
+      this.results.errors.push({
+        service: 'ci',
+        message: error.message
+      });
+    }
+  }
+
+  async checkMonitoring() {
+    console.log('\n📈 Checking Monitoring...');
+    
+    // This would integrate with your monitoring service (Datadog, New Relic, etc.)
+    this.results.monitoring = {
+      uptime: '99.9%', // Mock data
+      avgResponseTime: '234ms',
+      errorRate: '0.1%'
+    };
+  }
+
+  async runE2ETests() {
+    console.log('\n🧪 Running E2E Tests...');
+    
+    try {
+      const { stdout } = await execPromise(
+        'npm run test:prod -- --reporter=json',
+        { maxBuffer: 10 * 1024 * 1024 }
+      );
+      
+      const testResults = JSON.parse(stdout);
+      this.results.tests = {
+        total: testResults.suites.length,
+        passed: testResults.suites.filter(s => s.status === 'passed').length,
+        failed: testResults.suites.filter(s => s.status === 'failed').length,
+        duration: testResults.duration
+      };
+      
+      if (this.results.tests.failed > 0) {
+        this.results.errors.push({
+          service: 'tests',
+          message: `${this.results.tests.failed} E2E tests failed`,
+          details: testResults.suites
+            .filter(s => s.status === 'failed')
+            .map(s => s.title)
+        });
+      }
+      
+    } catch (error) {
+      this.results.errors.push({
+        service: 'tests',
+        message: 'E2E tests failed to run',
+        details: error.message
+      });
+    }
+  }
+
+  async analyzeResults() {
+    console.log('\n🤔 Analyzing results...');
+    
+    // Generate suggestions based on findings
+    if (this.results.errors.length > 5) {
+      this.results.suggestions.push({
+        priority: 'high',
+        message: 'Multiple errors detected across services',
+        action: 'Focus on stabilizing the most critical service first'
+      });
+    }
+    
+    if (this.results.frontend.performance?.score < 50) {
+      this.results.suggestions.push({
+        priority: 'medium',
+        message: 'Frontend performance needs improvement',
+        action: 'Run bundle analyzer and implement code splitting'
+      });
+    }
+    
+    if (this.results.backend.recentErrors?.length > 10) {
+      this.results.suggestions.push({
+        priority: 'high',
+        message: 'High error rate in backend',
+        action: 'Implement better error handling and monitoring'
+      });
+    }
+  }
+
+  async generateReport() {
+    const results = await this.runDiagnostics();
+    
+    // Create reports directory
+    const reportsDir = path.join(process.cwd(), 'reports');
+    await fs.mkdir(reportsDir, { recursive: true });
+    
+    // Save detailed JSON report
+    const reportPath = path.join(reportsDir, `diagnostic-${Date.now()}.json`);
+    await fs.writeFile(reportPath, JSON.stringify(results, null, 2));
+    
+    // Generate summary
+    console.log('\n📊 DIAGNOSTIC SUMMARY');
+    console.log('====================\n');
+    
+    console.log(`✅ Checks completed: ${Object.keys(results).length - 3}`);
+    console.log(`❌ Errors found: ${results.errors.length}`);
+    console.log(`⚠️  Warnings: ${results.warnings.length}`);
+    console.log(`💡 Suggestions: ${results.suggestions.length}`);
+    
+    if (results.errors.length > 0) {
+      console.log('\n❌ TOP ERRORS:');
+      results.errors.slice(0, 5).forEach(error => {
+        console.log(`\n- [${error.service}] ${error.message}`);
+        if (error.details) {
+          console.log(`  Details: ${error.details.toString().slice(0, 200)}...`);
+        }
+      });
+    }
+    
+    if (results.suggestions.length > 0) {
+      console.log('\n💡 RECOMMENDATIONS:');
+      results.suggestions.forEach(suggestion => {
+        console.log(`\n- [${suggestion.priority}] ${suggestion.message}`);
+        console.log(`  Action: ${suggestion.action}`);
+      });
+    }
+    
+    console.log(`\n📄 Full report saved to: ${reportPath}`);
+    
+    // Return exit code based on severity
+    const criticalErrors = results.errors.filter(e => 
+      e.message.includes('failed') || e.message.includes('down')
+    );
+    
+    process.exit(criticalErrors.length > 0 ? 1 : 0);
+  }
+}
+
+// Run diagnostics
+if (require.main === module) {
+  const diagnostics = new DeploymentDiagnostics();
+  diagnostics.generateReport().catch(console.error);
+}
+
+module.exports = DeploymentDiagnostics;
+```
+
+## 🌐 Web UI Automation
+
+### 1. Browser Controller
+
+```typescript
+// tools/browser-controller.ts
+import { chromium, Browser, Page, BrowserContext } from 'playwright';
+import fs from 'fs/promises';
+import path from 'path';
+import crypto from 'crypto';
+
+interface ServiceCredentials {
+  email?: string;
+  username?: string;
+  password?: string;
+  otpSecret?: string;
+}
+
+export class BrowserController {
+  private context: BrowserContext;
+  private page: Page;
+  private screenshots: string[] = [];
+  
+  async initialize(options: { headless?: boolean; record?: boolean } = {}) {
+    const userDataDir = path.join(process.cwd(), '.browser-data');
+    await fs.mkdir(userDataDir, { recursive: true });
+    
+    this.context = await chromium.launchPersistentContext(userDataDir, {
+      headless: options.headless ?? true,
+      viewport: { width: 1920, height: 1080 },
+      userAgent: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36',
+      recordVideo: options.record ? { dir: './videos' } : undefined,
+      ignoreHTTPSErrors: true,
+    });
+    
+    this.page = this.context.pages()[0] || await this.context.newPage();
+    
+    // Enhanced debugging
+    this.page.on('console', msg => {
+      if (msg.type() === 'error') {
+        console.error('Browser console error:', msg.text());
+      }
+    });
+    
+    this.page.on('pageerror', error => {
+      console.error('Page error:', error.message);
+    });
+  }
+  
+  async navigateToDashboard(service: 'vercel' | 'github' | 'digitalocean' | 'custom', customUrl?: string) {
+    const urls = {
+      vercel: 'https://vercel.com/dashboard',
+      github: 'https://github.com',
+      digitalocean: 'https://cloud.digitalocean.com/projects',
+      custom: customUrl || ''
+    };
+    
+    console.log(`Navigating to ${service}...`);
+    await this.page.goto(urls[service], { waitUntil: 'networkidle' });
+    
+    // Take screenshot
+    const screenshot = await this.captureScreenshot(`${service}-dashboard`);
+    
+    // Extract page state
+    const pageState = await this.extractPageState();
+    
+    return {
+      url: this.page.url(),
+      title: await this.page.title(),
+      screenshot,
+      state: pageState,
+      isLoggedIn: await this.checkLoginStatus(service)
+    };
+  }
+  
+  async loginToService(service: string, credentials: ServiceCredentials) {
+    const loginFlows = {
+      vercel: async () => {
+        await this.page.goto('https://vercel.com/login');
+        
+        // Email-based login
+        await this.page.fill('input[name="email"]', credentials.email!);
+        await this.page.click('button[type="submit"]');
+        
+        // Wait for password or OTP
+        await this.page.waitForTimeout(2000);
+        
+        if (await this.page.locator('input[name="password"]').isVisible()) {
+          await this.page.fill('input[name="password"]', credentials.password!);
+          await this.page.click('button[type="submit"]');
+        } else if (await this.page.locator('input[name="token"]').isVisible()) {
+          // Handle OTP if needed
+          const otp = await this.generateOTP(credentials.otpSecret!);
+          await this.page.fill('input[name="token"]', otp);
+          await this.page.click('button[type="submit"]');
+        }
+        
+        await this.page.waitForURL('**/dashboard', { timeout: 30000 });
+      },
+      
+      github: async () => {
+        await this.page.goto('https://github.com/login');
+        await this.page.fill('input[name="login"]', credentials.username!);
+        await this.page.fill('input[name="password"]', credentials.password!);
+        await this.page.click('input[type="submit"]');
+        
+        // Handle 2FA if needed
+        if (await this.page.locator('input#otp').isVisible()) {
+          const otp = await this.generateOTP(credentials.otpSecret!);
+          await this.page.fill('input#otp', otp);
+          await this.page.click('button[type="submit"]');
+        }
+        
+        await this.page.waitForURL('https://github.com/', { timeout: 30000 });
+      },
+      
+      digitalocean: async () => {
+        await this.page.goto('https://cloud.digitalocean.com/login');
+        await this.page.fill('input[name="email"]', credentials.email!);
+        await this.page.fill('input[name="password"]', credentials.password!);
+        await this.page.click('button[type="submit"]');
+        
+        await this.page.waitForURL('**/projects', { timeout: 30000 });
+      }
+    };
+    
+    if (loginFlows[service]) {
+      await loginFlows[service]();
+      console.log(`Successfully logged into ${service}`);
+      
+      // Save auth state
+      await this.context.storageState({ 
+        path: path.join('.browser-data', `${service}-auth.json`) 
+      });
+    }
+  }
+  
+  async extractPageState() {
+    return await this.page.evaluate(() => {
+      const extractText = (selector: string): string[] => {
+        return Array.from(document.querySelectorAll(selector))
+          .map(el => el.textContent?.trim() || '')
+          .filter(text => text.length > 0);
+      };
+      
+      const findElements = (patterns: string[]): Record<string, string[]> => {
+        const results: Record<string, string[]> = {};
+        
+        patterns.forEach(pattern => {
+          results[pattern] = extractText(pattern);
+        });
+        
+        return results;
+      };
+      
+      // Common patterns across dashboards
+      const patterns = [
+        // Error indicators
+        '[class*="error"]',
+        '[class*="alert"]',
+        '[class*="warning"]',
+        '[role="alert"]',
+        '.text-red-500',
+        '.text-danger',
+        
+        // Status indicators
+        '[class*="status"]',
+        '[class*="state"]',
+        '[data-state]',
+        
+        // Deployment/Build info
+        '[class*="deployment"]',
+        '[class*="build"]',
+        '[class*="pipeline"]',
+        
+        // Metrics
+        '[class*="metric"]',
+        '[class*="stat"]',
+        '[class*="count"]'
+      ];
+      
+      return {
+        url: window.location.href,
+        title: document.title,
+        elements: findElements(patterns),
+        
+        // Extract all visible text for analysis
+        bodyText: document.body.innerText,
+        
+        // Find all buttons and links
+        interactiveElements: {
+          buttons: Array.from(document.querySelectorAll('button')).map(btn => ({
+            text: btn.textContent?.trim(),
+            disabled: btn.disabled,
+            onclick: btn.onclick?.toString()
+          })),
+          links: Array.from(document.querySelectorAll('a[href]')).map(link => ({
+            text: link.textContent?.trim(),
+            href: link.getAttribute('href')
+          }))
+        },
+        
+        // Check for common error patterns
+        hasErrors: document.body.innerText.toLowerCase().includes('error') ||
+                   document.body.innerText.toLowerCase().includes('failed'),
+        
+        // Extract any JSON data in script tags
+        jsonData: Array.from(document.querySelectorAll('script[type="application/json"]'))
+          .map(script => {
+            try {
+              return JSON.parse(script.textContent || '{}');
+            } catch {
+              return null;
+            }
+          })
+          .filter(data => data !== null)
+      };
+    });
+  }
+  
+  async captureScreenshot(name: string): Promise<string> {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const filename = `${name}-${timestamp}.png`;
+    const filepath = path.join('screenshots', filename);
+    
+    await fs.mkdir('screenshots', { recursive: true });
+    await this.page.screenshot({ 
+      path: filepath,
+      fullPage: true 
+    });
+    
+    this.screenshots.push(filepath);
+    return filepath;
+  }
+  
+  async findAndClickElement(text: string, options: { exact?: boolean } = {}) {
+    const selector = options.exact 
+      ? `text="${text}"`
+      : `text=${text}`;
+    
+    try {
+      await this.page.click(selector, { timeout: 5000 });
+      return true;
+    } catch {
+      // Try alternative selectors
+      const alternatives = [
+        `button:has-text("${text}")`,
+        `a:has-text("${text}")`,
+        `[role="button"]:has-text("${text}")`,
+        `[class*="button"]:has-text("${text}")`
+      ];
+      
+      for (const alt of alternatives) {
+        try {
+          await this.page.click(alt, { timeout: 2000 });
+          return true;
+        } catch {
+          continue;
+        }
+      }
+      
+      return false;
+    }
+  }
+  
+  async extractErrors(): Promise<any[]> {
+    const errors = await this.page.evaluate(() => {
+      const errorPatterns = [
+        { selector: '[class*="error"]', type: 'error' },
+        { selector: '[class*="alert-danger"]', type: 'error' },
+        { selector: '[class*="warning"]', type: 'warning' },
+        { selector: '[role="alert"]', type: 'alert' },
+        { selector: '.text-red-500', type: 'error' },
+        { selector: '.text-danger', type: 'error' }
+      ];
+      
+      const found: any[] = [];
+      
+      errorPatterns.forEach(({ selector, type }) => {
+        document.querySelectorAll(selector).forEach(el => {
+          const text = el.textContent?.trim();
+          if (text && text.length > 0) {
+            found.push({
+              type,
+              text,
+              selector,
+              html: el.outerHTML.slice(0, 200)
+            });
+          }
+        });
+      });
+      
+      // Also search for error keywords in text
+      const bodyText = document.body.innerText.toLowerCase();
+      const errorKeywords = ['error', 'failed', 'failure', 'exception', 'rejected'];
+      
+      errorKeywords.forEach(keyword => {
+        if (bodyText.includes(keyword)) {
+          // Find the context around the keyword
+          const index = bodyText.indexOf(keyword);
+          const start = Math.max(0, index - 50);
+          const end = Math.min(bodyText.length, index + 50);
+          const context = document.body.innerText.slice(start, end);
+          
+          found.push({
+            type: 'keyword',
+            keyword,
+            context
+          });
+        }
+      });
+      
+      return found;
+    });
+    
+    return errors;
+  }
+  
+  async performAction(action: {
+    type: 'click' | 'fill' | 'select' | 'navigate' | 'wait' | 'screenshot';
+    selector?: string;
+    value?: string;
+    url?: string;
+    timeout?: number;
+  }) {
+    switch (action.type) {
+      case 'click':
+        await this.page.click(action.selector!, { timeout: action.timeout || 5000 });
+        break;
+        
+      case 'fill':
+        await this.page.fill(action.selector!, action.value!);
+        break;
+        
+      case 'select':
+        await this.page.selectOption(action.selector!, action.value!);
+        break;
+        
+      case 'navigate':
+        await this.page.goto(action.url!);
+        break;
+        
+      case 'wait':
+        await this.page.waitForTimeout(action.timeout || 1000);
+        break;
+        
+      case 'screenshot':
+        await this.captureScreenshot(action.value || 'action');
+        break;
+    }
+    
+    // Always wait a bit after actions
+    await this.page.waitForTimeout(500);
+    
+    // Check for errors after action
+    const errors = await this.extractErrors();
+    if (errors.length > 0) {
+      console.warn('Errors detected after action:', errors);
+    }
+    
+    return {
+      success: true,
+      errors,
+      screenshot: await this.captureScreenshot(`after-${action.type}`)
+    };
+  }
+  
+  private async checkLoginStatus(service: string): Promise<boolean> {
+    const checks = {
+      vercel: async () => {
+        return this.page.url().includes('dashboard') && 
+               !this.page.url().includes('login');
+      },
+      github: async () => {
+        return await this.page.locator('[aria-label="View profile and more"]').isVisible();
+      },
+      digitalocean: async () => {
+        return this.page.url().includes('projects') && 
+               !this.page.url().includes('login');
+      }
+    };
+    
+    if (checks[service]) {
+      try {
+        return await checks[service]();
+      } catch {
+        return false;
+      }
+    }
+    
+    return false;
+  }
+  
+  private async generateOTP(secret: string): Promise<string> {
+    // Implement TOTP generation
+    // This is a placeholder - you'd use a library like speakeasy
+    return '123456';
+  }
+  
+  async cleanup() {
+    if (this.context) {
+      await this.context.close();
+    }
+    
+    console.log(`Session complete. Screenshots saved: ${this.screenshots.join(', ')}`);
+  }
+}
+```
+
+### 2. Dashboard API Bridge
+
+```typescript
+// tools/dashboard-api.ts
+import { BrowserController } from './browser-controller';
+
+interface DeploymentInfo {
+  id: string;
+  url: string;
+  status: 'ready' | 'building' | 'error' | 'canceled';
+  created: string;
+  duration?: number;
+  commit?: string;
+  branch?: string;
+  errors?: string[];
+}
+
+interface ActionRun {
+  id: string;
+  name: string;
+  status: 'completed' | 'in_progress' | 'failed' | 'cancelled';
+  conclusion?: 'success' | 'failure' | 'cancelled';
+  branch: string;
+  commit: string;
+  duration?: number;
+  logs?: string;
+}
+
+export class DashboardAPI {
+  constructor(private browser: BrowserController) {}
+  
+  vercel = {
+    getDeployments: async (): Promise<DeploymentInfo[]> => {
+      await this.browser.navigateToDashboard('vercel');
+      
+      return await this.browser.page.evaluate(() => {
+        const deployments: any[] = [];
+        
+        // Vercel's deployment list structure
+        document.querySelectorAll('[data-testid="deployment-item"]').forEach(item => {
+          const statusElement = item.querySelector('[data-testid="deployment-status"]');
+          const urlElement = item.querySelector('a[href*="vercel.app"]');
+          const timeElement = item.querySelector('time');
+          const commitElement = item.querySelector('[data-testid="git-commit"]');
+          
+          deployments.push({
+            id: item.getAttribute('data-deployment-id') || '',
+            url: urlElement?.getAttribute('href') || '',
+            status: statusElement?.getAttribute('data-state') || 'unknown',
+            created: timeElement?.getAttribute('datetime') || '',
+            commit: commitElement?.textContent?.trim() || '',
+            branch: item.querySelector('[data-testid="git-branch"]')?.textContent?.trim() || ''
+          });
+        });
+        
+        return deployments;
+      });
+    },
+    
+    getDeploymentDetails: async (deploymentUrl: string) => {
+      await this.browser.page.goto(deploymentUrl);
+      await this.browser.page.waitForLoadState('networkidle');
+      
+      const details = await this.browser.page.evaluate(() => {
+        return {
+          buildLogs: document.querySelector('[data-testid="build-logs"]')?.textContent || '',
+          functionLogs: document.querySelector('[data-testid="function-logs"]')?.textContent || '',
+          errors: Array.from(document.querySelectorAll('.error-message')).map(e => e.textContent || ''),
+          metrics: {
+            buildTime: document.querySelector('[data-testid="build-time"]')?.textContent || '',
+            totalSize: document.querySelector('[data-testid="total-size"]')?.textContent || ''
+          }
+        };
+      });
+      
+      return details;
+    },
+    
+    triggerRedeploy: async (deploymentId: string) => {
+      // Find and click redeploy button
+      const selector = `[data-deployment-id="${deploymentId}"] button[aria-label*="Redeploy"]`;
+      await this.browser.page.click(selector);
+      
+      // Confirm in modal
+      await this.browser.page.waitForSelector('[role="dialog"]');
+      await this.browser.findAndClickElement('Redeploy');
+      
+      // Wait for new deployment to start
+      await this.browser.page.waitForSelector('[data-testid="deployment-building"]', {
+        timeout: 10000
+      });
+      
+      return { success: true, message: 'Redeployment triggered' };
+    },
+    
+    getEnvironmentVariables: async (projectName: string) => {
+      await this.browser.page.goto(`https://vercel.com/${projectName}/settings/environment-variables`);
+      
+      return await this.browser.page.evaluate(() => {
+        const vars: any[] = [];
+        
+        document.querySelectorAll('[data-testid="env-var-item"]').forEach(item => {
+          vars.push({
+            key: item.querySelector('[data-testid="env-key"]')?.textContent || '',
+            value: item.querySelector('[data-testid="env-value"]')?.textContent || '******',
+            targets: Array.from(item.querySelectorAll('[data-testid="env-target"]'))
+              .map(t => t.textContent || '')
+          });
+        });
+        
+        return vars;
+      });
+    }
+  };
+  
+  github = {
+    getActionRuns: async (owner: string, repo: string): Promise<ActionRun[]> => {
+      await this.browser.page.goto(`https://github.com/${owner}/${repo}/actions`);
+      
+      return await this.browser.page.evaluate(() => {
+        const runs: any[] = [];
+        
+        document.querySelectorAll('.Box-row').forEach(row => {
+          const statusIcon = row.querySelector('[class*="octicon"]');
+          const status = statusIcon?.classList.toString().includes('check') ? 'completed' : 
+                        statusIcon?.classList.toString().includes('x') ? 'failed' : 'in_progress';
+          
+          runs.push({
+            id: row.getAttribute('data-run-id') || '',
+            name: row.querySelector('.text-bold')?.textContent?.trim() || '',
+            status,
+            conclusion: status === 'completed' ? 'success' : status === 'failed' ? 'failure' : undefined,
+            branch: row.querySelector('[class*="branch"]')?.textContent?.trim() || '',
+            commit: row.querySelector('.commit-message')?.textContent?.trim() || '',
+            duration: row.querySelector('relative-time')?.getAttribute('datetime') || ''
+          });
+        });
+        
+        return runs;
+      });
+    },
+    
+    getActionLogs: async (owner: string, repo: string, runId: string) => {
+      await this.browser.page.goto(`https://github.com/${owner}/${repo}/actions/runs/${runId}`);
+      
+      // Expand failed steps
+      await this.browser.page.click('[aria-expanded="false"][class*="failed"]').catch(() => {});
+      
+      const logs = await this.browser.page.evaluate(() => {
+        const logElements = document.querySelectorAll('.js-check-run-log-line');
+        return Array.from(logElements).map(el => el.textContent || '').join('\n');
+      });
+      
+      return logs;
+    },
+    
+    triggerWorkflow: async (owner: string, repo: string, workflowFile: string) => {
+      await this.browser.page.goto(`https://github.com/${owner}/${repo}/actions/workflows/${workflowFile}`);
+      
+      // Click "Run workflow" button
+      await this.browser.findAndClickElement('Run workflow');
+      
+      // Select branch and run
+      await this.browser.page.waitForSelector('[role="dialog"]');
+      await this.browser.findAndClickElement('Run workflow', { exact: true });
+      
+      return { success: true, message: 'Workflow triggered' };
+    }
+  };
+  
+  digitalocean = {
+    getApps: async () => {
+      await this.browser.navigateToDashboard('digitalocean');
+      
+      return await this.browser.page.evaluate(() => {
+        const apps: any[] = [];
+        
+        document.querySelectorAll('[data-testid="app-card"]').forEach(card => {
+          apps.push({
+            name: card.querySelector('[data-testid="app-name"]')?.textContent || '',
+            status: card.querySelector('[data-testid="app-status"]')?.textContent || '',
+            url: card.querySelector('a[href*="ondigitalocean.app"]')?.getAttribute('href') || '',
+            lastDeployed: card.querySelector('time')?.textContent || ''
+          });
+        });
+        
+        return apps;
+      });
+    },
+    
+    getAppLogs: async (appId: string) => {
+      await this.browser.page.goto(`https://cloud.digitalocean.com/apps/${appId}/logs`);
+      
+      // Wait for logs to load
+      await this.browser.page.waitForSelector('[data-testid="log-line"]', { timeout: 10000 });
+      
+      const logs = await this.browser.page.evaluate(() => {
+        return Array.from(document.querySelectorAll('[data-testid="log-line"]'))
+          .map(line => line.textContent || '')
+          .join('\n');
+      });
+      
+      return logs;
+    },
+    
+    restartApp: async (appId: string) => {
+      await this.browser.page.goto(`https://cloud.digitalocean.com/apps/${appId}`);
+      
+      // Click actions menu
+      await this.browser.findAndClickElement('Actions');
+      await this.browser.findAndClickElement('Restart');
+      
+      // Confirm
+      await this.browser.page.waitForSelector('[role="dialog"]');
+      await this.browser.findAndClickElement('Restart', { exact: true });
+      
+      return { success: true, message: 'App restart initiated' };
+    }
+  };
+}
+```
+
+## 👁️ Visual Analysis
+
+### 1. Visual Analyzer Tool
+
+```typescript
+// tools/visual-analyzer.ts
+import { createCanvas, loadImage, Canvas } from 'canvas';
+import pixelmatch from 'pixelmatch';
+import { PNG } from 'pngjs';
+import Tesseract from 'tesseract.js';
+import fs from 'fs/promises';
+import path from 'path';
+
+interface VisualAnalysis {
+  text: string;
+  errors: string[];
+  warnings: string[];
+  buttons: string[];
+  links: string[];
+  colorAnalysis: {
+    hasErrorColors: boolean;
+    hasSuccessColors: boolean;
+    hasWarningColors: boolean;
+    dominantColors: string[];
+  };
+  layout: {
+    hasModal: boolean;
+    hasAlerts: boolean;
+    isEmpty: boolean;
+  };
+}
+
+export class VisualAnalyzer {
+  async analyzeScreenshot(screenshotPath: string): Promise<VisualAnalysis> {
+    // Extract text using OCR
+    const textData = await this.extractText(screenshotPath);
+    
+    // Analyze colors
+    const colorAnalysis = await this.analyzeColors(screenshotPath);
+    
+    // Detect UI patterns
+    const patterns = this.detectPatterns(textData.text);
+    
+    // Analyze layout
+    const layout = await this.analyzeLayout(screenshotPath);
+    
+    return {
+      text: textData.text,
+      errors: patterns.errors,
+      warnings: patterns.warnings,
+      buttons: patterns.buttons,
+      links: patterns.links,
+      colorAnalysis,
+      layout
+    };
+  }
+  
+  async compareScreenshots(baseline: string, current: string): Promise<{
+    different: boolean;
+    diffPercentage: number;
+    diffImage: string;
+    analysis: string;
+  }> {
+    const img1 = PNG.sync.read(await fs.readFile(baseline));
+    const img2 = PNG.sync.read(await fs.readFile(current));
+    
+    // Ensure images are the same size
+    if (img1.width !== img2.width || img1.height !== img2.height) {
+      return {
+        different: true,
+        diffPercentage: 100,
+        diffImage: '',
+        analysis: 'Images have different dimensions'
+      };
+    }
+    
+    const { width, height } = img1;
+    const diff = new PNG({ width, height });
+    
+    const numDiffPixels = pixelmatch(
+      img1.data,
+      img2.data,
+      diff.data,
+      width,
+      height,
+      { 
+        threshold: 0.1,
+        includeAA: true,
+        alpha: 0.1
+      }
+    );
+    
+    const diffPercentage = (numDiffPixels / (width * height)) * 100;
+    
+    // Save diff image
+    const diffPath = path.join('screenshots', `diff-${Date.now()}.png`);
+    await fs.writeFile(diffPath, PNG.sync.write(diff));
+    
+    // Analyze the differences
+    const analysis = this.analyzeDifferences(diffPercentage, numDiffPixels, width * height);
+    
+    return {
+      different: diffPercentage > 1, // 1% threshold
+      diffPercentage,
+      diffImage: diffPath,
+      analysis
+    };
+  }
+  
+  private async extractText(imagePath: string): Promise<{ text: string; confidence: number }> {
+    const { data } = await Tesseract.recognize(imagePath, 'eng', {
+      logger: (m) => {
+        if (m.status === 'recognizing text') {
+          console.log(`OCR Progress: ${Math.round(m.progress * 100)}%`);
+        }
+      }
+    });
+    
+    return {
+      text: data.text,
+      confidence: data.confidence
+    };
+  }
+  
+  private detectPatterns(text: string): {
+    errors: string[];
+    warnings: string[];
+    buttons: string[];
+    links: string[];
+  } {
+    const lines = text.split('\n').filter(line => line.trim().length > 0);
+    
+    const patterns = {
+      errors: [] as string[],
+      warnings: [] as string[],
+      buttons: [] as string[],
+      links: [] as string[]
+    };
+    
+    const errorKeywords = [
+      'error', 'failed', 'failure', 'exception', 'rejected', 
+      'denied', 'unauthorized', 'forbidden', 'invalid'
+    ];
+    
+    const warningKeywords = [
+      'warning', 'alert', 'notice', 'caution', 'deprecated'
+    ];
+    
+    const buttonPatterns = [
+      /^(submit|cancel|save|delete|create|update|deploy|run|execute|confirm)/i,
+      /\b(btn|button)\b/i
+    ];
+    
+    const linkPatterns = [
+      /https?:\/\/[^\s]+/,
+      /^(view|edit|delete|manage|configure)\s/i
+    ];
+    
+    lines.forEach(line => {
+      const lowerLine = line.toLowerCase();
+      
+      // Check for errors
+      if (errorKeywords.some(keyword => lowerLine.includes(keyword))) {
+        patterns.errors.push(line);
+      }
+      
+      // Check for warnings
+      if (warningKeywords.some(keyword => lowerLine.includes(keyword))) {
+        patterns.warnings.push(line);
+      }
+      
+      // Check for buttons
+      if (buttonPatterns.some(pattern => pattern.test(line))) {
+        patterns.buttons.push(line);
+      }
+      
+      // Check for links
+      if (linkPatterns.some(pattern => pattern.test(line))) {
+        patterns.links.push(line);
+      }
+    });
+    
+    return patterns;
+  }
+  
+  private async analyzeColors(imagePath: string): Promise<{
+    hasErrorColors: boolean;
+    hasSuccessColors: boolean;
+    hasWarningColors: boolean;
+    dominantColors: string[];
+  }> {
+    const image = await loadImage(imagePath);
+    const canvas = createCanvas(image.width, image.height);
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(image, 0, 0);
+    
+    const imageData = ctx.getImageData(0, 0, image.width, image.height);
+    const pixels = imageData.data;
+    
+    let redPixels = 0;
+    let greenPixels = 0;
+    let yellowPixels = 0;
+    
+    // Color frequency map
+    const colorMap = new Map<string, number>();
+    
+    for (let i = 0; i < pixels.length; i += 4) {
+      const r = pixels[i];
+      const g = pixels[i + 1];
+      const b = pixels[i + 2];
+      const a = pixels[i + 3];
+      
+      // Skip transparent pixels
+      if (a < 128) continue;
+      
+      // Detect specific color ranges
+      if (r > 200 && g < 100 && b < 100) redPixels++;
+      if (g > 200 && r < 150 && b < 100) greenPixels++;
+      if (r > 200 && g > 200 && b < 100) yellowPixels++;
+      
+      // Track color frequency (grouped by similarity)
+      const colorKey = `${Math.floor(r/20)*20},${Math.floor(g/20)*20},${Math.floor(b/20)*20}`;
+      colorMap.set(colorKey, (colorMap.get(colorKey) || 0) + 1);
+    }
+    
+    // Get dominant colors
+    const dominantColors = Array.from(colorMap.entries())
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([color]) => `rgb(${color})`);
+    
+    const totalPixels = image.width * image.height;
+    
+    return {
+      hasErrorColors: redPixels > totalPixels * 0.001, // 0.1% threshold
+      hasSuccessColors: greenPixels > totalPixels * 0.001,
+      hasWarningColors: yellowPixels > totalPixels * 0.001,
+      dominantColors
+    };
+  }
+  
+  private async analyzeLayout(imagePath: string): Promise<{
+    hasModal: boolean;
+    hasAlerts: boolean;
+    isEmpty: boolean;
+  }> {
+    const image = await loadImage(imagePath);
+    const canvas = createCanvas(image.width, image.height);
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(image, 0, 0);
+    
+    const imageData = ctx.getImageData(0, 0, image.width, image.height);
+    
+    // Simple heuristics for layout detection
+    const hasModal = this.detectModal(imageData);
+    const hasAlerts = this.detectAlerts(imageData);
+    const isEmpty = this.detectEmptyState(imageData);
+    
+    return { hasModal, hasAlerts, isEmpty };
+  }
+  
+  private detectModal(imageData: ImageData): boolean {
+    // Look for dark overlay pattern (common in modals)
+    const { width, height, data } = imageData;
+    let darkPixels = 0;
+    
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i];
+      const g = data[i + 1];
+      const b = data[i + 2];
+      const a = data[i + 3];
+      
+      // Dark semi-transparent pixels
+      if (r < 50 && g < 50 && b < 50 && a > 100 && a < 200) {
+        darkPixels++;
+      }
+    }
+    
+    // If more than 30% of image is dark overlay, likely a modal
+    return darkPixels > (width * height * 0.3);
+  }
+  
+  private detectAlerts(imageData: ImageData): boolean {
+    // Look for horizontal bands of color (common in alerts)
+    const { width, height, data } = imageData;
+    
+    // Check top portion of image for alert-like patterns
+    for (let y = 0; y < height * 0.2; y++) {
+      let consecutiveColored = 0;
+      let lastColor = null;
+      
+      for (let x = 0; x < width; x++) {
+        const idx = (y * width + x) * 4;
+        const r = data[idx];
+        const g = data[idx + 1];
+        const b = data[idx + 2];
+        
+        const isColored = (r > 200 || g > 200 || b > 200) && 
+                         !(r > 240 && g > 240 && b > 240); // Not white
+        
+        if (isColored) {
+          consecutiveColored++;
+          if (consecutiveColored > width * 0.8) {
+            return true; // Found alert-like band
+          }
+        } else {
+          consecutiveColored = 0;
+        }
+      }
+    }
+    
+    return false;
+  }
+  
+  private detectEmptyState(imageData: ImageData): boolean {
+    // Check if image is mostly uniform color (empty state)
+    const { width, height, data } = imageData;
+    const samples = 1000;
+    const sampleColors = new Set<string>();
+    
+    for (let i = 0; i < samples; i++) {
+      const randomIdx = Math.floor(Math.random() * (data.length / 4)) * 4;
+      const color = `${data[randomIdx]},${data[randomIdx+1]},${data[randomIdx+2]}`;
+      sampleColors.add(color);
+    }
+    
+    // If very few unique colors, likely empty
+    return sampleColors.size < 10;
+  }
+  
+  private analyzeDifferences(diffPercentage: number, diffPixels: number, totalPixels: number): string {
+    if (diffPercentage < 0.1) {
+      return 'Images are virtually identical';
+    } else if (diffPercentage < 1) {
+      return 'Minor differences detected, likely due to dynamic content';
+    } else if (diffPercentage < 5) {
+      return 'Noticeable differences detected, possibly UI changes';
+    } else if (diffPercentage < 20) {
+      return 'Significant differences detected, major UI changes';
+    } else {
+      return 'Major differences detected, completely different content';
+    }
+  }
+  
+  async generateReport(analyses: VisualAnalysis[]): Promise<string> {
+    const report = {
+      timestamp: new Date().toISOString(),
+      summary: {
+        totalScreenshots: analyses.length,
+        errorsFound: analyses.filter(a => a.errors.length > 0).length,
+        warningsFound: analyses.filter(a => a.warnings.length > 0).length
+      },
+      details: analyses.map((analysis, index) => ({
+        screenshot: index,
+        errors: analysis.errors,
+        warnings: analysis.warnings,
+        colorFlags: {
+          hasErrors: analysis.colorAnalysis.hasErrorColors,
+          hasSuccess: analysis.colorAnalysis.hasSuccessColors,
+          hasWarnings: analysis.colorAnalysis.hasWarningColors
+        },
+        layout: analysis.layout
+      })),
+      recommendations: this.generateRecommendations(analyses)
+    };
+    
+    const reportPath = path.join('reports', `visual-analysis-${Date.now()}.json`);
+    await fs.writeFile(reportPath, JSON.stringify(report, null, 2));
+    
+    return reportPath;
+  }
+  
+  private generateRecommendations(analyses: VisualAnalysis[]): string[] {
+    const recommendations: string[] = [];
+    
+    const totalErrors = analyses.reduce((sum, a) => sum + a.errors.length, 0);
+    const totalWarnings = analyses.reduce((sum, a) => sum + a.warnings.length, 0);
+    
+    if (totalErrors > 0) {
+      recommendations.push(`Found ${totalErrors} error messages across screenshots - investigate and fix`);
+    }
+    
+    if (totalWarnings > 5) {
+      recommendations.push(`High number of warnings (${totalWarnings}) - review and address`);
+    }
+    
+    const emptyScreens = analyses.filter(a => a.layout.isEmpty).length;
+    if (emptyScreens > 0) {
+      recommendations.push(`${emptyScreens} screens appear empty - check if content is loading properly`);
+    }
+    
+    const modalScreens = analyses.filter(a => a.layout.hasModal).length;
+    ```typescript
+    if (modalScreens > analyses.length * 0.3) {
+      recommendations.push(`Many modal dialogs detected (${modalScreens}) - ensure user flow isn't interrupted`);
+    }
+    
+    return recommendations;
+  }
+}
+```
+
+## 🔧 Best Practices
+
+### 1. Security Configuration
+
+```typescript
+// tools/secure-config.ts
+import crypto from 'crypto';
+import fs from 'fs/promises';
+import path from 'path';
+
+export class SecureConfig {
+  private static algorithm = 'aes-256-gcm';
+  private static keyPath = '.encryption-key';
+  
+  static async initialize() {
+    // Generate encryption key if not exists
+    try {
+      await fs.access(this.keyPath);
+    } catch {
+      const key = crypto.randomBytes(32);
+      await fs.writeFile(this.keyPath, key);
+      console.log('Generated new encryption key');
+    }
+  }
+  
+  static async encrypt(text: string): Promise<string> {
+    const key = await fs.readFile(this.keyPath);
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv(this.algorithm, key, iv);
+    
+    let encrypted = cipher.update(text, 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    
+    const authTag = cipher.getAuthTag();
+    
+    return iv.toString('hex') + ':' + authTag.toString('hex') + ':' + encrypted;
+  }
+  
+  static async decrypt(encrypted: string): Promise<string> {
+    const key = await fs.readFile(this.keyPath);
+    const parts = encrypted.split(':');
+    
+    const iv = Buffer.from(parts[0], 'hex');
+    const authTag = Buffer.from(parts[1], 'hex');
+    const encryptedText = parts[2];
+    
+    const decipher = crypto.createDecipheriv(this.algorithm, key, iv);
+    decipher.setAuthTag(authTag);
+    
+    let decrypted = decipher.update(encryptedText, 'hex', 'utf8');
+    decrypted += decipher.final('utf8');
+    
+    return decrypted;
+  }
+  
+  static async loadSecureEnv() {
+    const envPath = '.env.secure';
+    
+    try {
+      const content = await fs.readFile(envPath, 'utf8');
+      const lines = content.split('\n').filter(line => line.trim());
+      
+      for (const line of lines) {
+        const [key, value] = line.split('=');
+        if (value?.startsWith('encrypted:')) {
+          const encrypted = value.substring('encrypted:'.length);
+          process.env[key] = await this.decrypt(encrypted);
+        } else {
+          process.env[key] = value;
+        }
+      }
+    } catch (error) {
+      console.warn('No secure environment file found');
+    }
+  }
+}
+
+// Setup script
+async function setupSecureCredentials() {
+  await SecureConfig.initialize();
+  
+  const credentials = {
+    VERCEL_EMAIL: await prompt('Vercel Email: '),
+    VERCEL_PASSWORD: await prompt('Vercel Password: ', true),
+    GITHUB_USERNAME: await prompt('GitHub Username: '),
+    GITHUB_PASSWORD: await prompt('GitHub Password: ', true),
+    DO_EMAIL: await prompt('DigitalOcean Email: '),
+    DO_PASSWORD: await prompt('DigitalOcean Password: ', true)
+  };
+  
+  const encrypted: string[] = [];
+  
+  for (const [key, value] of Object.entries(credentials)) {
+    const encryptedValue = await SecureConfig.encrypt(value);
+    encrypted.push(`${key}=encrypted:${encryptedValue}`);
+  }
+  
+  await fs.writeFile('.env.secure', encrypted.join('\n'));
+  console.log('Credentials encrypted and saved');
+}
+```
+
+### 2. Error Recovery System
+
+```typescript
+// tools/error-recovery.ts
+export class ErrorRecovery {
+  private static strategies = {
+    'deployment-failed': async (context: any) => {
+      console.log('Attempting to recover from deployment failure...');
+      
+      // 1. Check build logs
+      const logs = await context.api.vercel.getDeploymentDetails(context.deploymentUrl);
+      
+      // 2. Identify common issues
+      if (logs.errors.some(e => e.includes('npm install'))) {
+        console.log('Package installation failed - clearing cache and retrying');
+        await context.browser.performAction({
+          type: 'click',
+          selector: 'button[aria-label="Clear cache and redeploy"]'
+        });
+      } else if (logs.errors.some(e => e.includes('build script'))) {
+        console.log('Build script failed - checking package.json');
+        // Could integrate with code fixing here
+      }
+      
+      return { recovered: true, action: 'redeployed' };
+    },
+    
+    'api-down': async (context: any) => {
+      console.log('API appears to be down - checking backend...');
+      
+      // 1. Check DO app status
+      const apps = await context.api.digitalocean.getApps();
+      const problemApp = apps.find(app => app.status !== 'active');
+      
+      if (problemApp) {
+        console.log(`Restarting app: ${problemApp.name}`);
+        await context.api.digitalocean.restartApp(problemApp.id);
+        
+        // Wait for restart
+        await new Promise(resolve => setTimeout(resolve, 30000));
+        
+        // Verify it's back up
+        const healthCheck = await fetch(`${process.env.API_URL}/health`);
+        return { recovered: healthCheck.ok, action: 'restarted-app' };
+      }
+      
+      return { recovered: false, action: 'manual-intervention-needed' };
+    },
+    
+    'test-failures': async (context: any) => {
+      console.log('Tests are failing - analyzing...');
+      
+      // Run tests with more debugging
+      const { stdout } = await execPromise(
+        'npm run test:e2e -- --reporter=json --trace=on'
+      );
+      
+      const results = JSON.parse(stdout);
+      const failures = results.suites.filter(s => s.status === 'failed');
+      
+      // Common test failure patterns
+      for (const failure of failures) {
+        if (failure.error?.includes('timeout')) {
+          console.log('Timeout issues - increasing wait times');
+          // Could modify test config here
+        } else if (failure.error?.includes('element not found')) {
+          console.log('UI changes detected - updating selectors');
+          // Could update test selectors
+        }
+      }
+      
+      return { recovered: false, action: 'analysis-complete', failures };
+    }
+  };
+  
+  static async attemptRecovery(errorType: string, context: any) {
+    const strategy = this.strategies[errorType];
+    
+    if (strategy) {
+      try {
+        return await strategy(context);
+      } catch (error) {
+        console.error(`Recovery strategy failed: ${error.message}`);
+        return { recovered: false, error: error.message };
+      }
+    }
+    
+    return { recovered: false, error: 'No recovery strategy available' };
+  }
+}
+```
+
+### 3. Custom Reporter for Claude
+
+```typescript
+// custom-reporter.ts
+import { Reporter, TestCase, TestResult, FullResult } from '@playwright/test/reporter';
+import fs from 'fs/promises';
+import path from 'path';
+
+export default class ClaudeReporter implements Reporter {
+  private results: any[] = [];
+  private startTime: number = 0;
+  
+  onBegin() {
+    this.startTime = Date.now();
+    console.log('🧪 Starting test run for Claude analysis...');
+  }
+  
+  onTestEnd(test: TestCase, result: TestResult) {
+    const simplified = {
+      title: test.title,
+      file: test.location.file,
+      status: result.status,
+      duration: result.duration,
+      error: result.error ? {
+        message: result.error.message,
+        stack: result.error.stack?.split('\n').slice(0, 5).join('\n')
+      } : null,
+      attachments: result.attachments.map(a => ({
+        name: a.name,
+        path: a.path,
+        contentType: a.contentType
+      })),
+      stdout: result.stdout.join('\n'),
+      stderr: result.stderr.join('\n')
+    };
+    
+    this.results.push(simplified);
+    
+    // Real-time feedback for Claude
+    if (result.status === 'failed') {
+      console.log(`\n❌ FAILED: ${test.title}`);
+      console.log(`   Error: ${result.error?.message}`);
+      console.log(`   File: ${test.location.file}:${test.location.line}`);
+    }
+  }
+  
+  async onEnd(result: FullResult) {
+    const duration = Date.now() - this.startTime;
+    
+    const report = {
+      status: result.status,
+      duration,
+      startTime: new Date(this.startTime).toISOString(),
+      stats: {
+        total: this.results.length,
+        passed: this.results.filter(r => r.status === 'passed').length,
+        failed: this.results.filter(r => r.status === 'failed').length,
+        skipped: this.results.filter(r => r.status === 'skipped').length,
+        flaky: this.results.filter(r => r.status === 'flaky').length
+      },
+      results: this.results,
+      suggestions: this.generateSuggestions()
+    };
+    
+    // Save for Claude to analyze
+    const reportPath = path.join('test-results', `claude-report-${Date.now()}.json`);
+    await fs.mkdir('test-results', { recursive: true });
+    await fs.writeFile(reportPath, JSON.stringify(report, null, 2));
+    
+    // Summary for console
+    console.log('\n📊 Test Summary for Claude:');
+    console.log(`Total: ${report.stats.total}`);
+    console.log(`✅ Passed: ${report.stats.passed}`);
+    console.log(`❌ Failed: ${report.stats.failed}`);
+    console.log(`⏭️  Skipped: ${report.stats.skipped}`);
+    console.log(`🔄 Flaky: ${report.stats.flaky}`);
+    console.log(`\nDetailed report: ${reportPath}`);
+  }
+  
+  private generateSuggestions(): string[] {
+    const suggestions: string[] = [];
+    
+    const failures = this.results.filter(r => r.status === 'failed');
+    
+    // Analyze failure patterns
+    const timeoutFailures = failures.filter(f => f.error?.message.includes('timeout'));
+    if (timeoutFailures.length > 2) {
+      suggestions.push('Multiple timeout failures detected - consider increasing global timeout or optimizing page load times');
+    }
+    
+    const selectorFailures = failures.filter(f => 
+      f.error?.message.includes('element not found') || 
+      f.error?.message.includes('selector')
+    );
+    if (selectorFailures.length > 0) {
+      suggestions.push('Selector failures detected - UI may have changed, update test selectors');
+    }
+    
+    // Performance suggestions
+    const slowTests = this.results.filter(r => r.duration > 30000);
+    if (slowTests.length > 0) {
+      suggestions.push(`${slowTests.length} tests took over 30 seconds - consider optimizing or splitting them`);
+    }
+    
+    return suggestions;
+  }
+}
+```
+
+## 📚 Quick Start Templates
+
+### 1. Complete Setup Script
+
+```bash
+#!/bin/bash
+# setup-windsurf-claude.sh
+
+echo "🚀 Setting up Windsurf/Claude Code Enhanced Development Environment"
+
+# 1. Install dependencies
+echo "📦 Installing dependencies..."
+npm install --save-dev \
+  @playwright/test \
+  playwright \
+  commander \
+  chalk \
+  dotenv \
+  tesseract.js \
+  pixelmatch \
+  pngjs \
+  @types/node \
+  typescript \
+  ts-node
+
+# 2. Install Playwright browsers
+echo "🌐 Installing browsers..."
+npx playwright install
+
+# 3. Create directory structure
+echo "📁 Creating directory structure..."
+mkdir -p {tools,scripts,tests/{e2e,health,visual},reports,screenshots,.browser-data}
+
+# 4. Copy template files
+echo "📄 Creating configuration files..."
+
+# Create playwright.config.ts
+cat > playwright.config.ts << 'EOL'
+import { defineConfig } from '@playwright/test';
+export default defineConfig({
+  testDir: './tests',
+  use: {
+    baseURL: process.env.BASE_URL || 'http://localhost:3000',
+  },
+});
+EOL
+
+# Create .env.template
+cat > .env.template << 'EOL'
+FRONTEND_URL=
+API_URL=
+VERCEL_TOKEN=
+GITHUB_TOKEN=
+DIGITALOCEAN_TOKEN=
+EOL
+
+# 5. Initialize git hooks
+echo "🔗 Setting up git hooks..."
+cat > .git/hooks/pre-push << 'EOL'
+#!/bin/bash
+npm run test:e2e
+npm run diagnose
+EOL
+chmod +x .git/hooks/pre-push
+
+echo "✅ Setup complete! Next steps:"
+echo "1. Copy .env.template to .env and fill in your values"
+echo "2. Run 'npm run setup:secure' to encrypt sensitive credentials"
+echo "3. Run 'npm test' to verify everything is working"
+```
+
+### 2. Claude-Optimized Package.json
+
+```json
+{
+  "name": "windsurf-claude-enhanced",
+  "version": "1.0.0",
+  "scripts": {
+    "setup": "bash setup-windsurf-claude.sh",
+    "setup:secure": "ts-node tools/secure-config.ts setup",
+    
+    "test": "npm run test:unit && npm run test:e2e",
+    "test:unit": "jest",
+    "test:e2e": "playwright test",
+    "test:prod": "BASE_URL=$FRONTEND_URL playwright test",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    
+    "diagnose": "node scripts/diagnose-deployment.js",
+    "diagnose:visual": "ts-node tools/visual-analyzer.ts analyze",
+    "monitor": "node scripts/monitor-production.js",
+    "monitor:realtime": "nodemon scripts/monitor-production.js",
+    
+    "web:access": "ts-node tools/web-access.ts",
+    "web:diagnose": "ts-node tools/web-access.ts diagnose",
+    "web:fix": "ts-node tools/web-access.ts fix",
+    
+    "report": "playwright show-report",
+    "report:generate": "ts-node tools/report-generator.ts",
+    
+    "claude:analyze": "ts-node tools/claude-analyzer.ts",
+    "claude:suggest": "ts-node tools/claude-suggester.ts",
+    
+    "fix:deploy": "ts-node tools/error-recovery.ts deployment-failed",
+    "fix:tests": "ts-node tools/error-recovery.ts test-failures"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.40.0",
+    "@types/node": "^20.0.0",
+    "chalk": "^5.3.0",
+    "commander": "^11.0.0",
+    "dotenv": "^16.0.0",
+    "nodemon": "^3.0.0",
+    "pixelmatch": "^5.3.0",
+    "playwright": "^1.40.0",
+    "pngjs": "^7.0.0",
+    "tesseract.js": "^5.0.0",
+    "ts-node": "^10.0.0",
+    "typescript": "^5.0.0"
+  }
+}
+```
+
+### 3. Windsurf Configuration
+
+Create `.windsurf/config.json`:
+
+```json
+{
+  "claudeCode": {
+    "capabilities": {
+      "webAccess": true,
+      "visualAnalysis": true,
+      "deploymentControl": true
+    },
+    "automation": {
+      "testOnSave": true,
+      "diagnoseOnDeploy": true,
+      "monitorProduction": true
+    },
+    "tools": {
+      "playwright": {
+        "enabled": true,
+        "headless": true,
+        "timeout": 30000
+      },
+      "monitoring": {
+        "interval": 300000,
+        "alerts": true
+      }
+    },
+    "scripts": {
+      "beforeCommit": ["npm test"],
+      "afterDeploy": ["npm run diagnose", "npm run test:prod"],
+      "onError": ["npm run diagnose", "npm run claude:suggest"]
+    }
+  }
+}
+```
+
+## 🎯 Final Integration
+
+### Master Controller Script
+
+```typescript
+// tools/claude-master.ts
+#!/usr/bin/env node
+
+import { Command } from 'commander';
+import { BrowserController } from './browser-controller';
+import { VisualAnalyzer } from './visual-analyzer';
+import { DashboardAPI } from './dashboard-api';
+import { ErrorRecovery } from './error-recovery';
+import { SecureConfig } from './secure-config';
+import DeploymentDiagnostics from '../scripts/diagnose-deployment';
+import chalk from 'chalk';
+
+class ClaudeMaster {
+  private browser: BrowserController;
+  private visualAnalyzer: VisualAnalyzer;
+  private api: DashboardAPI;
+  
+  constructor() {
+    this.browser = new BrowserController();
+    this.visualAnalyzer = new VisualAnalyzer();
+    this.api = new DashboardAPI(this.browser);
+  }
+  
+  async initialize() {
+    await SecureConfig.loadSecureEnv();
+    await this.browser.initialize({ headless: true });
+  }
+  
+  async fullDiagnostic() {
+    console.log(chalk.blue('🔍 Running comprehensive diagnostic...'));
+    
+    // 1. Check deployment status
+    const diagnostics = new DeploymentDiagnostics();
+    const deploymentResults = await diagnostics.runDiagnostics();
+    
+    // 2. Visual analysis of dashboards
+    const services = ['vercel', 'github', 'digitalocean'];
+    const visualResults = [];
+    
+    for (const service of services) {
+      const { screenshot } = await this.browser.navigateToDashboard(service as any);
+      const analysis = await this.visualAnalyzer.analyzeScreenshot(screenshot);
+      visualResults.push({ service, analysis });
+    }
+    
+    // 3. Run E2E tests
+    const { exec } = require('child_process');
+    const { promisify } = require('util');
+    const execPromise = promisify(exec);
+    
+    let testResults;
+    try {
+      const { stdout } = await execPromise('npm run test:prod -- --reporter=json');
+      testResults = JSON.parse(stdout);
+    } catch (error) {
+      testResults = { error: error.message };
+    }
+    
+    // 4. Compile report
+    const report = {
+      timestamp: new Date().toISOString(),
+      deployment: deploymentResults,
+      visual: visualResults,
+      tests: testResults,
+      recommendations: this.generateRecommendations(deploymentResults, visualResults, testResults)
+    };
+    
+    // 5. Attempt auto-fixes
+    if (report.deployment.errors.length > 0) {
+      console.log(chalk.yellow('🔧 Attempting automatic fixes...'));
+      
+      for (const error of report.deployment.errors) {
+        const recovery = await ErrorRecovery.attemptRecovery(
+          this.categorizeError(error),
+          { api: this.api, browser: this.browser }
+        );
+        
+        if (recovery.recovered) {
+          console.log(chalk.green(`✅ Fixed: ${error.message}`));
+        } else {
+          console.log(chalk.red(`❌ Could not fix: ${error.message}`));
+        }
+      }
+    }
+    
+    return report;
+  }
+  
+  private categorizeError(error: any): string {
+    if (error.service === 'frontend' && error.message.includes('deployment')) {
+      return 'deployment-failed';
+    } else if (error.service === 'backend' && error.message.includes('down')) {
+      return 'api-down';
+    } else if (error.service === 'tests') {
+      return 'test-failures';
+    }
+    return 'unknown';
+  }
+  
+  private generateRecommendations(deployment: any, visual: any[], tests: any): string[] {
+    const recommendations: string[] = [];
+    
+    // Deployment recommendations
+    if (deployment.errors.length > 3) {
+      recommendations.push('Multiple deployment errors detected - consider rolling back to last stable version');
+    }
+    
+    // Visual recommendations
+    const visualErrors = visual.filter(v => v.analysis.errors.length > 0);
+    if (visualErrors.length > 0) {
+      recommendations.push(`Visual errors detected on ${visualErrors.map(v => v.service).join(', ')}`);
+    }
+    
+    // Test recommendations
+    if (tests.error) {
+      recommendations.push('E2E tests failed to run - check test environment configuration');
+    } else if (tests.stats?.failed > 0) {
+      recommendations.push(`${tests.stats.failed} E2E tests failing - review test results and fix`);
+    }
+    
+    // Performance recommendations
+    if (deployment.frontend?.performance?.score < 70) {
+      recommendations.push('Frontend performance score is low - run lighthouse audit and optimize');
+    }
+    
+    return recommendations;
+  }
+  
+  async cleanup() {
+    await this.browser.cleanup();
+  }
+}
+
+// CLI
+const program = new Command();
+const master = new ClaudeMaster();
+
+program
+  .name('claude-master')
+  .description('Master controller for Claude-enhanced development')
+  .version('1.0.0');
+
+program
+  .command('diagnose')
+  .description('Run full diagnostic')
+  .action(async () => {
+    await master.initialize();
+    const report = await master.fullDiagnostic();
+    console.log('\n📊 Diagnostic Complete');
+    console.log(JSON.stringify(report, null, 2));
+    await master.cleanup();
+  });
+
+program
+  .command('fix <issue>')
+  .description('Attempt to fix a specific issue')
+  .action(async (issue) => {
+    await master.initialize();
+    const result = await ErrorRecovery.attemptRecovery(issue, {
+      api: master.api,
+      browser: master.browser
+    });
+    console.log(result);
+    await master.cleanup();
+  });
+
+program
+  .command('monitor')
+  .description('Start continuous monitoring')
+  .action(async () => {
+    await master.initialize();
+    
+    console.log(chalk.blue('👁️  Starting continuous monitoring...'));
+    
+    setInterval(async () => {
+      console.log(chalk.gray(`\n[${new Date().toISOString()}] Running check...`));
+      const report = await master.fullDiagnostic();
+      
+      if (report.deployment.errors.length > 0 || report.tests?.stats?.failed > 0) {
+        console.log(chalk.red('🚨 Issues detected!'));
+        // Could send alerts here
+      } else {
+        console.log(chalk.green('✅ All systems operational'));
+      }
+    }, 5 * 60 * 1000); // Every 5 minutes
+  });
+
+program.parse();
+```
+
+## 🎉 Conclusion
+
+This comprehensive guide transforms Windsurf/Claude Code from a simple code generator into a powerful, self-healing development environment. By implementing these tools and practices, Claude can:
+
+1. **See** what's happening in your deployed applications
+2. **Test** functionality automatically
+3. **Diagnose** issues across your entire stack
+4. **Fix** problems autonomously
+5. **Learn** from failures to prevent future issues
+
+The key is giving Claude the right tools to interact with the world beyond just code files. With browser automation, visual analysis, and platform integrations, Claude becomes a true development partner that can handle the full lifecycle of your application.
+
+Remember: The goal isn't to replace human developers but to augment them with an AI assistant that can handle the repetitive, time-consuming tasks of monitoring, testing, and debugging, freeing you to focus on creative problem-solving and feature development.
+
+Happy coding with your enhanced Claude! 🚀

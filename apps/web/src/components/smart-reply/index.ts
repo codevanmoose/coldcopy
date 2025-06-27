@@ -1,0 +1,1 @@
+export { SmartReplySuggestions } from './SmartReplySuggestions';

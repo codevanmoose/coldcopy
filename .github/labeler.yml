@@ -1,0 +1,78 @@
+# Frontend labels
+frontend:
+  - apps/web/**/*
+  - packages/**/*
+
+# Backend labels
+backend:
+  - apps/api/**/*
+  - requirements.txt
+  - pyproject.toml
+
+# Database labels
+database:
+  - supabase/migrations/**/*
+  - supabase/functions/**/*
+  - supabase/seed.sql
+
+# Infrastructure labels
+infrastructure:
+  - infrastructure/**/*
+  - .github/workflows/*
+  - docker-compose.yml
+  - Dockerfile
+
+# Documentation labels
+documentation:
+  - '**/*.md'
+  - docs/**/*
+
+# Test labels
+tests:
+  - '**/*.test.ts'
+  - '**/*.test.tsx'
+  - '**/*.spec.ts'
+  - '**/test_*.py'
+  - e2e/**/*
+
+# Configuration labels
+config:
+  - '**/*.json'
+  - '**/*.yaml'
+  - '**/*.yml'
+  - '**/*.toml'
+  - .env.example
+
+# Component labels
+components:
+  - apps/web/src/components/**/*
+
+# API labels
+api:
+  - apps/web/src/app/api/**/*
+  - apps/api/routers/**/*
+
+# Styling labels
+styling:
+  - '**/*.css'
+  - '**/*.scss'
+  - apps/web/tailwind.config.ts
+
+# Security labels
+security:
+  - .github/workflows/security.yml
+  - '**/auth/**/*
+  - '**/security/**/*
+
+# Performance labels
+performance:
+  - '**/cache/**/*
+  - infrastructure/pgbouncer/**/*
+  - infrastructure/redis/**/*
+
+# Dependencies
+dependencies:
+  - package.json
+  - pnpm-lock.yaml
+  - requirements.txt
+  - pyproject.toml
