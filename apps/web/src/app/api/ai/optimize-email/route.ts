@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { advancedAI } from '@/lib/ai/advanced-ai-service'
+import { createAdvancedAI } from '@/lib/ai/advanced-ai-service'
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,6 +46,9 @@ export async function POST(request: NextRequest) {
     if (!member) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
+
+    // Create AI service instance
+    const advancedAI = await createAdvancedAI(supabase)
 
     // Optimize email using AI service
     const response = await advancedAI.optimizeEmailContent(

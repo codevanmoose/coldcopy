@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { enrichmentService } from '@/lib/enrichment/enrichment-service'
 import { enqueueJob, JobPriority } from '@/lib/enrichment/job-processor'
-import { gdprService } from '@/lib/gdpr/gdpr-service'
+import { createGdprService } from '@/lib/gdpr/gdpr-service'
 import { ConsentType, AuditActionCategory, LegalBasis } from '@/lib/gdpr/types'
 import { z } from 'zod'
 
@@ -20,7 +20,8 @@ const enrichRequestSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    const supabase = createClient()
+    const supabase = await createClient()
+    const gdprService = await createGdprService()
     
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()

@@ -27,13 +27,15 @@ const nextConfig: NextConfig = {
   // Configure compression
   compress: true,
   
+  // Server external packages (moved from experimental)
+  serverExternalPackages: ['prom-client', 'bull', 'ioredis', 'sharp'],
+  
   // Experimental features for better performance
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons', 'recharts'],
     serverActions: {
       bodySizeLimit: '2mb',
     },
-    serverComponentsExternalPackages: ['prom-client', 'bull', 'ioredis', 'sharp'],
   },
   
   // Security headers

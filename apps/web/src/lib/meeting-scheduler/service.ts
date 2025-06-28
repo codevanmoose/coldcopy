@@ -12,7 +12,15 @@ import {
   AvailabilityCheck,
 } from './types';
 import { addDays, addHours, format, parse, isWithinInterval, startOfDay, endOfDay } from 'date-fns';
-import { utcToZonedTime, zonedTimeToUtc } from 'date-fns-tz';
+import { formatInTimeZone } from 'date-fns-tz';
+// For Next.js compatibility, we'll use a different approach for timezone conversion
+const utcToZonedTime = (date: Date, timeZone: string) => {
+  return new Date(date.toLocaleString('en-US', { timeZone }));
+};
+const zonedTimeToUtc = (date: Date, timeZone: string) => {
+  const offset = new Date().getTimezoneOffset();
+  return new Date(date.getTime() + offset * 60 * 1000);
+};
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY!,

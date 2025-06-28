@@ -5,6 +5,9 @@
 
 import { GdprEmailType } from './types'
 
+// Re-export GdprEmailType for convenience
+export { GdprEmailType } from './types'
+
 export interface EmailTemplateVariables {
   recipientName?: string
   recipientEmail: string

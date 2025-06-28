@@ -313,6 +313,29 @@ export function createCustomWebhookHandler(
  */
 
 /**
+ * Process a Stripe webhook event and return a result
+ * This is for internal processing without HTTP response handling
+ */
+export async function handleBillingWebhook(event: WebhookEvent): Promise<WebhookHandlerResult> {
+  try {
+    // Process the webhook event based on type
+    const handler = WebhookHandlers[event.type as keyof typeof WebhookHandlers]
+    if (handler) {
+      return await handler(event)
+    }
+    
+    // Log unhandled event types
+    console.log(`Unhandled webhook event type: ${event.type}`)
+    return { success: true }
+  } catch (error: any) {
+    return {
+      success: false,
+      error: BillingErrors.stripeWebhookError(error)
+    }
+  }
+}
+
+/**
  * Webhook testing utilities for development
  */
 export const WebhookTesting = {

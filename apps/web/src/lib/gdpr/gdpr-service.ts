@@ -77,8 +77,8 @@ import { getEmailTemplate, GdprEmailType } from './email-templates'
 export class GdprService {
   private supabase: SupabaseClient
 
-  constructor(supabase?: SupabaseClient) {
-    this.supabase = supabase || createClient()
+  constructor(supabase: SupabaseClient) {
+    this.supabase = supabase
   }
 
   // ==================== Consent Management ====================
@@ -1803,5 +1803,16 @@ export class GdprService {
   }
 }
 
-// Export singleton instance
-export const gdprService = new GdprService()
+// Export a factory function instead of singleton to avoid cookies at build time
+export async function createGdprService(): Promise<GdprService> {
+  const supabase = await createClient()
+  return new GdprService(supabase)
+}
+
+// For backward compatibility, export a getter that warns about usage
+export const gdprService = {
+  get _warning() {
+    console.warn('Direct gdprService access is deprecated. Use createGdprService() instead.')
+    return null
+  }
+}

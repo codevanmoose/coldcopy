@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { corsHeaders } from '@/lib/cors'
 
-export const runtime = 'edge'
+// Remove edge runtime to avoid global object issues
+// export const runtime = 'edge'
 
 // GET /api/workspaces/[workspaceId]/campaigns
 export async function GET(

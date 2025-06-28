@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { gdprService } from '@/lib/gdpr/gdpr-service'
+import { createGdprService } from '@/lib/gdpr/gdpr-service'
 import { 
   DataRetentionPolicy, 
   DeletionStrategy, 
@@ -77,7 +77,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const supabase = createClient()
+    const supabase = await createClient()
+    const gdprService = await createGdprService()
     const results: RetentionResult[] = []
     let totalRecordsProcessed = 0
     let totalRecordsDeleted = 0
@@ -188,7 +189,7 @@ async function processRetentionPolicy(
   workspaceId: string,
   policy: DataRetentionPolicy
 ): Promise<RetentionResult> {
-  const supabase = createClient()
+  const supabase = await createClient()
   const result: RetentionResult = {
     policyId: policy.id,
     dataType: policy.dataType,
@@ -294,7 +295,7 @@ async function processEmailEvents(
   strategy: DeletionStrategy,
   result: RetentionResult
 ): Promise<number> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Get old email events
   const { data: events, error } = await supabase
@@ -328,7 +329,7 @@ async function processCampaignEmails(
   strategy: DeletionStrategy,
   result: RetentionResult
 ): Promise<number> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data: emails, error } = await supabase
     .from('campaign_emails')
@@ -364,7 +365,7 @@ async function processEnrichedData(
   strategy: DeletionStrategy,
   result: RetentionResult
 ): Promise<number> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data: enrichments, error } = await supabase
     .from('enriched_data')
@@ -395,7 +396,8 @@ async function processInactiveLeads(
   strategy: DeletionStrategy,
   result: RetentionResult
 ): Promise<number> {
-  const supabase = createClient()
+  const supabase = await createClient()
+  const gdprService = await createGdprService()
 
   // Find leads with no recent activity
   const { data: inactiveLeads, error } = await supabase
@@ -426,7 +428,8 @@ async function processUnsubscribedLeads(
   strategy: DeletionStrategy,
   result: RetentionResult
 ): Promise<number> {
-  const supabase = createClient()
+  const supabase = await createClient()
+  const gdprService = await createGdprService()
 
   // Find unsubscribed leads older than retention period
   const { data: unsubscribedLeads, error } = await supabase
@@ -466,7 +469,7 @@ async function processAuditLogs(
   strategy: DeletionStrategy,
   result: RetentionResult
 ): Promise<number> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   const { data: logs, error } = await supabase
     .from('gdpr_audit_logs')
@@ -501,7 +504,7 @@ async function processGenericTable(
   anonymizationFields: string[] | undefined,
   result: RetentionResult
 ): Promise<number> {
-  const supabase = createClient()
+  const supabase = await createClient()
 
   // Generic processing for any table
   const { data: records, error } = await supabase
@@ -559,7 +562,7 @@ async function sendRetentionNotification(
 ): Promise<void> {
   try {
     // Get workspace admin emails
-    const supabase = createClient()
+    const supabase = await createClient()
     const { data: admins } = await supabase
       .from('profiles')
       .select('email')

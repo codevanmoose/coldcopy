@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { sendEmail } from '@/lib/email/ses-client'
 import { generateEmailHtml, generateEmailText } from '@/lib/email/templates'
 import { processEmailForTracking, addUnsubscribeFooter, generateUnsubscribeLink } from '@/lib/email/tracking'
-import { gdprService } from '@/lib/gdpr/gdpr-service'
+import { createGdprService } from '@/lib/gdpr/gdpr-service'
 import { ConsentType, AuditActionCategory } from '@/lib/gdpr/types'
 import { z } from 'zod'
 import crypto from 'crypto'
@@ -24,6 +24,7 @@ const sendEmailSchema = z.object({
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
+    const gdprService = await createGdprService()
     
     // Check authentication
     const { data: { user }, error: authError } = await supabase.auth.getUser()

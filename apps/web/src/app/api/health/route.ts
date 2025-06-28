@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { corsHeaders } from '@/lib/cors'
 
-export const runtime = 'edge'
+// Remove edge runtime to avoid global object issues
+// export const runtime = 'edge'
 
 export async function GET(request: NextRequest) {
   const origin = request.headers.get('origin')

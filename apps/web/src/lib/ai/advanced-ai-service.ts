@@ -129,9 +129,9 @@ const AI_PROVIDERS: AIProvider[] = [
 export class AdvancedAIService {
   private openai: OpenAI
   private anthropic: Anthropic
-  private supabase = createClient()
+  private supabase: any // We'll accept any supabase client
 
-  constructor() {
+  constructor(supabase?: any) {
     this.openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY!,
     })
@@ -139,6 +139,15 @@ export class AdvancedAIService {
     this.anthropic = new Anthropic({
       apiKey: process.env.ANTHROPIC_API_KEY!,
     })
+    
+    // For client-side usage, createClient will be called
+    // For server-side, it should be passed in
+    if (supabase) {
+      this.supabase = supabase
+    } else if (typeof window !== 'undefined') {
+      // Only create client in browser environment
+      this.supabase = createClient()
+    }
   }
 
   getProviders(): AIProvider[] {
@@ -507,5 +516,15 @@ export class AdvancedAIService {
   }
 }
 
-// Export singleton instance
-export const advancedAI = new AdvancedAIService()
+// Export factory function for server-side usage
+export async function createAdvancedAI(supabase?: any): Promise<AdvancedAIService> {
+  // Import server createClient only when needed
+  if (!supabase && typeof window === 'undefined') {
+    const { createClient } = await import('@/lib/supabase/server')
+    supabase = await createClient()
+  }
+  return new AdvancedAIService(supabase)
+}
+
+// For backward compatibility and client-side usage
+export const advancedAI = typeof window !== 'undefined' ? new AdvancedAIService() : null
