@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { gdprService } from '@/lib/gdpr/gdpr-service'
+import { gdprClientService } from '@/lib/gdpr/gdpr-client-service'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Button } from '@/components/ui/button'
@@ -123,15 +123,15 @@ export default function GdprComplianceDashboard() {
       setLoading(true)
 
       // Load metrics
-      const metricsData = await gdprService.getGdprMetrics(workspaceId)
+      const metricsData = await gdprClientService.getGdprMetrics(workspaceId)
       setMetrics(metricsData)
 
       // Load data subject requests
-      const requests = await gdprService.getDataSubjectRequests(workspaceId)
+      const requests = await gdprClientService.getDataSubjectRequests(workspaceId)
       setDataRequests(requests)
 
       // Load retention policies
-      const policies = await gdprService.getDataRetentionPolicies(workspaceId)
+      const policies = await gdprClientService.getDataRetentionPolicies(workspaceId)
       setRetentionPolicies(policies)
     } catch (error) {
       console.error('Error loading GDPR data:', error)
@@ -148,7 +148,7 @@ export default function GdprComplianceDashboard() {
   async function handleRequestAction(requestId: string, action: 'approve' | 'reject') {
     try {
       if (action === 'approve') {
-        await gdprService.updateDataSubjectRequest({
+        await gdprClientService.updateDataSubjectRequest({
           requestId,
           status: DataSubjectRequestStatus.IN_PROGRESS,
         })
@@ -160,7 +160,7 @@ export default function GdprComplianceDashboard() {
         const reason = prompt('Please provide a reason for rejection:')
         if (!reason) return
 
-        await gdprService.updateDataSubjectRequest({
+        await gdprClientService.updateDataSubjectRequest({
           requestId,
           status: DataSubjectRequestStatus.REJECTED,
           rejectionReason: reason,
@@ -184,7 +184,7 @@ export default function GdprComplianceDashboard() {
 
   async function executeRetentionPolicy(policyId: string) {
     try {
-      await gdprService.executeRetentionPolicies(workspaceId)
+      await gdprClientService.executeRetentionPolicies(workspaceId)
       toast({
         title: 'Retention Policy Executed',
         description: 'Data retention policy has been executed successfully.',
@@ -202,7 +202,7 @@ export default function GdprComplianceDashboard() {
 
   async function generateComplianceReport(type: 'consent' | 'requests' | 'audit' | 'processing' | 'full') {
     try {
-      const report = await gdprService.generateComplianceReport({
+      const report = await gdprClientService.generateComplianceReport({
         workspaceId,
         reportType: type,
       })

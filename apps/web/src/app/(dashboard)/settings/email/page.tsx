@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { createClient } from '@/lib/supabase/client'
 import { useAuthStore } from '@/stores/auth'
+import { api } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -21,10 +21,12 @@ import {
   Loader2,
   AlertCircle,
   Copy,
-  ExternalLink
+  ExternalLink,
+  Server
 } from 'lucide-react'
 import { TestEmailDialog } from '@/components/email/test-email-dialog'
 import { WarmUpConfig } from '@/components/email/warm-up-config'
+import { SESSetupGuide } from '@/components/email/ses-setup-guide'
 
 const emailConfigSchema = z.object({
   sender_name: z.string().min(2, 'Sender name is required'),
@@ -48,7 +50,7 @@ export default function EmailSettingsPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [verificationStatus, setVerificationStatus] = useState<DomainVerification | null>(null)
   const [checkingVerification, setCheckingVerification] = useState(false)
-  const supabase = createClient()
+  const [showSESGuide, setShowSESGuide] = useState(false)
 
   const {
     register,
@@ -83,26 +85,20 @@ export default function EmailSettingsPage() {
 
     setIsLoading(true)
     try {
-      const { data: updatedWorkspace, error } = await supabase
-        .from('workspaces')
-        .update({
-          settings: {
-            ...workspace.settings,
-            email: {
-              sender_name: data.sender_name,
-              sender_email: data.sender_email,
-              reply_to_email: data.reply_to_email || null,
-            },
+      const response = await api.workspaces.update(workspace.id, {
+        settings: {
+          ...workspace.settings,
+          email: {
+            sender_name: data.sender_name,
+            sender_email: data.sender_email,
+            reply_to_email: data.reply_to_email || null,
           },
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', workspace.id)
-        .select()
-        .single()
+        },
+      })
 
-      if (error) throw error
+      if (response.error) throw new Error(response.error)
 
-      setWorkspace(updatedWorkspace)
+      setWorkspace(response.data)
       toast.success('Email settings updated successfully')
       reset(data)
     } catch (error) {
@@ -148,8 +144,79 @@ export default function EmailSettingsPage() {
     verificationStatus.spf_verified && 
     verificationStatus.dmarc_verified
 
+  // Check if AWS credentials are configured
+  const isAWSConfigured = process.env.NODE_ENV === 'production' || 
+    (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY)
+
+  if (showSESGuide) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            onClick={() => setShowSESGuide(false)}
+            className="gap-2"
+          >
+            ← Back to Email Settings
+          </Button>
+        </div>
+        <SESSetupGuide onConfigurationComplete={() => setShowSESGuide(false)} />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-6">
+      {/* AWS Configuration Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Server className="h-5 w-5" />
+            Amazon SES Configuration
+          </CardTitle>
+          <CardDescription>
+            Configure Amazon Simple Email Service for reliable email delivery
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {isAWSConfigured ? (
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+              ) : (
+                <AlertCircle className="h-5 w-5 text-yellow-600" />
+              )}
+              <div>
+                <p className="font-medium">
+                  {isAWSConfigured ? 'AWS SES Configured' : 'AWS SES Setup Required'}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {isAWSConfigured 
+                    ? 'Your AWS credentials are configured and ready for email sending'
+                    : 'Configure AWS credentials to enable email sending'
+                  }
+                </p>
+              </div>
+            </div>
+            {!isAWSConfigured && (
+              <Button onClick={() => setShowSESGuide(true)}>
+                Setup Guide
+              </Button>
+            )}
+          </div>
+          
+          {!isAWSConfigured && (
+            <Alert className="mt-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Email sending is currently disabled. Follow our setup guide to configure Amazon SES 
+                with your AWS credentials for reliable email delivery.
+              </AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
+
       <Card>
         <CardHeader>
           <CardTitle>Email Configuration</CardTitle>

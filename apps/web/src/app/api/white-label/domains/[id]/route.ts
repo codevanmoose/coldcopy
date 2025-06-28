@@ -5,11 +5,12 @@ import { Database } from '@/lib/supabase/database.types'
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const supabase = createServerComponentClient<Database>({ cookies })
-    const domainId = params.id
+    const domainId = id
 
     if (!domainId) {
       return NextResponse.json(
@@ -82,11 +83,12 @@ export async function DELETE(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const supabase = createServerComponentClient<Database>({ cookies })
-    const domainId = params.id
+    const domainId = id
     const body = await request.json()
 
     if (!domainId) {

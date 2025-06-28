@@ -8,8 +8,9 @@ const updateMemberSchema = z.object({
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { workspaceId: string; memberId: string } }
+  { params }: { params: Promise<{ workspaceId: string; memberId: string }> }
 ) {
+  const { workspaceId } = await params;
   try {
     const body = await request.json()
     const { role } = updateMemberSchema.parse(body)
@@ -28,7 +29,7 @@ export async function PATCH(
     const { data: hasPermission } = await supabase
       .rpc('check_user_permission', {
         p_user_id: user.id,
-        p_workspace_id: params.workspaceId,
+        p_workspace_id: workspaceId,
         p_permission: 'team:manage'
       })
 
@@ -44,7 +45,7 @@ export async function PATCH(
       .from('workspace_members')
       .update({ role })
       .eq('id', params.memberId)
-      .eq('workspace_id', params.workspaceId)
+      .eq('workspace_id', workspaceId)
 
     if (error) {
       throw error
@@ -52,7 +53,7 @@ export async function PATCH(
 
     // Create audit log
     await supabase.from('audit_logs').insert({
-      workspace_id: params.workspaceId,
+      workspace_id: workspaceId,
       user_id: user.id,
       action: 'member_role_updated',
       resource_type: 'workspace_member',
@@ -79,8 +80,9 @@ export async function PATCH(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { workspaceId: string; memberId: string } }
+  { params }: { params: Promise<{ workspaceId: string; memberId: string }> }
 ) {
+  const { workspaceId } = await params;
   try {
     const supabase = await createClient()
     
@@ -96,7 +98,7 @@ export async function DELETE(
     const { data: hasPermission } = await supabase
       .rpc('check_user_permission', {
         p_user_id: user.id,
-        p_workspace_id: params.workspaceId,
+        p_workspace_id: workspaceId,
         p_permission: 'team:manage'
       })
 
@@ -112,7 +114,7 @@ export async function DELETE(
       .from('workspace_members')
       .select('user_id')
       .eq('id', params.memberId)
-      .eq('workspace_id', params.workspaceId)
+      .eq('workspace_id', workspaceId)
       .single()
 
     if (!member) {
@@ -135,7 +137,7 @@ export async function DELETE(
       .from('workspace_members')
       .delete()
       .eq('id', params.memberId)
-      .eq('workspace_id', params.workspaceId)
+      .eq('workspace_id', workspaceId)
 
     if (error) {
       throw error
@@ -143,7 +145,7 @@ export async function DELETE(
 
     // Create audit log
     await supabase.from('audit_logs').insert({
-      workspace_id: params.workspaceId,
+      workspace_id: workspaceId,
       user_id: user.id,
       action: 'member_removed',
       resource_type: 'workspace_member',

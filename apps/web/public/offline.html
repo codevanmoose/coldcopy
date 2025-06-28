@@ -5,50 +5,298 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Offline - ColdCopy</title>
   <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-      background-color: #0F172A;
+      background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
       color: #E2E8F0;
+      min-height: 100vh;
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 100vh;
-      margin: 0;
       text-align: center;
+      position: relative;
+      overflow: hidden;
     }
+    
+    .background {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: 
+        radial-gradient(circle at 20% 50%, rgba(99, 102, 241, 0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.05) 0%, transparent 50%),
+        radial-gradient(circle at 40% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%);
+      animation: backgroundShift 20s ease-in-out infinite;
+    }
+    
+    @keyframes backgroundShift {
+      0%, 100% { transform: translateX(0) translateY(0); }
+      50% { transform: translateX(-20px) translateY(-10px); }
+    }
+    
     .container {
-      padding: 2rem;
+      position: relative;
+      z-index: 1;
+      max-width: 500px;
+      padding: 3rem 2rem;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(99, 102, 241, 0.2);
+      border-radius: 1.5rem;
+      box-shadow: 
+        0 25px 50px -12px rgba(0, 0, 0, 0.5),
+        0 0 0 1px rgba(99, 102, 241, 0.1);
     }
+    
+    .icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 2rem;
+      background: linear-gradient(135deg, #6366F1, #8B5CF6);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: pulse 2s ease-in-out infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    .icon svg {
+      width: 40px;
+      height: 40px;
+      fill: white;
+    }
+    
     h1 {
       font-size: 2.5rem;
+      font-weight: 700;
       margin-bottom: 1rem;
-      color: #6366F1;
+      background: linear-gradient(135deg, #6366F1, #8B5CF6);
+      background-clip: text;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      line-height: 1.2;
     }
+    
     p {
-      font-size: 1.25rem;
+      font-size: 1.125rem;
       color: #94A3B8;
       margin-bottom: 2rem;
+      line-height: 1.6;
     }
+    
+    .status {
+      background: rgba(99, 102, 241, 0.1);
+      border: 1px solid rgba(99, 102, 241, 0.3);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin-bottom: 2rem;
+      font-size: 0.875rem;
+      color: #A5B4FC;
+    }
+    
+    .status-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #EF4444;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+      animation: blink 1.5s infinite;
+    }
+    
+    @keyframes blink {
+      0%, 50% { opacity: 1; }
+      51%, 100% { opacity: 0.3; }
+    }
+    
+    .actions {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    
     .retry-button {
-      background-color: #6366F1;
+      background: linear-gradient(135deg, #6366F1, #4F46E5);
       color: white;
       border: none;
-      padding: 0.75rem 2rem;
+      padding: 0.875rem 2rem;
       font-size: 1rem;
-      border-radius: 0.5rem;
+      font-weight: 600;
+      border-radius: 0.75rem;
       cursor: pointer;
-      transition: background-color 0.2s;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
     }
+    
     .retry-button:hover {
-      background-color: #4F46E5;
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+    }
+    
+    .retry-button:active {
+      transform: translateY(0);
+    }
+    
+    .cache-info {
+      background: rgba(34, 197, 94, 0.1);
+      border: 1px solid rgba(34, 197, 94, 0.3);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      margin-top: 2rem;
+      font-size: 0.875rem;
+      color: #86EFAC;
+    }
+    
+    .cache-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      background: #22C55E;
+      border-radius: 50%;
+      margin-right: 0.5rem;
+    }
+    
+    @media (max-width: 640px) {
+      .container {
+        margin: 1rem;
+        padding: 2rem 1.5rem;
+      }
+      
+      h1 {
+        font-size: 2rem;
+      }
+      
+      p {
+        font-size: 1rem;
+      }
     }
   </style>
 </head>
 <body>
+  <div class="background"></div>
   <div class="container">
+    <div class="icon">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+      </svg>
+    </div>
+    
     <h1>You're Offline</h1>
-    <p>It looks like you've lost your internet connection. Please check your connection and try again.</p>
-    <button class="retry-button" onclick="window.location.reload()">Try Again</button>
+    <p>ColdCopy is currently running in offline mode. Some features may be limited until you reconnect.</p>
+    
+    <div class="status">
+      <span class="status-indicator"></span>
+      No internet connection detected
+    </div>
+    
+    <div class="actions">
+      <button class="retry-button" onclick="checkConnection()">Check Connection</button>
+    </div>
+    
+    <div class="cache-info">
+      <span class="cache-indicator"></span>
+      Cached data is available for viewing your leads, campaigns, and recent analytics
+    </div>
   </div>
+
+  <script>
+    // Enhanced offline page functionality
+    let isCheckingConnection = false;
+    
+    function checkConnection() {
+      if (isCheckingConnection) return;
+      
+      isCheckingConnection = true;
+      const button = document.querySelector('.retry-button');
+      const originalText = button.textContent;
+      
+      button.textContent = 'Checking...';
+      button.disabled = true;
+      
+      // Simple connectivity check
+      fetch('/', { 
+        method: 'HEAD',
+        cache: 'no-cache',
+        signal: AbortSignal.timeout(5000)
+      })
+      .then(response => {
+        if (response.ok) {
+          button.textContent = 'Connected! Redirecting...';
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 1000);
+        } else {
+          throw new Error('Connection failed');
+        }
+      })
+      .catch(() => {
+        button.textContent = 'Still Offline';
+        setTimeout(() => {
+          button.textContent = originalText;
+          button.disabled = false;
+          isCheckingConnection = false;
+        }, 2000);
+      });
+    }
+    
+    // Listen for online/offline events
+    window.addEventListener('online', () => {
+      const status = document.querySelector('.status');
+      const indicator = document.querySelector('.status-indicator');
+      
+      status.innerHTML = '<span class="cache-indicator"></span>Connection restored! Redirecting...';
+      
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1500);
+    });
+    
+    window.addEventListener('offline', () => {
+      const status = document.querySelector('.status');
+      status.innerHTML = '<span class="status-indicator"></span>Connection lost';
+    });
+    
+    // Automatic connection checking every 30 seconds
+    setInterval(() => {
+      if (!isCheckingConnection && !navigator.onLine) {
+        fetch('/', { 
+          method: 'HEAD',
+          cache: 'no-cache',
+          signal: AbortSignal.timeout(3000)
+        })
+        .then(response => {
+          if (response.ok && !navigator.onLine) {
+            // Connection is back but browser hasn't detected it yet
+            window.location.href = '/dashboard';
+          }
+        })
+        .catch(() => {
+          // Still offline, do nothing
+        });
+      }
+    }, 30000);
+    
+    // Initialize page state
+    document.addEventListener('DOMContentLoaded', () => {
+      if (navigator.onLine) {
+        // If we're actually online, redirect immediately
+        window.location.href = '/dashboard';
+      }
+    });
+  </script>
 </body>
 </html>

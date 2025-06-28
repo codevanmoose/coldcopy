@@ -3,8 +3,10 @@
 import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { TrialOnboarding } from '@/components/onboarding/trial-onboarding'
+import { OnboardingWidget } from '@/components/onboarding/onboarding-widget'
 import { useWorkspace } from '@/hooks/use-workspace'
-import { supabase } from '@/lib/supabase/client'
+import { api } from '@/lib/api-client'
+import { cn } from '@/lib/utils'
 import { 
   Users, 
   Mail, 
@@ -101,14 +103,10 @@ export default function DashboardPage() {
       
       if (!completed) {
         // Check if this is a trial user
-        const { data: subscription } = await supabase
-          .from('subscriptions')
-          .select('status, created_at')
-          .eq('workspace_id', workspace.id)
-          .single()
+        const response = await api.workspaces.get(workspace.id)
         
-        if (subscription?.status === 'trialing') {
-          const createdAt = new Date(subscription.created_at)
+        if (response.data?.subscription?.status === 'trialing') {
+          const createdAt = new Date(response.data.subscription.created_at)
           const hoursSinceCreation = (Date.now() - createdAt.getTime()) / (1000 * 60 * 60)
           
           // Show onboarding if trial was created within the last 24 hours
@@ -139,6 +137,9 @@ export default function DashboardPage() {
           Welcome back! Here's an overview of your outreach performance.
         </p>
       </div>
+
+      {/* Onboarding Widget */}
+      <OnboardingWidget />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {stats.map((stat) => (

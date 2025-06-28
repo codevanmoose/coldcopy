@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { createClient } from '@/lib/supabase/client'
+import { api } from '@/lib/api-client'
 import { useAuthStore } from '@/stores/auth'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -46,7 +46,6 @@ const roleColors: Record<UserRole, string> = {
 export default function TeamSettingsPage() {
   const { workspace, dbUser } = useAuthStore()
   const [inviteOpen, setInviteOpen] = useState(false)
-  const supabase = createClient()
   const queryClient = useQueryClient()
 
   const { data: teamMembers, isLoading } = useQuery({
@@ -54,26 +53,19 @@ export default function TeamSettingsPage() {
     queryFn: async () => {
       if (!workspace) return []
       
-      const { data, error } = await supabase
-        .from('users')
-        .select('*')
-        .eq('workspace_id', workspace.id)
-        .order('created_at', { ascending: true })
-
-      if (error) throw error
-      return data as User[]
+      const response = await api.users.list(workspace.id)
+      
+      if (response.error) throw new Error(response.error)
+      return response.data || []
     },
     enabled: !!workspace,
   })
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ userId, role }: { userId: string; role: UserRole }) => {
-      const { error } = await supabase
-        .from('users')
-        .update({ role })
-        .eq('id', userId)
-
-      if (error) throw error
+      const response = await api.users.update(userId, { role })
+      
+      if (response.error) throw new Error(response.error)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['team-members'] })
@@ -86,12 +78,9 @@ export default function TeamSettingsPage() {
 
   const removeMemberMutation = useMutation({
     mutationFn: async (userId: string) => {
-      const { error } = await supabase
-        .from('users')
-        .delete()
-        .eq('id', userId)
-
-      if (error) throw error
+      const response = await api.users.delete(userId)
+      
+      if (response.error) throw new Error(response.error)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['team-members'] })

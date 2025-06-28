@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { createClient } from '@/lib/supabase/client'
+import { api } from '@/lib/api-client'
 import { useAuthStore } from '@/stores/auth'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -22,13 +22,15 @@ import {
   AlertCircle,
   ExternalLink,
   Check,
-  X
+  X,
+  CheckCircle2
 } from 'lucide-react'
 import { PurchaseTokensDialog } from '@/components/billing/purchase-tokens-dialog'
 import { TokenHistory } from '@/components/billing/token-history'
 import { UpgradeModal } from '@/components/billing/upgrade-modal'
 import { UsageDisplay } from '@/components/billing/usage-display'
 import { PaymentMethodManager } from '@/components/billing/payment-method-manager'
+import { StripeSetupGuide } from '@/components/billing/stripe-setup-guide'
 import type { 
   Subscription, 
   SubscriptionPlan,
@@ -40,8 +42,8 @@ export default function BillingPage() {
   const { workspace, dbUser } = useAuthStore()
   const [isUpgradeModalOpen, setIsUpgradeModalOpen] = useState(false)
   const [selectedPeriod, setSelectedPeriod] = useState<'current' | '30d' | '90d'>('current')
+  const [showStripeGuide, setShowStripeGuide] = useState(false)
   const queryClient = useQueryClient()
-  const supabase = createClient()
   
   // Check if coming from trial expired redirect
   const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null
@@ -54,15 +56,11 @@ export default function BillingPage() {
     queryFn: async () => {
       if (!workspace) return null
       
-      const response = await fetch('/api/billing/subscription', {
-        headers: {
-          'x-workspace-id': workspace.id
-        }
-      })
+      const response = await api.billing.subscription.get()
       
-      if (!response.ok) throw new Error('Failed to fetch billing summary')
+      if (response.error) throw new Error(response.error)
       
-      return response.json() as Promise<BillingSummary>
+      return response.data as BillingSummary
     },
     enabled: !!workspace,
   })
@@ -73,15 +71,11 @@ export default function BillingPage() {
     queryFn: async () => {
       if (!workspace) return null
       
-      const response = await fetch(`/api/billing/usage?period=${selectedPeriod}`, {
-        headers: {
-          'x-workspace-id': workspace.id
-        }
-      })
+      const response = await api.billing.usage.get({ period: selectedPeriod })
       
-      if (!response.ok) throw new Error('Failed to fetch usage data')
+      if (response.error) throw new Error(response.error)
       
-      return response.json() as Promise<UsageSummary>
+      return response.data as UsageSummary
     },
     enabled: !!workspace,
   })
@@ -89,21 +83,14 @@ export default function BillingPage() {
   // Cancel subscription mutation
   const cancelSubscription = useMutation({
     mutationFn: async () => {
-      const response = await fetch('/api/billing/subscription', {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-workspace-id': workspace!.id
-        },
-        body: JSON.stringify({
-          cancelAtPeriodEnd: true,
-          reason: 'customer_request'
-        })
+      const response = await api.billing.subscription.cancel({
+        cancelAtPeriodEnd: true,
+        reason: 'customer_request'
       })
       
-      if (!response.ok) throw new Error('Failed to cancel subscription')
+      if (response.error) throw new Error(response.error)
       
-      return response.json()
+      return response.data
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['billing-summary'] })
@@ -113,26 +100,20 @@ export default function BillingPage() {
   // Create portal session
   const createPortalSession = useMutation({
     mutationFn: async () => {
-      const response = await fetch('/api/billing/portal', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-workspace-id': workspace!.id
-        },
-        body: JSON.stringify({
-          returnUrl: window.location.href
-        })
-      })
+      const response = await api.billing.portal.create()
       
-      if (!response.ok) throw new Error('Failed to create portal session')
+      if (response.error) throw new Error(response.error)
       
-      const { url } = await response.json()
-      return url
+      return response.data.url
     },
     onSuccess: (url) => {
       window.location.href = url
     }
   })
+
+  // Check if Stripe is configured
+  const isStripeConfigured = process.env.NODE_ENV === 'production' || 
+    (process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY && process.env.STRIPE_SECRET_KEY)
 
   if (!workspace || summaryLoading) {
     return (
@@ -149,6 +130,23 @@ export default function BillingPage() {
   const trialDaysRemaining = subscription?.trialEnd 
     ? Math.max(0, Math.ceil((new Date(subscription.trialEnd).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
     : 0
+
+  if (showStripeGuide) {
+    return (
+      <div className="space-y-6">
+        <div className="flex items-center gap-4">
+          <Button
+            variant="ghost"
+            onClick={() => setShowStripeGuide(false)}
+            className="gap-2"
+          >
+            ← Back to Billing Settings
+          </Button>
+        </div>
+        <StripeSetupGuide onConfigurationComplete={() => setShowStripeGuide(false)} />
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
@@ -191,6 +189,57 @@ export default function BillingPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* Stripe Configuration Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <CreditCard className="h-5 w-5" />
+            Stripe Billing Configuration
+          </CardTitle>
+          <CardDescription>
+            Configure Stripe for subscription billing and payment processing
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              {isStripeConfigured ? (
+                <CheckCircle2 className="h-5 w-5 text-green-600" />
+              ) : (
+                <AlertCircle className="h-5 w-5 text-yellow-600" />
+              )}
+              <div>
+                <p className="font-medium">
+                  {isStripeConfigured ? 'Stripe Configured' : 'Stripe Setup Required'}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  {isStripeConfigured 
+                    ? 'Billing and subscriptions are ready'
+                    : 'Configure Stripe to enable subscription billing'
+                  }
+                </p>
+              </div>
+            </div>
+            {!isStripeConfigured && (
+              <Button onClick={() => setShowStripeGuide(true)}>
+                Setup Guide
+              </Button>
+            )}
+          </div>
+          
+          {!isStripeConfigured && (
+            <Alert className="mt-4">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                Subscription billing is currently disabled. Follow our setup guide to configure Stripe 
+                with your API keys and webhook endpoints.
+              </AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+      </Card>
+
       {/* Current Plan Overview */}
       <Card>
         <CardHeader>

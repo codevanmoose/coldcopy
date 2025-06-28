@@ -1,0 +1,241 @@
+# ColdCopy Alerting Rules
+
+groups:
+  - name: coldcopy.application
+    rules:
+      - alert: HighErrorRate
+        expr: |
+          (
+            rate(coldcopy_errors_total[5m]) / rate(coldcopy_http_requests_total[5m]) * 100
+          ) > 5
+        for: 2m
+        labels:
+          severity: warning
+          team: engineering
+          service: coldcopy
+        annotations:
+          summary: "High error rate detected"
+          description: "Error rate is {{ $value }}% over the last 5 minutes"
+          runbook_url: "https://docs.coldcopy.cc/runbooks/high-error-rate"
+
+      - alert: CriticalErrorRate
+        expr: |
+          (
+            rate(coldcopy_errors_total[5m]) / rate(coldcopy_http_requests_total[5m]) * 100
+          ) > 10
+        for: 1m
+        labels:
+          severity: critical
+          team: engineering
+          service: coldcopy
+        annotations:
+          summary: "Critical error rate detected"
+          description: "Error rate is {{ $value }}% over the last 5 minutes"
+          runbook_url: "https://docs.coldcopy.cc/runbooks/critical-error-rate"
+
+      - alert: HighResponseTime
+        expr: |
+          histogram_quantile(0.95, rate(coldcopy_http_request_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+          team: engineering
+          service: coldcopy
+        annotations:
+          summary: "High response time detected"
+          description: "95th percentile response time is {{ $value }}s"
+          runbook_url: "https://docs.coldcopy.cc/runbooks/high-response-time"
+
+      - alert: ApplicationDown
+        expr: up{job="coldcopy-app"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: engineering
+          service: coldcopy
+        annotations:
+          summary: "ColdCopy application is down"
+          description: "ColdCopy application has been down for more than 1 minute"
+          runbook_url: "https://docs.coldcopy.cc/runbooks/application-down"
+
+  - name: coldcopy.database
+    rules:
+      - alert: HighDatabaseConnections
+        expr: coldcopy_database_connections_active > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: engineering
+          service: database
+        annotations:
+          summary: "High database connection usage"
+          description: "Database connection count is {{ $value }}"
+          runbook_url: "https://docs.coldcopy.cc/runbooks/high-db-connections"
+
+      - alert: LowCacheHitRatio
+        expr: |
+          (
+            coldcopy_cache_hits_total / (coldcopy_cache_hits_total + coldcopy_cache_misses_total) * 100
+          ) < 90
+        for: 10m
+        labels:
+          severity: warning
+          team: engineering
+          service: cache
+        annotations:
+          summary: "Low cache hit ratio"
+          description: "Cache hit ratio is {{ $value }}%"
+          runbook_url: "https://docs.coldcopy.cc/runbooks/low-cache-hit-ratio"
+
+      - alert: SlowDatabaseQueries
+        expr: |
+          histogram_quantile(0.95, rate(coldcopy_database_query_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+          team: engineering
+          service: database
+        annotations:
+          summary: "Slow database queries detected"
+          description: "95th percentile query time is {{ $value }}s"
+          runbook_url: "https://docs.coldcopy.cc/runbooks/slow-queries"
+
+  - name: coldcopy.business
+    rules:
+      - alert: EmailQueueBacklog
+        expr: coldcopy_email_queue_size > 1000
+        for: 10m
+        labels:
+          severity: warning
+          team: operations
+          service: email
+        annotations:
+          summary: "Large email queue backlog"
+          description: "Email queue size is {{ $value }}"
+          runbook_url: "https://docs.coldcopy.cc/runbooks/email-queue-backlog"
+
+      - alert: CriticalEmailQueueBacklog
+        expr: coldcopy_email_queue_size > 5000
+        for: 5m
+        labels:
+          severity: critical
+          team: operations
+          service: email
+        annotations:
+          summary: "Critical email queue backlog"
+          description: "Email queue size is {{ $value }}"
+          runbook_url: "https://docs.coldcopy.cc/runbooks/critical-email-queue"
+
+      - alert: HighAITokenUsage
+        expr: |
+          increase(coldcopy_ai_tokens_used_total[1h]) > 100000
+        for: 0m
+        labels:
+          severity: warning
+          team: operations
+          service: ai
+        annotations:
+          summary: "High AI token usage"
+          description: "{{ $value }} AI tokens used in the last hour"
+          runbook_url: "https://docs.coldcopy.cc/runbooks/high-ai-usage"
+
+      - alert: SuspiciousActivity
+        expr: |
+          rate(coldcopy_suspicious_activity_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+          team: security
+          service: security
+        annotations:
+          summary: "Suspicious activity detected"
+          description: "{{ $value }} suspicious activities per second"
+          runbook_url: "https://docs.coldcopy.cc/runbooks/suspicious-activity"
+
+  - name: coldcopy.infrastructure
+    rules:
+      - alert: HighCPUUsage
+        expr: |
+          (
+            100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100)
+          ) > 80
+        for: 10m
+        labels:
+          severity: warning
+          team: infrastructure
+          service: system
+        annotations:
+          summary: "High CPU usage"
+          description: "CPU usage is {{ $value }}% on {{ $labels.instance }}"
+          runbook_url: "https://docs.coldcopy.cc/runbooks/high-cpu"
+
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes * 100
+          ) > 85
+        for: 10m
+        labels:
+          severity: warning
+          team: infrastructure
+          service: system
+        annotations:
+          summary: "High memory usage"
+          description: "Memory usage is {{ $value }}% on {{ $labels.instance }}"
+          runbook_url: "https://docs.coldcopy.cc/runbooks/high-memory"
+
+      - alert: DiskSpaceLow
+        expr: |
+          (
+            (node_filesystem_size_bytes - node_filesystem_free_bytes) / node_filesystem_size_bytes * 100
+          ) > 85
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+          service: system
+        annotations:
+          summary: "Low disk space"
+          description: "Disk usage is {{ $value }}% on {{ $labels.instance }}"
+          runbook_url: "https://docs.coldcopy.cc/runbooks/low-disk-space"
+
+      - alert: HighRateLimitHits
+        expr: |
+          rate(coldcopy_rate_limit_hits_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          team: engineering
+          service: api
+        annotations:
+          summary: "High rate limit hits"
+          description: "{{ $value }} rate limit hits per second"
+          runbook_url: "https://docs.coldcopy.cc/runbooks/high-rate-limits"
+
+  - name: coldcopy.security
+    rules:
+      - alert: FailedAuthenticationAttempts
+        expr: |
+          rate(coldcopy_authentication_attempts_total{status="failed"}[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          team: security
+          service: auth
+        annotations:
+          summary: "High failed authentication attempts"
+          description: "{{ $value }} failed authentication attempts per second"
+          runbook_url: "https://docs.coldcopy.cc/runbooks/failed-auth"
+
+      - alert: UnhandledExceptions
+        expr: |
+          rate(coldcopy_unhandled_exceptions_total[5m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          team: engineering
+          service: application
+        annotations:
+          summary: "Unhandled exceptions detected"
+          description: "{{ $value }} unhandled exceptions per second"
+          runbook_url: "https://docs.coldcopy.cc/runbooks/unhandled-exceptions"

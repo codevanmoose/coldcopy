@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { createClient } from '@/lib/supabase/client'
 import { useAuthStore } from '@/stores/auth'
+import { api } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -30,7 +30,6 @@ interface WorkspaceWithStats extends Workspace {
 export default function AdminWorkspacesPage() {
   const { dbUser } = useAuthStore()
   const [searchQuery, setSearchQuery] = useState('')
-  const supabase = createClient()
 
   // Check if user is super admin
   const isSuperAdmin = dbUser?.role === 'super_admin'
@@ -38,24 +37,14 @@ export default function AdminWorkspacesPage() {
   const { data: workspaces, isLoading } = useQuery({
     queryKey: ['admin-workspaces', searchQuery],
     queryFn: async () => {
-      let query = supabase
-        .from('workspaces')
-        .select(`
-          *,
-          users_count:users(count),
-          campaigns_count:campaigns(count),
-          leads_count:leads(count)
-        `)
-        .order('created_at', { ascending: false })
-
+      const params: any = { includeStats: true }
       if (searchQuery) {
-        query = query.or(`name.ilike.%${searchQuery}%,slug.ilike.%${searchQuery}%`)
+        params.search = searchQuery
       }
 
-      const { data, error } = await query
-
-      if (error) throw error
-      return data as unknown as WorkspaceWithStats[]
+      const response = await api.workspaces.list()
+      if (response.error) throw new Error(response.error)
+      return response.data as WorkspaceWithStats[]
     },
     enabled: isSuperAdmin,
   })

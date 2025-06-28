@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, use } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
@@ -109,14 +109,15 @@ const statusConfig = {
   },
 }
 
-export default function CampaignDetailPage({ params }: { params: { id: string } }) {
+export default function CampaignDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
   const router = useRouter()
   const queryClient = useQueryClient()
   const supabase = createClient()
 
   // Fetch campaign details
   const { data: campaign, isLoading } = useQuery({
-    queryKey: ['campaign', params.id],
+    queryKey: ['campaign', id],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('campaigns')
@@ -128,7 +129,7 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
             lead:leads(*)
           )
         `)
-        .eq('id', params.id)
+        .eq('id', id)
         .single()
 
       if (error) throw error
@@ -142,12 +143,12 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
       const { error } = await supabase
         .from('campaigns')
         .update({ status, updated_at: new Date().toISOString() })
-        .eq('id', params.id)
+        .eq('id', id)
 
       if (error) throw error
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['campaign', params.id] })
+      queryClient.invalidateQueries({ queryKey: ['campaign', id] })
       toast.success('Campaign status updated')
     },
     onError: (error) => {
@@ -162,7 +163,7 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
       const { error } = await supabase
         .from('campaigns')
         .delete()
-        .eq('id', params.id)
+        .eq('id', id)
 
       if (error) throw error
     },
@@ -247,7 +248,7 @@ export default function CampaignDetailPage({ params }: { params: { id: string } 
             </Button>
           )}
           
-          <Link href={`/campaigns/${params.id}/edit`}>
+          <Link href={`/campaigns/${id}/edit`}>
             <Button variant="outline">
               <Edit className="mr-2 h-4 w-4" />
               Edit

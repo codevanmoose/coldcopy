@@ -1,7 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { useParams } from "next/navigation"
+import { useState, useEffect, use } from "react"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -92,9 +91,8 @@ const WINNER_METHODS = [
   { value: 'manual', label: 'Manual Selection' }
 ]
 
-export default function CampaignABTestingPage() {
-  const params = useParams()
-  const campaignId = params.id as string
+export default function CampaignABTestingPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id: campaignId } = use(params)
   
   const [tests, setTests] = useState<ABTest[]>([])
   const [selectedTest, setSelectedTest] = useState<ABTest | null>(null)

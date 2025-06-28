@@ -50,7 +50,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { cn } from '@/lib/utils';
-import { ActivityCategory, ActivitySubType } from '@/lib/integrations/pipedrive/activity-timeline';
+import { ActivityCategory, ActivitySubType } from '@/lib/integrations/pipedrive/activity-timeline-types';
 
 interface TimelineActivity {
   id: string;

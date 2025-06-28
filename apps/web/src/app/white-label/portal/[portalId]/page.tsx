@@ -11,26 +11,28 @@ import { Button } from "../../../../components/ui/button";
 import { Badge } from "../../../../components/ui/badge";
 
 interface ClientPortalPageProps {
-  params: {
+  params: Promise<{
     portalId: string;
-  };
-  searchParams: {
+  }>;
+  searchParams: Promise<{
     token?: string;
-  };
+  }>;
 }
 
-export default function ClientPortalPage({ params, searchParams }: ClientPortalPageProps) {
-  const headersList = headers();
+export default async function ClientPortalPage({ params, searchParams }: ClientPortalPageProps) {
+  const resolvedParams = await params;
+  const resolvedSearchParams = await searchParams;
+  const headersList = await headers();
   const portalId = headersList.get('x-portal-id');
   const workspaceId = headersList.get('x-workspace-id');
   
   // Validate portal access
-  if (!portalId || portalId !== params.portalId) {
-    if (searchParams.token) {
+  if (!portalId || portalId !== resolvedParams.portalId) {
+    if (resolvedSearchParams.token) {
       // Redirect to login with token
-      redirect(`/white-label/portal/${params.portalId}/login?token=${searchParams.token}`);
+      redirect(`/white-label/portal/${resolvedParams.portalId}/login?token=${resolvedSearchParams.token}`);
     } else {
-      redirect(`/white-label/portal/${params.portalId}/login`);
+      redirect(`/white-label/portal/${resolvedParams.portalId}/login`);
     }
   }
 

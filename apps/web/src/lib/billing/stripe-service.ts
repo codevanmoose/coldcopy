@@ -305,7 +305,7 @@ export class StripeBillingService {
   async cancelSubscription({
     subscriptionId,
     cancelAtPeriodEnd = true,
-    reason?: string,
+    reason
   }: {
     subscriptionId: string
     cancelAtPeriodEnd?: boolean
@@ -1593,3 +1593,6 @@ export function formatUsage(
 
 // Export singleton instance
 export const stripeBillingService = new StripeBillingService()
+
+// Export StripeService as an alias for backward compatibility
+export const StripeService = StripeBillingService

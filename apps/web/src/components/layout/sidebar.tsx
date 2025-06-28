@@ -31,6 +31,7 @@ const navigation = [
   { name: 'Sales Intelligence', href: '/intelligence', icon: Brain },
   { name: 'Privacy', href: '/privacy', icon: Shield },
   { name: 'Settings', href: '/settings', icon: Settings },
+  { name: 'Test API', href: '/test-api', icon: Activity }, // Temporary for testing
 ]
 
 const adminNavigation = [

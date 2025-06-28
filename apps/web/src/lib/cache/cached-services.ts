@@ -1,5 +1,5 @@
 import { createClient } from '@/utils/supabase/server';
-import { cache, cacheKeys, Cacheable, InvalidateCache } from './redis';
+import { cache, cacheKeys } from './redis';
 import { Lead, Campaign, CampaignEmail } from '@/types';
 
 /**
@@ -9,8 +9,15 @@ export class CachedLeadService {
   /**
    * Get lead by ID with caching
    */
-  @Cacheable({ ttl: 3600 }) // 1 hour
   static async getLeadById(leadId: string): Promise<Lead | null> {
+    const cacheKey = cacheKeys.lead(leadId);
+    
+    // Try cache first
+    const cached = await cache.get(cacheKey);
+    if (cached) {
+      return cached as Lead;
+    }
+    
     const supabase = createClient();
     
     const { data, error } = await supabase
@@ -22,6 +29,11 @@ export class CachedLeadService {
     if (error) {
       console.error('Error fetching lead:', error);
       return null;
+    }
+
+    // Cache the result
+    if (data) {
+      await cache.set(cacheKey, data, { ttl: 3600 }); // 1 hour
     }
 
     return data;
@@ -74,8 +86,13 @@ export class CachedLeadService {
   /**
    * Get lead enrichment data with caching
    */
-  @Cacheable({ ttl: 86400 }) // 24 hours
   static async getLeadEnrichment(leadId: string): Promise<any> {
+    const cacheKey = cacheKeys.leadEnrichment(leadId);
+    
+    // Try cache first
+    const cached = await cache.get(cacheKey);
+    if (cached) return cached;
+    
     const supabase = createClient();
     
     const { data, error } = await supabase
@@ -86,13 +103,19 @@ export class CachedLeadService {
 
     if (error || !data) return null;
     
-    return data.enrichment_data;
+    const enrichmentData = data.enrichment_data;
+    
+    // Cache for 24 hours
+    if (enrichmentData) {
+      await cache.set(cacheKey, enrichmentData, { ttl: 86400 });
+    }
+    
+    return enrichmentData;
   }
 
   /**
    * Create or update lead with cache invalidation
    */
-  @InvalidateCache(['leads:workspace:*', 'analytics:workspace:*'])
   static async upsertLead(lead: Partial<Lead>): Promise<Lead | null> {
     const supabase = createClient();
     
@@ -107,9 +130,29 @@ export class CachedLeadService {
       return null;
     }
 
+    // Invalidate caches
+    const keysToInvalidate = [];
+    
     // Invalidate specific lead cache
     if (data.id) {
-      await cache.delete(cacheKeys.lead(data.id));
+      keysToInvalidate.push(cacheKeys.lead(data.id));
+      keysToInvalidate.push(cacheKeys.leadEnrichment(data.id));
+    }
+    
+    // Invalidate workspace-related caches
+    if (data.workspace_id) {
+      // Get all keys matching the pattern and delete them
+      const workspacePattern = `leads:workspace:${data.workspace_id}:*`;
+      const analyticsPattern = `analytics:workspace:${data.workspace_id}:*`;
+      
+      // Note: This requires pattern-based deletion support in your cache implementation
+      // For now, we'll invalidate known keys
+      keysToInvalidate.push(cacheKeys.leadsByWorkspace(data.workspace_id, 1));
+      keysToInvalidate.push(cacheKeys.workspaceAnalytics(data.workspace_id, 'last_30_days'));
+    }
+    
+    if (keysToInvalidate.length > 0) {
+      await cache.delete(keysToInvalidate);
     }
 
     return data;
@@ -161,8 +204,13 @@ export class CachedCampaignService {
   /**
    * Get campaigns by workspace
    */
-  @Cacheable({ ttl: 600 }) // 10 minutes
   static async getCampaignsByWorkspace(workspaceId: string): Promise<Campaign[]> {
+    const cacheKey = cacheKeys.campaignsByWorkspace(workspaceId);
+    
+    // Try cache first
+    const cached = await cache.get<Campaign[]>(cacheKey);
+    if (cached) return cached;
+    
     const supabase = createClient();
     
     const { data, error } = await supabase
@@ -176,7 +224,12 @@ export class CachedCampaignService {
       return [];
     }
 
-    return data || [];
+    const campaigns = data || [];
+    
+    // Cache for 10 minutes
+    await cache.set(cacheKey, campaigns, { ttl: 600 });
+    
+    return campaigns;
   }
 
   /**
@@ -288,8 +341,13 @@ export class CachedAnalyticsService {
   /**
    * Get deliverability metrics
    */
-  @Cacheable({ ttl: 14400 }) // 4 hours
   static async getDeliverabilityMetrics(workspaceId: string): Promise<any> {
+    const cacheKey = cacheKeys.deliverabilityMetrics(workspaceId);
+    
+    // Try cache first
+    const cached = await cache.get(cacheKey);
+    if (cached) return cached;
+    
     const supabase = createClient();
     
     const { data, error } = await supabase
@@ -302,7 +360,12 @@ export class CachedAnalyticsService {
       return [];
     }
 
-    return data || [];
+    const metrics = data || [];
+    
+    // Cache for 4 hours
+    await cache.set(cacheKey, metrics, { ttl: 14400 });
+    
+    return metrics;
   }
 }
 

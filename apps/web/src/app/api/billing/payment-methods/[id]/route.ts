@@ -11,8 +11,9 @@ const stripeService = new StripeService()
 // PATCH /api/billing/payment-methods/[id] - Update payment method
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const workspaceId = request.headers.get('x-workspace-id')
     if (!workspaceId) {
@@ -37,7 +38,7 @@ export async function PATCH(
 
     // Update payment method
     const paymentMethod = await stripeService.updatePaymentMethod({
-      paymentMethodId: params.id,
+      paymentMethodId: id,
       ...body
     })
     
@@ -55,11 +56,13 @@ export async function PATCH(
   }
 }
 
+
 // DELETE /api/billing/payment-methods/[id] - Remove payment method
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const workspaceId = request.headers.get('x-workspace-id')
     if (!workspaceId) {
@@ -81,7 +84,7 @@ export async function DELETE(
     }
 
     // Remove payment method
-    await stripeService.removePaymentMethod(workspaceId, params.id)
+    await stripeService.removePaymentMethod(workspaceId, id)
     
     return NextResponse.json({ success: true })
   } catch (error: any) {
@@ -96,3 +99,4 @@ export async function DELETE(
     )
   }
 }
+

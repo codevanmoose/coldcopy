@@ -1,115 +1,116 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import React, { createContext, useContext, useEffect, useState } from 'react'
+import { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
-import { 
-  getCurrentUser, 
-  switchWorkspace as switchWorkspaceUtil,
-  checkPermission as checkPermissionUtil,
-  signOut as signOutUtil,
-  type AuthUser,
-  type UserWorkspace 
-} from '@/lib/supabase/auth'
+import { useRouter } from 'next/navigation'
 
 interface AuthContextType {
-  user: AuthUser | null
+  user: User | null
   loading: boolean
-  currentWorkspace: UserWorkspace | null
-  workspaces: UserWorkspace[]
-  switchWorkspace: (workspaceId: string) => Promise<void>
-  checkPermission: (permission: string) => Promise<boolean>
+  error: Error | null
+  signIn: (email: string, password: string) => Promise<void>
+  signUp: (email: string, password: string) => Promise<void>
   signOut: () => Promise<void>
   refreshUser: () => Promise<void>
 }
 
-const AuthContext = createContext<AuthContextType | null>(null)
+export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
-export function useAuth() {
-  const context = useContext(AuthContext)
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider')
-  }
-  return context
-}
-
-interface AuthProviderProps {
-  children: React.ReactNode
-}
-
-export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<AuthUser | null>(null)
+export function AuthProvider({ children }: { children: React.ReactNode }) {
+  const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<Error | null>(null)
   const router = useRouter()
   const supabase = createClient()
 
-  const refreshUser = useCallback(async () => {
-    try {
-      const currentUser = await getCurrentUser()
-      setUser(currentUser)
-    } catch (error) {
-      console.error('Error refreshing user:', error)
-      setUser(null)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
   useEffect(() => {
-    refreshUser()
+    // Check active sessions and sets the user
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null)
+      setLoading(false)
+    })
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        await refreshUser()
-      } else if (event === 'SIGNED_OUT') {
-        setUser(null)
-        router.push('/auth/login')
-      }
+    // Listen for changes on auth state (logged in, signed out, etc.)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null)
+      setLoading(false)
     })
 
     return () => subscription.unsubscribe()
-  }, [refreshUser, router, supabase.auth])
+  }, [])
 
-  const switchWorkspace = async (workspaceId: string) => {
-    if (!user) return
-
-    const success = await switchWorkspaceUtil(workspaceId)
-    if (success) {
-      await refreshUser()
-      router.refresh()
+  const signIn = async (email: string, password: string) => {
+    try {
+      setError(null)
+      const { error } = await supabase.auth.signInWithPassword({ email, password })
+      if (error) throw error
+      router.push('/dashboard')
+    } catch (error) {
+      setError(error as Error)
+      throw error
     }
   }
 
-  const checkPermission = async (permission: string) => {
-    if (!user?.currentWorkspace) return false
-    return await checkPermissionUtil(user.currentWorkspace.workspace_id, permission)
+  const signUp = async (email: string, password: string) => {
+    try {
+      setError(null)
+      const { error } = await supabase.auth.signUp({ email, password })
+      if (error) throw error
+    } catch (error) {
+      setError(error as Error)
+      throw error
+    }
   }
 
   const signOut = async () => {
-    await signOutUtil()
-    setUser(null)
-    router.push('/auth/login')
+    try {
+      setError(null)
+      const { error } = await supabase.auth.signOut()
+      if (error) throw error
+      router.push('/login')
+    } catch (error) {
+      setError(error as Error)
+      throw error
+    }
   }
 
-  const currentWorkspace = user?.currentWorkspace || null
-  const workspaces = user?.workspaces || []
+  const refreshUser = async () => {
+    try {
+      setError(null)
+      const { data: { user }, error } = await supabase.auth.getUser()
+      if (error) throw error
+      setUser(user)
+    } catch (error) {
+      setError(error as Error)
+      throw error
+    }
+  }
 
   return (
     <AuthContext.Provider
       value={{
         user,
         loading,
-        currentWorkspace,
-        workspaces,
-        switchWorkspace,
-        checkPermission,
+        error,
+        signIn,
+        signUp,
         signOut,
-        refreshUser
+        refreshUser,
       }}
     >
       {children}
     </AuthContext.Provider>
   )
 }
+
+export const useAuthContext = () => {
+  const context = useContext(AuthContext)
+  if (context === undefined) {
+    throw new Error('useAuthContext must be used within an AuthProvider')
+  }
+  return context
+}
+
+// Export useAuth as an alias for useAuthContext
+export const useAuth = useAuthContext

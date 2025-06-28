@@ -1,8 +1,32 @@
 {
   "crons": [
     {
-      "path": "/api/billing/trial",
+      "path": "/api/cron/billing/trial",
       "schedule": "0 9 * * *"
+    },
+    {
+      "path": "/api/cron/data-retention",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/lead-scoring",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/workflow-execution",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/cron/email-warmup",
+      "schedule": "0 8,12,16,20 * * *"
+    },
+    {
+      "path": "/api/cron/analytics-refresh",
+      "schedule": "0 */2 * * *"
+    },
+    {
+      "path": "/api/cron/cache-warming",
+      "schedule": "*/30 * * * *"
     }
   ],
   "functions": {
@@ -14,6 +38,48 @@
     },
     "app/api/enrichment/process/route.ts": {
       "maxDuration": 300
+    },
+    "app/api/ai/generate-email/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/ai/analyze-images/route.ts": {
+      "maxDuration": 120
+    },
+    "app/api/workflows/[id]/execute/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/intelligence/score/[leadId]/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/analytics/advanced/route.ts": {
+      "maxDuration": 120
+    },
+    "app/api/campaigns/multi-channel/route.ts": {
+      "maxDuration": 60
+    },
+    "app/api/integrations/hubspot/sync/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/integrations/salesforce/sync/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/leads/import/route.ts": {
+      "maxDuration": 60,
+      "memory": 3008
+    },
+    "app/api/analytics/export/route.ts": {
+      "maxDuration": 60,
+      "memory": 3008
+    },
+    "app/api/gdpr/export/route.ts": {
+      "maxDuration": 60,
+      "memory": 3008
+    },
+    "app/api/cron/*/route.ts": {
+      "maxDuration": 300
+    },
+    "app/api/email/track/*/route.ts": {
+      "maxDuration": 10
     }
   },
   "headers": [
@@ -31,8 +97,92 @@
         {
           "key": "X-XSS-Protection",
           "value": "1; mode=block"
+        },
+        {
+          "key": "Strict-Transport-Security",
+          "value": "max-age=31536000; includeSubDomains"
+        },
+        {
+          "key": "Referrer-Policy",
+          "value": "strict-origin-when-cross-origin"
+        },
+        {
+          "key": "Permissions-Policy",
+          "value": "camera=(), microphone=(), geolocation=()"
+        },
+        {
+          "key": "Access-Control-Allow-Credentials",
+          "value": "true"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version, Authorization, X-Workspace-Id, X-API-Key"
+        }
+      ]
+    },
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
+          "key": "X-Frame-Options",
+          "value": "SAMEORIGIN"
+        },
+        {
+          "key": "X-XSS-Protection",
+          "value": "1; mode=block"
+        }
+      ]
+    },
+    {
+      "source": "/service-worker.js",
+      "headers": [
+        {
+          "key": "Service-Worker-Allowed",
+          "value": "/"
+        },
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
         }
       ]
     }
-  ]
+  ],
+  "rewrites": [
+    {
+      "source": "/api/webhooks/stripe",
+      "destination": "/api/webhooks/stripe"
+    },
+    {
+      "source": "/api/webhooks/ses",
+      "destination": "/api/webhooks/email"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/home",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/app",
+      "destination": "/dashboard",
+      "permanent": false
+    }
+  ],
+  "buildCommand": "npm run build",
+  "outputDirectory": ".next",
+  "installCommand": "npm ci",
+  "framework": "nextjs",
+  "regions": ["iad1"],
+  "env": {
+    "NEXT_TELEMETRY_DISABLED": "1"
+  }
 }

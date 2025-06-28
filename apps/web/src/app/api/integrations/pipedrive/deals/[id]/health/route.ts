@@ -3,13 +3,11 @@ import { createServerClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { DealHealthOptimizer } from '@/lib/integrations/pipedrive/deal-health-optimizer';
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
   try {
     const supabase = createServerClient(cookies());
     

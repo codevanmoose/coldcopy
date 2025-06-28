@@ -5,11 +5,12 @@ import { Database } from '@/lib/supabase/database.types'
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const supabase = createServerComponentClient<Database>({ cookies })
-    const portalId = params.id
+    const portalId = id
 
     if (!portalId) {
       return NextResponse.json(
@@ -82,11 +83,12 @@ export async function DELETE(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const supabase = createServerComponentClient<Database>({ cookies })
-    const portalId = params.id
+    const portalId = id
     const body = await request.json()
 
     if (!portalId) {
@@ -165,11 +167,12 @@ export async function PUT(
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const supabase = createServerComponentClient<Database>({ cookies })
-    const portalId = params.id
+    const portalId = id
 
     if (!portalId) {
       return NextResponse.json(

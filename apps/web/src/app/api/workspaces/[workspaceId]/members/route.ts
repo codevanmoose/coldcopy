@@ -3,8 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { workspaceId: string } }
+  { params }: { params: Promise<{ workspaceId: string }> }
 ) {
+  const { workspaceId } = await params;
   try {
     const supabase = await createClient()
     
@@ -20,7 +21,7 @@ export async function GET(
     const { data: membership } = await supabase
       .from('workspace_members')
       .select('id')
-      .eq('workspace_id', params.workspaceId)
+      .eq('workspace_id', workspaceId)
       .eq('user_id', user.id)
       .single()
 
@@ -46,7 +47,7 @@ export async function GET(
           avatar_url
         )
       `)
-      .eq('workspace_id', params.workspaceId)
+      .eq('workspace_id', workspaceId)
       .order('joined_at', { ascending: true })
 
     if (error) {

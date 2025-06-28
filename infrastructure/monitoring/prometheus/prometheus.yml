@@ -1,0 +1,136 @@
+# Prometheus configuration for ColdCopy monitoring
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'coldcopy-production'
+    environment: 'production'
+
+rule_files:
+  - "/etc/prometheus/rules/*.yml"
+
+scrape_configs:
+  # ColdCopy application metrics
+  - job_name: 'coldcopy-app'
+    scrape_interval: 30s
+    scrape_timeout: 10s
+    metrics_path: '/api/metrics'
+    scheme: 'https'
+    static_configs:
+      - targets:
+          - 'coldcopy.cc'
+    authorization:
+      credentials: '${PROMETHEUS_AUTH_TOKEN}'
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: __param_target
+      - source_labels: [__param_target]
+        target_label: instance
+      - target_label: __address__
+        replacement: 'coldcopy.cc'
+
+  # Node.js process metrics (if available)
+  - job_name: 'coldcopy-nodejs'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - 'api.coldcopy.cc:9464'  # Default Node.js metrics port
+    scrape_timeout: 10s
+    honor_labels: true
+    
+  # Digital Ocean Droplet metrics (via node_exporter)
+  - job_name: 'node-exporter'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - 'api.coldcopy.cc:9100'  # Node exporter port
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: '([^:]+):.+'
+        target_label: instance
+        replacement: '${1}'
+
+  # Redis metrics (if Redis exporter is available)
+  - job_name: 'redis'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - 'api.coldcopy.cc:9121'  # Redis exporter port
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: '([^:]+):.+'
+        target_label: instance
+        replacement: '${1}'
+
+  # PostgreSQL metrics (if postgres_exporter is available)
+  - job_name: 'postgres'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - 'api.coldcopy.cc:9187'  # Postgres exporter port
+    relabel_configs:
+      - source_labels: [__address__]
+        regex: '([^:]+):.+'
+        target_label: instance
+        replacement: '${1}'
+
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - 'localhost:9090'
+
+  # Grafana metrics
+  - job_name: 'grafana'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - 'localhost:3000'
+    metrics_path: '/metrics'
+
+  # Alertmanager metrics
+  - job_name: 'alertmanager'
+    scrape_interval: 30s
+    static_configs:
+      - targets:
+          - 'localhost:9093'
+
+# Alerting configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - 'localhost:9093'
+
+# Storage configuration
+storage:
+  tsdb:
+    path: /prometheus/data
+    retention.time: 30d
+    retention.size: 10GB
+    wal-compression: true
+
+# Remote write configuration (for long-term storage)
+remote_write:
+  - url: 'https://prometheus-blocks-prod-us-central1.grafana.net/api/prom/push'
+    basic_auth:
+      username: '${GRAFANA_CLOUD_USERNAME}'
+      password: '${GRAFANA_CLOUD_API_KEY}'
+    queue_config:
+      capacity: 10000
+      max_shards: 200
+      min_shards: 1
+      max_samples_per_send: 1000
+      batch_send_deadline: 5s
+      min_backoff: 30ms
+      max_backoff: 100ms
+
+# Web configuration
+web:
+  listen-address: '0.0.0.0:9090'
+  external-url: 'https://prometheus.coldcopy.cc'
+  route-prefix: '/'
+  enable-lifecycle: true
+  enable-admin-api: true

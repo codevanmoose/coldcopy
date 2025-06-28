@@ -47,7 +47,8 @@ import {
   ExternalLink,
   User,
   Filter,
-  Search
+  Search,
+  Clock
 } from 'lucide-react'
 import { DateRange } from 'react-day-picker'
 import { formatDistanceToNow, format, subDays } from 'date-fns'
@@ -555,85 +556,87 @@ export function ReplyDetectionDashboard({ workspaceId }: ReplyDetectionDashboard
               </div>
             </div>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Lead</TableHead>
-                  <TableHead>Subject</TableHead>
-                  <TableHead>Type</TableHead>
-                  <TableHead className="text-center">Score</TableHead>
-                  <TableHead>Campaign</TableHead>
-                  <TableHead>Time</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {recentReplies?.map((reply) => (
-                  <TableRow key={reply.id}>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="font-medium">{reply.lead_name || 'Unknown'}</p>
-                          <p className="text-sm text-muted-foreground">{reply.lead_email}</p>
+            <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Lead</TableHead>
+                    <TableHead>Subject</TableHead>
+                    <TableHead>Type</TableHead>
+                    <TableHead className="text-center">Score</TableHead>
+                    <TableHead>Campaign</TableHead>
+                    <TableHead>Time</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {recentReplies?.map((reply) => (
+                    <TableRow key={reply.id}>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          <User className="h-4 w-4 text-muted-foreground" />
+                          <div>
+                            <p className="font-medium">{reply.lead_name || 'Unknown'}</p>
+                            <p className="text-sm text-muted-foreground">{reply.lead_email}</p>
+                          </div>
                         </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <p className="max-w-[300px] truncate">{reply.subject}</p>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        {getReplyTypeIcon(reply.reply_type)}
-                        {getReplyTypeBadge(reply.reply_type)}
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-center">
-                      <span className={cn("font-semibold", getScoreColor(reply.reply_score))}>
-                        {reply.reply_score}
-                      </span>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-sm">{reply.campaign_name || 'N/A'}</p>
-                    </TableCell>
-                    <TableCell>
-                      <p className="text-sm text-muted-foreground">
-                        {formatDistanceToNow(new Date(reply.timestamp), { addSuffix: true })}
-                      </p>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        {reply.thread_id && (
+                      </TableCell>
+                      <TableCell>
+                        <p className="max-w-[300px] truncate">{reply.subject}</p>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2">
+                          {getReplyTypeIcon(reply.reply_type)}
+                          {getReplyTypeBadge(reply.reply_type)}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-center">
+                        <span className={cn("font-semibold", getScoreColor(reply.reply_score))}>
+                          {reply.reply_score}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-sm">{reply.campaign_name || 'N/A'}</p>
+                      </TableCell>
+                      <TableCell>
+                        <p className="text-sm text-muted-foreground">
+                          {formatDistanceToNow(new Date(reply.timestamp), { addSuffix: true })}
+                        </p>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          {reply.thread_id && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => window.open(`/inbox?thread=${reply.thread_id}`, '_blank')}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => window.open(`/inbox?thread=${reply.thread_id}`, '_blank')}
+                            onClick={() => window.open(`/leads/${reply.lead_id}`, '_blank')}
                           >
-                            <Eye className="h-4 w-4" />
+                            <ExternalLink className="h-4 w-4" />
                           </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => window.open(`/leads/${reply.lead_id}`, '_blank')}
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
 
-            {(!recentReplies || recentReplies.length === 0) && (
-              <div className="text-center py-8 text-muted-foreground">
-                No replies found matching your filters
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+              {(!recentReplies || recentReplies.length === 0) && (
+                <div className="text-center py-8 text-muted-foreground">
+                  No replies found matching your filters
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
     </div>
   )
 }

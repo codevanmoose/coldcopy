@@ -1,0 +1,24 @@
+# Development Dockerfile for ColdCopy
+# This includes hot-reloading and development tools
+
+FROM node:20-alpine
+
+# Install dependencies for building native modules
+RUN apk add --no-cache libc6-compat python3 make g++
+
+WORKDIR /app
+
+# Copy package files
+COPY package.json package-lock.json ./
+
+# Install dependencies
+RUN npm ci
+
+# Copy application code
+COPY . .
+
+# Expose ports
+EXPOSE 3000
+
+# Development command
+CMD ["npm", "run", "dev"]

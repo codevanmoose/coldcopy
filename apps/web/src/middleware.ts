@@ -2,6 +2,9 @@ import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { DomainResolver, createDomainResolver } from './lib/white-label/domain-resolver'
 import { gdprMiddleware, shouldShowCookieBanner } from './middleware/gdpr'
+import { checkRateLimit, RATE_LIMITS } from './lib/security/rate-limiter'
+import { ApiKeyManager } from './lib/security/api-keys'
+import { MetricsCollector, rateLimitHits } from './lib/monitoring/metrics'
 
 // Create domain resolver instance (shared across requests)
 const domainResolver = createDomainResolver({
@@ -10,53 +13,30 @@ const domainResolver = createDomainResolver({
   maxRetries: 3,
 })
 
-// Rate limiting for security
-const rateLimitMap = new Map<string, { count: number; resetTime: number }>()
-const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
-const RATE_LIMIT_MAX_REQUESTS = 100
+// Paths that allow API key authentication
+const API_KEY_ALLOWED_PATHS = [
+  '/api/leads',
+  '/api/campaigns',
+  '/api/analytics',
+  '/api/email',
+  '/api/webhooks',
+]
 
 export async function middleware(request: NextRequest) {
   const startTime = Date.now()
+  const pathname = request.nextUrl.pathname
   
   try {
     // ====================================
     // 1. Rate Limiting & Security
     // ====================================
     
-    const clientIP = request.ip || request.headers.get('x-forwarded-for') || 'unknown'
-    const now = Date.now()
-    
-    // Clean up expired rate limit entries
-    for (const [ip, data] of rateLimitMap.entries()) {
-      if (now > data.resetTime) {
-        rateLimitMap.delete(ip)
+    // Apply advanced rate limiting to API routes
+    if (pathname.startsWith('/api/')) {
+      const rateLimitResponse = await applyRateLimit(request, pathname)
+      if (rateLimitResponse) {
+        return rateLimitResponse
       }
-    }
-    
-    // Check rate limit
-    const rateLimit = rateLimitMap.get(clientIP)
-    if (rateLimit) {
-      if (now < rateLimit.resetTime) {
-        rateLimit.count++
-        if (rateLimit.count > RATE_LIMIT_MAX_REQUESTS) {
-          return new NextResponse('Too Many Requests', { 
-            status: 429,
-            headers: {
-              'Retry-After': String(Math.ceil((rateLimit.resetTime - now) / 1000)),
-            },
-          })
-        }
-      } else {
-        // Reset window
-        rateLimit.count = 1
-        rateLimit.resetTime = now + RATE_LIMIT_WINDOW
-      }
-    } else {
-      // First request from this IP
-      rateLimitMap.set(clientIP, {
-        count: 1,
-        resetTime: now + RATE_LIMIT_WINDOW,
-      })
     }
 
     // ====================================
@@ -64,7 +44,6 @@ export async function middleware(request: NextRequest) {
     // ====================================
     
     const domainContext = await domainResolver.resolveDomain(request)
-    const pathname = request.nextUrl.pathname
 
     // ====================================
     // 3. Security Validation
@@ -76,6 +55,14 @@ export async function middleware(request: NextRequest) {
       if (!isValidOwnership) {
         console.warn(`Invalid domain ownership: ${domainContext.domain}`)
         return new NextResponse('Domain not verified', { status: 403 })
+      }
+    }
+    
+    // Check API key authentication for API routes
+    if (pathname.startsWith('/api/') && isApiKeyAllowedPath(pathname)) {
+      const apiKeyResponse = await checkApiKeyAuth(request, pathname)
+      if (apiKeyResponse) {
+        return apiKeyResponse
       }
     }
 
@@ -266,11 +253,11 @@ export async function middleware(request: NextRequest) {
               }
             }
             
-            // Add subscription info to headers
-            headers.set('x-subscription-status', subscription.status)
-            headers.set('x-subscription-plan', subscription.plan?.slug || 'none')
+            // Store subscription info to add to headers later
+            supabaseResponse.headers.set('x-subscription-status', subscription.status)
+            supabaseResponse.headers.set('x-subscription-plan', subscription.plan?.slug || 'none')
             if (trialEnd) {
-              headers.set('x-trial-end', trialEnd.toISOString())
+              supabaseResponse.headers.set('x-trial-end', trialEnd.toISOString())
             }
           }
         } catch (error) {
@@ -322,7 +309,34 @@ export async function middleware(request: NextRequest) {
     // Security headers
     headers.set('x-frame-options', 'DENY')
     headers.set('x-content-type-options', 'nosniff')
+    headers.set('x-xss-protection', '1; mode=block')
     headers.set('referrer-policy', 'strict-origin-when-cross-origin')
+    headers.set('permissions-policy', 'camera=(), microphone=(), geolocation=()')
+    
+    // Content Security Policy
+    const csp = [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com https://cdn.jsdelivr.net",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+      "font-src 'self' https://fonts.gstatic.com",
+      "img-src 'self' data: https: blob:",
+      "connect-src 'self' https://api.stripe.com https://*.supabase.co wss://*.supabase.co https://api.openai.com https://api.anthropic.com",
+      "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+      "object-src 'none'",
+      "base-uri 'self'",
+      "form-action 'self'",
+      "frame-ancestors 'none'",
+    ].join('; ')
+    
+    headers.set('content-security-policy', csp)
+    
+    // HSTS (only in production)
+    if (process.env.NODE_ENV === 'production') {
+      headers.set(
+        'strict-transport-security',
+        'max-age=31536000; includeSubDomains; preload'
+      )
+    }
     
     // Workspace context for all authenticated requests
     if (workspaceId) {
@@ -361,10 +375,43 @@ export async function middleware(request: NextRequest) {
       domainResolver.cleanupCache()
     }
 
+    // ====================================
+    // 11. Metrics Collection
+    // ====================================
+    
+    // Record HTTP request metrics
+    const responseTime = Date.now() - startTime
+    const statusCode = finalResponse.status
+    
+    MetricsCollector.recordHttpRequest(
+      request.method,
+      pathname,
+      statusCode,
+      responseTime,
+      workspaceId
+    )
+    
+    // Record API usage if this was an API request
+    if (pathname.startsWith('/api/')) {
+      MetricsCollector.recordApiUsage(
+        pathname,
+        request.method,
+        workspaceId,
+        request.headers.get('X-API-Key-Id') || undefined
+      )
+    }
+
     return finalResponse
 
   } catch (error) {
     console.error('Middleware error:', error)
+    
+    // Record error metrics
+    MetricsCollector.recordError(
+      'middleware_error',
+      pathname,
+      'error'
+    )
     
     // Return a fallback response
     return NextResponse.next({
@@ -379,6 +426,163 @@ export async function middleware(request: NextRequest) {
 // ====================================
 // Helper Functions
 // ====================================
+
+/**
+ * Apply rate limiting based on route
+ */
+async function applyRateLimit(
+  request: NextRequest,
+  pathname: string
+): Promise<Response | null> {
+  // Determine rate limit config based on path
+  let config;
+  
+  if (pathname.startsWith('/api/auth/signin')) {
+    config = RATE_LIMITS.auth.signin;
+  } else if (pathname.startsWith('/api/auth/signup')) {
+    config = RATE_LIMITS.auth.signup;
+  } else if (pathname.startsWith('/api/auth/reset-password')) {
+    config = RATE_LIMITS.auth.passwordReset;
+  } else if (pathname.startsWith('/api/enrichment')) {
+    config = RATE_LIMITS.api.enrichment;
+  } else if (pathname.startsWith('/api/ai')) {
+    config = RATE_LIMITS.api.ai;
+  } else if (pathname.startsWith('/api/export')) {
+    config = RATE_LIMITS.api.export;
+  } else if (pathname.startsWith('/api/upload')) {
+    config = RATE_LIMITS.api.upload;
+  } else if (pathname.startsWith('/api/email/track')) {
+    config = RATE_LIMITS.public.tracking;
+  } else if (pathname.startsWith('/api/unsubscribe')) {
+    config = RATE_LIMITS.public.unsubscribe;
+  } else if (pathname.startsWith('/api/webhooks')) {
+    config = RATE_LIMITS.webhooks.default;
+  } else if (pathname.startsWith('/api/leads')) {
+    config = RATE_LIMITS.api.leads;
+  } else if (pathname.startsWith('/api/campaigns')) {
+    config = RATE_LIMITS.api.campaigns;
+  } else {
+    config = RATE_LIMITS.api.default;
+  }
+
+  const rateLimitResult = await checkRateLimit(request, config);
+  
+  // Record rate limit hit if request was blocked
+  if (rateLimitResult && rateLimitResult.status === 429) {
+    rateLimitHits.labels(pathname, 'user').inc();
+  }
+  
+  return rateLimitResult;
+}
+
+/**
+ * Check if path allows API key authentication
+ */
+function isApiKeyAllowedPath(pathname: string): boolean {
+  return API_KEY_ALLOWED_PATHS.some(path => pathname.startsWith(path));
+}
+
+/**
+ * Extract API key from request
+ */
+function extractApiKey(request: NextRequest): string | null {
+  // Check Authorization header
+  const authHeader = request.headers.get('authorization');
+  if (authHeader?.startsWith('Bearer cc_')) {
+    return authHeader.substring(7); // Remove 'Bearer ' prefix
+  }
+  
+  // Check X-API-Key header
+  const apiKeyHeader = request.headers.get('x-api-key');
+  if (apiKeyHeader?.startsWith('cc_')) {
+    return apiKeyHeader;
+  }
+  
+  return null;
+}
+
+/**
+ * Check API key authentication
+ */
+async function checkApiKeyAuth(
+  request: NextRequest,
+  pathname: string
+): Promise<Response | null> {
+  const apiKey = extractApiKey(request);
+  
+  if (!apiKey) {
+    return null; // No API key provided, continue with regular auth
+  }
+  
+  const validation = await ApiKeyManager.validateApiKey(apiKey);
+  
+  if (!validation.valid) {
+    return new Response(
+      JSON.stringify({ error: validation.error || 'Invalid API key' }),
+      { status: 401, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  // Check scope
+  const requiredScope = getRequiredScope(pathname, request.method);
+  if (requiredScope && !ApiKeyManager.hasScope(validation.apiKey!, requiredScope)) {
+    return new Response(
+      JSON.stringify({ error: 'Insufficient permissions' }),
+      { status: 403, headers: { 'Content-Type': 'application/json' } }
+    );
+  }
+  
+  // Add API key context to headers
+  request.headers.set('X-API-Key-Id', validation.apiKey!.id);
+  request.headers.set('X-Workspace-Id', validation.apiKey!.workspace_id);
+  request.headers.set('X-API-Key-Auth', 'true');
+  
+  return null; // Authentication successful
+}
+
+/**
+ * Get required scope for API endpoint
+ */
+function getRequiredScope(pathname: string, method: string): string | null {
+  if (pathname.startsWith('/api/leads')) {
+    if (method === 'GET') return 'leads.read';
+    if (method === 'POST' || method === 'PUT' || method === 'PATCH') return 'leads.write';
+    if (method === 'DELETE') return 'leads.delete';
+    if (pathname.includes('/import')) return 'leads.import';
+    if (pathname.includes('/export')) return 'leads.export';
+    if (pathname.includes('/enrich')) return 'leads.enrich';
+  }
+  
+  if (pathname.startsWith('/api/campaigns')) {
+    if (method === 'GET') return 'campaigns.read';
+    if (method === 'POST' || method === 'PUT' || method === 'PATCH') return 'campaigns.write';
+    if (method === 'DELETE') return 'campaigns.delete';
+    if (pathname.includes('/send')) return 'campaigns.send';
+  }
+  
+  if (pathname.startsWith('/api/email')) {
+    if (pathname.includes('/send')) return 'email.send';
+    if (pathname.includes('/track')) return 'email.track';
+    return 'email.read';
+  }
+  
+  if (pathname.startsWith('/api/analytics')) {
+    return 'analytics.read';
+  }
+  
+  if (pathname.startsWith('/api/workspace')) {
+    if (method === 'GET') return 'workspace.read';
+    if (pathname.includes('/members')) return 'workspace.members';
+    return 'workspace.write';
+  }
+  
+  if (pathname.startsWith('/api/webhooks')) {
+    if (method === 'GET') return 'webhooks.read';
+    return 'webhooks.write';
+  }
+  
+  return null;
+}
 
 /**
  * Validate portal access using access token

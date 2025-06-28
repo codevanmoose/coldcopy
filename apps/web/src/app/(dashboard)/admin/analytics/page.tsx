@@ -10,7 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Progress } from "@/components/ui/progress"
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  LineChart, Line, PieChart, Pie, Cell, AreaChart, Area, ScatterPlot, Scatter
+  LineChart, Line, PieChart, Pie, Cell, AreaChart, Area, Scatter
 } from "recharts"
 import { 
   Users, Mail, DollarSign, Database, Activity, TrendingUp, 

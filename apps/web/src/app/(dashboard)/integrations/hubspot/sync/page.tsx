@@ -297,104 +297,106 @@ export default function HubSpotSyncPage() {
                   </p>
                 ) : (
                   syncJobs.map(job => (
-                    <div
-                      key={job.id}
-                      className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-muted/50"
-                      onClick={() => setSelectedJob(selectedJob === job.id ? null : job.id)}
-                    >
-                      <div className="flex items-center space-x-4">
-                        <div className={`p-2 rounded-full ${getStatusColor(job.status)}`}>
-                          {getStatusIcon(job.status)}
+                    <>
+                      <div
+                        key={job.id}
+                        className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-muted/50"
+                        onClick={() => setSelectedJob(selectedJob === job.id ? null : job.id)}
+                      >
+                        <div className="flex items-center space-x-4">
+                          <div className={`p-2 rounded-full ${getStatusColor(job.status)}`}>
+                            {getStatusIcon(job.status)}
+                          </div>
+                          <div>
+                            <div className="flex items-center space-x-2">
+                              <span className="font-medium capitalize">
+                                {job.object_type}
+                              </span>
+                              <Badge variant="outline" className="text-xs">
+                                {job.direction}
+                              </Badge>
+                            </div>
+                            <p className="text-sm text-muted-foreground">
+                              {formatDistanceToNow(new Date(job.created_at))} ago
+                            </p>
+                          </div>
                         </div>
-                        <div>
+
+                        <div className="text-right">
                           <div className="flex items-center space-x-2">
-                            <span className="font-medium capitalize">
-                              {job.object_type}
+                            <span className="text-sm">
+                              {job.records_success || 0} / {job.records_processed || 0}
                             </span>
-                            <Badge variant="outline" className="text-xs">
-                              {job.direction}
+                            <Badge 
+                              variant={job.status === 'completed' ? 'default' : 
+                                     job.status === 'failed' ? 'destructive' : 'secondary'}
+                            >
+                              {job.status}
                             </Badge>
                           </div>
-                          <p className="text-sm text-muted-foreground">
-                            {formatDistanceToNow(new Date(job.created_at))} ago
-                          </p>
+                          {job.status === 'completed' && job.records_processed > 0 && (
+                            <Progress 
+                              value={(job.records_success / job.records_processed) * 100}
+                              className="w-20 h-2 mt-1"
+                            />
+                          )}
                         </div>
                       </div>
 
-                      <div className="text-right">
-                        <div className="flex items-center space-x-2">
-                          <span className="text-sm">
-                            {job.records_success || 0} / {job.records_processed || 0}
-                          </span>
-                          <Badge 
-                            variant={job.status === 'completed' ? 'default' : 
-                                   job.status === 'failed' ? 'destructive' : 'secondary'}
-                          >
-                            {job.status}
-                          </Badge>
-                        </div>
-                        {job.status === 'completed' && job.records_processed > 0 && (
-                          <Progress 
-                            value={(job.records_success / job.records_processed) * 100}
-                            className="w-20 h-2 mt-1"
-                          />
-                        )}
-                      </div>
-                    </div>
-
-                    {selectedJob === job.id && (
-                      <div className="ml-12 p-4 bg-muted rounded-lg space-y-2">
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <span className="font-medium">Started:</span>
-                            <p>{new Date(job.created_at).toLocaleString()}</p>
-                          </div>
-                          {job.completed_at && (
+                      {selectedJob === job.id && (
+                        <div className="ml-12 p-4 bg-muted rounded-lg space-y-2">
+                          <div className="grid grid-cols-2 gap-4 text-sm">
                             <div>
-                              <span className="font-medium">Completed:</span>
-                              <p>{new Date(job.completed_at).toLocaleString()}</p>
+                              <span className="font-medium">Started:</span>
+                              <p>{new Date(job.created_at).toLocaleString()}</p>
+                            </div>
+                            {job.completed_at && (
+                              <div>
+                                <span className="font-medium">Completed:</span>
+                                <p>{new Date(job.completed_at).toLocaleString()}</p>
+                              </div>
+                            )}
+                            <div>
+                              <span className="font-medium">Records Processed:</span>
+                              <p>{job.records_processed || 0}</p>
+                            </div>
+                            <div>
+                              <span className="font-medium">Success Rate:</span>
+                              <p>
+                                {job.records_processed > 0 
+                                  ? `${Math.round((job.records_success / job.records_processed) * 100)}%`
+                                  : 'N/A'
+                                }
+                              </p>
+                            </div>
+                          </div>
+                          
+                          {job.error_message && (
+                            <div className="mt-3">
+                              <span className="font-medium text-destructive">Error:</span>
+                              <p className="text-sm text-muted-foreground mt-1">
+                                {job.error_message}
+                              </p>
                             </div>
                           )}
-                          <div>
-                            <span className="font-medium">Records Processed:</span>
-                            <p>{job.records_processed || 0}</p>
-                          </div>
-                          <div>
-                            <span className="font-medium">Success Rate:</span>
-                            <p>
-                              {job.records_processed > 0 
-                                ? `${Math.round((job.records_success / job.records_processed) * 100)}%`
-                                : 'N/A'
-                              }
-                            </p>
-                          </div>
-                        </div>
-                        
-                        {job.error_message && (
-                          <div className="mt-3">
-                            <span className="font-medium text-destructive">Error:</span>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              {job.error_message}
-                            </p>
-                          </div>
-                        )}
 
-                        {job.status === 'failed' && (
-                          <Button 
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              triggerSync(job.object_type, job.direction)
-                            }}
-                            size="sm" 
-                            variant="outline"
-                            className="mt-2"
-                          >
-                            <RefreshCw className="h-3 w-3 mr-2" />
-                            Retry
-                          </Button>
-                        )}
-                      </div>
-                    )}
+                          {job.status === 'failed' && (
+                            <Button 
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                triggerSync(job.object_type, job.direction)
+                              }}
+                              size="sm" 
+                              variant="outline"
+                              className="mt-2"
+                            >
+                              <RefreshCw className="h-3 w-3 mr-2" />
+                              Retry
+                            </Button>
+                          )}
+                        </div>
+                      )}
+                    </>
                   ))
                 )}
               </div>

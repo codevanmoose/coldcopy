@@ -1,6 +1,7 @@
 # Vercel ignore file
 .env.local
 .env
+.env.production
 node_modules
 .next
 coverage
@@ -8,3 +9,40 @@ coverage
 *.log
 .vscode
 .idea
+
+# Test files
+__tests__
+e2e
+tests
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+jest.config.js
+playwright.config.ts
+
+# Documentation
+docs
+*.md
+!README.md
+
+# Scripts
+scripts
+!scripts/verify-env.ts
+
+# Development files
+.eslintrc.json
+.prettierrc
+tsconfig.test.json
+
+# Git
+.git
+.gitignore
+
+# CI/CD
+.github
+
+# Examples
+*.example
+.env.example
+.env.production.example

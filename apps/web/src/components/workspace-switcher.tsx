@@ -18,25 +18,15 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover'
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
-import { Input } from '@/components/ui/input'
 import { useWorkspaces } from '@/hooks/use-user'
 import { useRouter } from 'next/navigation'
+import { CreateWorkspaceDialog } from '@/components/workspace/create-workspace-dialog'
 
 export function WorkspaceSwitcher() {
   const router = useRouter()
   const { workspaces, currentWorkspace, switchWorkspace } = useWorkspaces()
   const [open, setOpen] = useState(false)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
-  const [newWorkspaceName, setNewWorkspaceName] = useState('')
   const [loading, setLoading] = useState(false)
 
   const handleWorkspaceSwitch = async (workspaceId: string) => {
@@ -52,35 +42,6 @@ export function WorkspaceSwitcher() {
     router.refresh()
   }
 
-  const handleCreateWorkspace = async () => {
-    if (!newWorkspaceName.trim()) return
-
-    setLoading(true)
-    try {
-      const response = await fetch('/api/workspaces', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: newWorkspaceName,
-          slug: newWorkspaceName.toLowerCase().replace(/\s+/g, '-'),
-        }),
-      })
-
-      if (response.ok) {
-        const { workspace } = await response.json()
-        setShowCreateDialog(false)
-        setNewWorkspaceName('')
-        await switchWorkspace(workspace.id)
-        router.refresh()
-      }
-    } catch (error) {
-      console.error('Failed to create workspace:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
 
   return (
     <>
@@ -141,43 +102,13 @@ export function WorkspaceSwitcher() {
         </PopoverContent>
       </Popover>
 
-      <Dialog open={showCreateDialog} onOpenChange={setShowCreateDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Create workspace</DialogTitle>
-            <DialogDescription>
-              Add a new workspace to manage separate projects or teams.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="workspace-name">Workspace name</Label>
-              <Input
-                id="workspace-name"
-                placeholder="My Company"
-                value={newWorkspaceName}
-                onChange={(e) => setNewWorkspaceName(e.target.value)}
-                disabled={loading}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setShowCreateDialog(false)}
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleCreateWorkspace}
-              disabled={loading || !newWorkspaceName.trim()}
-            >
-              Create workspace
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <CreateWorkspaceDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        onSuccess={() => {
+          router.refresh()
+        }}
+      />
     </>
   )
 }

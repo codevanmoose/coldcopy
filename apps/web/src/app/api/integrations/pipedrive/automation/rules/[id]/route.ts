@@ -3,13 +3,11 @@ import { createServerClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { PipelineAutomationEngine } from '@/lib/integrations/pipedrive/pipeline-automation';
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
   try {
     const supabase = createServerClient(cookies());
     

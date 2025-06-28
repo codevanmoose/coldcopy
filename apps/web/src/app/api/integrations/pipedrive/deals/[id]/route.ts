@@ -3,13 +3,11 @@ import { createServerClient } from '@/lib/supabase/server';
 import { cookies } from 'next/headers';
 import { PipedriveDealManager } from '@/lib/integrations/pipedrive/deal-manager';
 
-interface RouteParams {
-  params: {
-    id: string;
-  };
-}
-
-export async function GET(request: NextRequest, { params }: RouteParams) {
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
   try {
     const supabase = createServerClient(cookies());
     
@@ -33,7 +31,7 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
     const workspaceId = workspace.workspace_id;
     const dealManager = new PipedriveDealManager(workspaceId);
     
-    const dealId = parseInt(params.id);
+    const dealId = parseInt(id);
     if (isNaN(dealId)) {
       return NextResponse.json({ error: 'Invalid deal ID' }, { status: 400 });
     }
@@ -50,7 +48,11 @@ export async function GET(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function PUT(request: NextRequest, { params }: RouteParams) {
+export async function PUT(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
   try {
     const supabase = createServerClient(cookies());
     
@@ -74,7 +76,7 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
     const workspaceId = workspace.workspace_id;
     const dealManager = new PipedriveDealManager(workspaceId);
     
-    const dealId = parseInt(params.id);
+    const dealId = parseInt(id);
     if (isNaN(dealId)) {
       return NextResponse.json({ error: 'Invalid deal ID' }, { status: 400 });
     }
@@ -92,7 +94,11 @@ export async function PUT(request: NextRequest, { params }: RouteParams) {
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: RouteParams) {
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
   try {
     const supabase = createServerClient(cookies());
     
@@ -116,7 +122,7 @@ export async function DELETE(request: NextRequest, { params }: RouteParams) {
     const workspaceId = workspace.workspace_id;
     const dealManager = new PipedriveDealManager(workspaceId);
     
-    const dealId = parseInt(params.id);
+    const dealId = parseInt(id);
     if (isNaN(dealId)) {
       return NextResponse.json({ error: 'Invalid deal ID' }, { status: 400 });
     }

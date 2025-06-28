@@ -1,0 +1,54 @@
+# Worker Dockerfile for ColdCopy Background Jobs
+# Optimized for running Bull Queue workers
+
+FROM node:20-alpine AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Copy package files
+COPY apps/web/package.json apps/web/package-lock.json ./
+RUN npm ci --only=production
+
+# Builder stage
+FROM node:20-alpine AS builder
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Copy dependencies
+COPY --from=deps /app/node_modules ./node_modules
+COPY apps/web/package.json apps/web/package-lock.json ./
+
+# Copy source code
+COPY apps/web/src ./src
+COPY apps/web/workers ./workers
+COPY apps/web/tsconfig.json ./
+
+# Build TypeScript
+RUN npm install -g typescript
+RUN tsc --project tsconfig.json --outDir dist
+
+# Production stage
+FROM node:20-alpine AS runner
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+
+# Create non-root user
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 worker
+
+# Copy compiled code and dependencies
+COPY --from=builder /app/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package.json ./
+
+# Set permissions
+RUN chown -R worker:nodejs /app
+
+# Switch to non-root user
+USER worker
+
+# Environment variables
+ENV NODE_ENV production
+
+# The specific worker will be specified in the command
+# e.g., CMD ["node", "dist/workers/email-worker.js"]

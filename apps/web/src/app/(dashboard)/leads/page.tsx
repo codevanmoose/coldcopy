@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { createClient } from '@/lib/supabase/client'
 import { useAuthStore } from '@/stores/auth'
+import { api } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -45,6 +45,7 @@ import { Lead, LeadStatus } from '@coldcopy/database'
 import { ImportLeadsDialog } from '@/components/leads/import-leads-dialog'
 import { GenerateEmailDialog } from '@/components/ai/generate-email-dialog'
 import { LeadEnrichment } from '@/components/leads/lead-enrichment'
+import { LeadFormDialog } from '@/components/leads/lead-form-dialog'
 import { format } from 'date-fns'
 
 const statusIcons = {
@@ -69,8 +70,9 @@ export default function LeadsPage() {
   const { workspace } = useAuthStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [importOpen, setImportOpen] = useState(false)
+  const [createOpen, setCreateOpen] = useState(false)
+  const [editingLead, setEditingLead] = useState<Lead | null>(null)
   const [selectedLeads, setSelectedLeads] = useState<string[]>([])
-  const supabase = createClient()
   const queryClient = useQueryClient()
 
   const { data: leads, isLoading, refetch } = useQuery({
@@ -78,34 +80,26 @@ export default function LeadsPage() {
     queryFn: async () => {
       if (!workspace) return []
       
-      let query = supabase
-        .from('leads')
-        .select('*')
-        .eq('workspace_id', workspace.id)
-        .order('created_at', { ascending: false })
-
+      const params: any = {}
       if (searchQuery) {
-        query = query.or(
-          `email.ilike.%${searchQuery}%,first_name.ilike.%${searchQuery}%,last_name.ilike.%${searchQuery}%,company.ilike.%${searchQuery}%`
-        )
+        params.search = searchQuery
       }
 
-      const { data, error } = await query
+      const response = await api.leads.list(workspace.id, params)
 
-      if (error) throw error
-      return data as Lead[]
+      if (response.error) throw new Error(response.error)
+      return response.data as Lead[]
     },
     enabled: !!workspace,
   })
 
   const updateStatusMutation = useMutation({
     mutationFn: async ({ leadId, status }: { leadId: string; status: LeadStatus }) => {
-      const { error } = await supabase
-        .from('leads')
-        .update({ status })
-        .eq('id', leadId)
-
-      if (error) throw error
+      if (!workspace) throw new Error('No workspace')
+      
+      const response = await api.leads.update(workspace.id, leadId, { status })
+      
+      if (response.error) throw new Error(response.error)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] })
@@ -118,12 +112,14 @@ export default function LeadsPage() {
 
   const deleteLeadsMutation = useMutation({
     mutationFn: async (leadIds: string[]) => {
-      const { error } = await supabase
-        .from('leads')
-        .delete()
-        .in('id', leadIds)
-
-      if (error) throw error
+      if (!workspace) throw new Error('No workspace')
+      
+      // Delete leads one by one (or we could add a bulk delete endpoint)
+      const promises = leadIds.map(id => api.leads.delete(workspace.id, id))
+      const results = await Promise.all(promises)
+      
+      const hasError = results.some(r => r.error)
+      if (hasError) throw new Error('Failed to delete some leads')
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['leads'] })
@@ -229,9 +225,13 @@ export default function LeadsPage() {
             <Download className="mr-2 h-4 w-4" />
             Export
           </Button>
-          <Button onClick={() => setImportOpen(true)}>
+          <Button variant="outline" onClick={() => setImportOpen(true)}>
             <Upload className="mr-2 h-4 w-4" />
             Import
+          </Button>
+          <Button onClick={() => setCreateOpen(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Add Lead
           </Button>
         </div>
       </div>
@@ -340,7 +340,12 @@ export default function LeadsPage() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem>View Details</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => {
+                              setEditingLead(lead)
+                              setCreateOpen(true)
+                            }}>
+                              Edit Lead
+                            </DropdownMenuItem>
                             <LeadEnrichment
                               lead={lead}
                               onUpdate={refetch}
@@ -407,6 +412,17 @@ export default function LeadsPage() {
         open={importOpen}
         onOpenChange={setImportOpen}
         workspaceId={workspace?.id || ''}
+      />
+
+      <LeadFormDialog
+        open={createOpen}
+        onOpenChange={(open) => {
+          setCreateOpen(open)
+          if (!open) setEditingLead(null)
+        }}
+        lead={editingLead}
+        workspaceId={workspace?.id || ''}
+        onSuccess={refetch}
       />
     </div>
   )

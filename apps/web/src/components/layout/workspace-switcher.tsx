@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery } from '@tanstack/react-query'
-import { createClient } from '@/lib/supabase/client'
+import { api } from '@/lib/api-client'
 import { useAuthStore } from '@/stores/auth'
 import { Button } from '@/components/ui/button'
 import {
@@ -21,7 +21,6 @@ export function WorkspaceSwitcher() {
   const router = useRouter()
   const { workspace, setWorkspace, dbUser } = useAuthStore()
   const [open, setOpen] = useState(false)
-  const supabase = createClient()
 
   const isSuperAdmin = dbUser?.role === 'super_admin'
 
@@ -30,24 +29,16 @@ export function WorkspaceSwitcher() {
     queryFn: async () => {
       if (!dbUser) return []
 
+      const response = await api.workspaces.list()
+      
+      if (response.error) throw new Error(response.error)
+      
       if (isSuperAdmin) {
         // Super admins can see all workspaces
-        const { data, error } = await supabase
-          .from('workspaces')
-          .select('*')
-          .order('name')
-
-        if (error) throw error
-        return data as Workspace[]
+        return response.data || []
       } else {
         // Regular users see only their workspace
-        const { data, error } = await supabase
-          .from('workspaces')
-          .select('*')
-          .eq('id', dbUser.workspace_id)
-
-        if (error) throw error
-        return data as Workspace[]
+        return (response.data || []).filter(ws => ws.id === dbUser.workspace_id)
       }
     },
     enabled: !!dbUser,
@@ -58,13 +49,10 @@ export function WorkspaceSwitcher() {
 
     // Update the user's current workspace
     if (isSuperAdmin) {
-      const { error } = await supabase
-        .from('users')
-        .update({ workspace_id: newWorkspace.id })
-        .eq('id', dbUser.id)
-
-      if (error) {
-        console.error('Error switching workspace:', error)
+      const response = await api.users.update(dbUser.id, { workspace_id: newWorkspace.id })
+      
+      if (response.error) {
+        console.error('Error switching workspace:', response.error)
         return
       }
     }

@@ -1,0 +1,126 @@
+version: '3.8'
+
+# Development docker-compose for ColdCopy
+# This includes all services needed for local development
+
+services:
+  # Next.js application
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile.dev
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./apps/web:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=redis://redis:6379
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - STRIPE_SECRET_KEY=${STRIPE_SECRET_KEY}
+      - STRIPE_WEBHOOK_SECRET=${STRIPE_WEBHOOK_SECRET}
+      - CRON_SECRET=${CRON_SECRET}
+    depends_on:
+      - redis
+      - mailhog
+    command: npm run dev
+
+  # Redis cache
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  # Redis Commander (GUI)
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    ports:
+      - "8081:8081"
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    depends_on:
+      - redis
+
+  # MailHog (Email testing)
+  mailhog:
+    image: mailhog/mailhog:latest
+    ports:
+      - "1025:1025" # SMTP
+      - "8025:8025" # Web UI
+    environment:
+      - MH_STORAGE=memory
+
+  # PgBouncer (Connection pooling)
+  pgbouncer:
+    image: edoburu/pgbouncer:latest
+    ports:
+      - "5432:5432"
+    environment:
+      - DATABASES_HOST=${PGBOUNCER_HOST:-db.supabase.co}
+      - DATABASES_PORT=6543
+      - DATABASES_DBNAME=postgres
+      - DATABASES_USER=${PGBOUNCER_USER:-postgres}
+      - DATABASES_PASSWORD=${PGBOUNCER_PASSWORD}
+      - POOL_MODE=transaction
+      - DEFAULT_POOL_SIZE=25
+      - MAX_CLIENT_CONN=100
+    volumes:
+      - ./infrastructure/database/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+
+  # Monitoring - Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./infrastructure/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+
+  # Monitoring - Grafana
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./infrastructure/monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards:ro
+      - ./infrastructure/monitoring/grafana/datasources:/etc/grafana/provisioning/datasources:ro
+    depends_on:
+      - prometheus
+
+  # Documentation
+  docs:
+    image: squidfunk/mkdocs-material:latest
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./docs:/docs
+    command: serve --dev-addr=0.0.0.0:8000
+
+volumes:
+  redis_data:
+  prometheus_data:
+  grafana_data:

@@ -1,6 +1,9 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 
+// Enable ISR with 86400 second (24 hours) revalidation for legal pages
+export const revalidate = 86400
+
 export const metadata: Metadata = {
   title: 'Terms of Service - ColdCopy',
   description: 'Read the terms and conditions for using ColdCopy\'s cold outreach automation platform.',

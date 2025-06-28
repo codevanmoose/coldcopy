@@ -4,8 +4,9 @@ import { cookies } from 'next/headers';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { syncId: string } }
+  { params }: { params: Promise<{ syncId: string }> }
 ) {
+  const { syncId } = await params;
   try {
     const supabase = createRouteHandlerClient({ cookies });
     const { data: { user } } = await supabase.auth.getUser();
@@ -32,7 +33,7 @@ export async function POST(
     const { data: syncJob } = await supabase
       .from('pipedrive_sync_jobs')
       .select('*')
-      .eq('id', params.syncId)
+      .eq('id', syncId)
       .eq('workspace_id', workspaceId)
       .single();
 
@@ -55,7 +56,7 @@ export async function POST(
         completed_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
-      .eq('id', params.syncId);
+      .eq('id', syncId);
 
     if (updateError) {
       throw updateError;

@@ -1,8 +1,8 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { createClient } from '@/lib/supabase/client'
 import { useWorkspace } from '@/hooks/use-workspace'
+import { api } from '@/lib/api-client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -30,7 +30,6 @@ import { addDays } from 'date-fns'
 
 export default function AnalyticsPage() {
   const { workspace } = useWorkspace()
-  const supabase = createClient()
   const [dateRange, setDateRange] = useState<DateRange | undefined>({
     from: addDays(new Date(), -30),
     to: new Date(),
@@ -42,15 +41,13 @@ export default function AnalyticsPage() {
     queryFn: async () => {
       if (!workspace) return null
 
-      const { data, error } = await supabase
-        .rpc('get_analytics_overview', {
-          p_workspace_id: workspace.id,
-          p_start_date: dateRange?.from?.toISOString(),
-          p_end_date: dateRange?.to?.toISOString(),
-        })
+      const params: any = {}
+      if (dateRange?.from) params.startDate = dateRange.from.toISOString()
+      if (dateRange?.to) params.endDate = dateRange.to.toISOString()
 
-      if (error) throw error
-      return data
+      const response = await api.analytics.overview(workspace.id, params)
+      if (response.error) throw new Error(response.error)
+      return response.data
     },
     enabled: !!workspace,
   })

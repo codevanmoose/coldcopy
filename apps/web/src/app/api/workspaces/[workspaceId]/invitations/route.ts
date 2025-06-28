@@ -3,8 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { workspaceId: string } }
+  { params }: { params: Promise<{ workspaceId: string }> }
 ) {
+  const { workspaceId } = await params;
   try {
     const supabase = await createClient()
     
@@ -20,7 +21,7 @@ export async function GET(
     const { data: membership } = await supabase
       .from('workspace_members')
       .select('id, role')
-      .eq('workspace_id', params.workspaceId)
+      .eq('workspace_id', workspaceId)
       .eq('user_id', user.id)
       .single()
 
@@ -53,7 +54,7 @@ export async function GET(
           email
         )
       `)
-      .eq('workspace_id', params.workspaceId)
+      .eq('workspace_id', workspaceId)
       .is('accepted_at', null)
       .gte('expires_at', new Date().toISOString())
       .order('created_at', { ascending: false })

@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { createClient } from '@/lib/supabase/client'
+import { api } from '@/lib/api-client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -31,51 +31,21 @@ interface CampaignMetricsProps {
 }
 
 export function CampaignMetrics({ workspaceId, dateRange }: CampaignMetricsProps) {
-  const supabase = createClient()
 
   const { data: campaigns, isLoading } = useQuery({
     queryKey: ['campaign-metrics', workspaceId, dateRange],
     queryFn: async () => {
       if (!workspaceId) return []
 
-      const { data, error } = await supabase
-        .from('campaigns')
-        .select(`
-          *,
-          campaign_emails!inner(
-            id,
-            status,
-            sent_at,
-            opened_at,
-            clicked_at,
-            replied_at
-          )
-        `)
-        .eq('workspace_id', workspaceId)
-        .gte('created_at', dateRange?.from?.toISOString() || '')
-        .lte('created_at', dateRange?.to?.toISOString() || '')
-        .order('created_at', { ascending: false })
+      const params: any = {}
+      if (dateRange?.from) params.startDate = dateRange.from.toISOString()
+      if (dateRange?.to) params.endDate = dateRange.to.toISOString()
+      params.includeMetrics = true
 
-      if (error) throw error
-
-      // Calculate metrics for each campaign
-      return data.map(campaign => {
-        const emails = campaign.campaign_emails
-        const totalSent = emails.filter((e: any) => e.status === 'sent').length
-        const totalOpened = emails.filter((e: any) => e.opened_at).length
-        const totalClicked = emails.filter((e: any) => e.clicked_at).length
-        const totalReplied = emails.filter((e: any) => e.replied_at).length
-
-        return {
-          ...campaign,
-          metrics: {
-            sent: totalSent,
-            openRate: totalSent > 0 ? (totalOpened / totalSent * 100).toFixed(1) : 0,
-            clickRate: totalSent > 0 ? (totalClicked / totalSent * 100).toFixed(1) : 0,
-            replyRate: totalSent > 0 ? (totalReplied / totalSent * 100).toFixed(1) : 0,
-          }
-        }
-      })
+      const response = await api.analytics.campaigns(workspaceId, params)
+      if (response.error) throw new Error(response.error)
+      
+      return response.data
     },
     enabled: !!workspaceId,
   })

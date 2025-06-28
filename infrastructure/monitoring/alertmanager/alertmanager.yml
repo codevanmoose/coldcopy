@@ -1,0 +1,187 @@
+# Alertmanager configuration for ColdCopy
+
+global:
+  smtp_smarthost: 'smtp.gmail.com:587'
+  smtp_from: '${ALERT_EMAIL_FROM}'
+  smtp_auth_username: '${ALERT_EMAIL_USERNAME}'
+  smtp_auth_password: '${ALERT_EMAIL_PASSWORD}'
+  slack_api_url: '${SLACK_WEBHOOK_URL}'
+
+# Templates for alert notifications
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+# Routing configuration
+route:
+  group_by: ['alertname', 'cluster', 'service']
+  group_wait: 10s
+  group_interval: 10s
+  repeat_interval: 1h
+  receiver: 'default'
+  routes:
+    # Critical alerts - immediate notification
+    - match:
+        severity: critical
+      receiver: 'critical-alerts'
+      group_wait: 5s
+      repeat_interval: 30m
+      continue: true
+
+    # Security alerts - immediate notification
+    - match:
+        team: security
+      receiver: 'security-alerts'
+      group_wait: 5s
+      repeat_interval: 15m
+      continue: true
+
+    # Engineering team alerts
+    - match:
+        team: engineering
+      receiver: 'engineering-alerts'
+      continue: true
+
+    # Operations team alerts  
+    - match:
+        team: operations
+      receiver: 'operations-alerts'
+      continue: true
+
+    # Infrastructure team alerts
+    - match:
+        team: infrastructure
+      receiver: 'infrastructure-alerts'
+      continue: true
+
+# Inhibition rules to prevent spam
+inhibit_rules:
+  # If application is down, don't alert on high error rates
+  - source_match:
+      alertname: ApplicationDown
+    target_match:
+      alertname: HighErrorRate
+    equal: ['service']
+
+  # If we have critical error rate, don't alert on warning error rate
+  - source_match:
+      severity: critical
+      alertname: CriticalErrorRate
+    target_match:
+      severity: warning
+      alertname: HighErrorRate
+    equal: ['service']
+
+  # If we have critical email queue backlog, don't alert on warning
+  - source_match:
+      alertname: CriticalEmailQueueBacklog
+    target_match:
+      alertname: EmailQueueBacklog
+    equal: ['service']
+
+# Receivers for different types of alerts
+receivers:
+  - name: 'default'
+    email_configs:
+      - to: '${DEFAULT_ALERT_EMAIL}'
+        subject: '[ColdCopy] {{ .GroupLabels.alertname }} - {{ .Status | toUpper }}'
+        body: |
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Labels: {{ range .Labels.SortedPairs }}{{ .Name }}={{ .Value }} {{ end }}
+          {{ end }}
+
+  - name: 'critical-alerts'
+    email_configs:
+      - to: '${CRITICAL_ALERT_EMAIL}'
+        subject: '[ColdCopy CRITICAL] {{ .GroupLabels.alertname }}'
+        body: |
+          🚨 CRITICAL ALERT 🚨
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Runbook: {{ .Annotations.runbook_url }}
+          
+          Labels:
+          {{ range .Labels.SortedPairs }}  {{ .Name }}: {{ .Value }}
+          {{ end }}
+          {{ end }}
+    slack_configs:
+      - channel: '#alerts-critical'
+        title: '🚨 Critical Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          **{{ .Annotations.summary }}**
+          {{ .Annotations.description }}
+          
+          Runbook: {{ .Annotations.runbook_url }}
+          {{ end }}
+        color: 'danger'
+
+  - name: 'security-alerts'
+    email_configs:
+      - to: '${SECURITY_ALERT_EMAIL}'
+        subject: '[ColdCopy SECURITY] {{ .GroupLabels.alertname }}'
+        body: |
+          🔒 SECURITY ALERT 🔒
+          
+          {{ range .Alerts }}
+          Alert: {{ .Annotations.summary }}
+          Description: {{ .Annotations.description }}
+          Runbook: {{ .Annotations.runbook_url }}
+          
+          Labels:
+          {{ range .Labels.SortedPairs }}  {{ .Name }}: {{ .Value }}
+          {{ end }}
+          {{ end }}
+    slack_configs:
+      - channel: '#alerts-security'
+        title: '🔒 Security Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          **{{ .Annotations.summary }}**
+          {{ .Annotations.description }}
+          
+          Runbook: {{ .Annotations.runbook_url }}
+          {{ end }}
+        color: 'warning'
+
+  - name: 'engineering-alerts'
+    slack_configs:
+      - channel: '#alerts-engineering'
+        title: '⚠️ Engineering Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          **{{ .Annotations.summary }}**
+          {{ .Annotations.description }}
+          
+          {{ if .Annotations.runbook_url }}Runbook: {{ .Annotations.runbook_url }}{{ end }}
+          {{ end }}
+        color: 'warning'
+
+  - name: 'operations-alerts'
+    slack_configs:
+      - channel: '#alerts-operations'
+        title: '📊 Operations Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          **{{ .Annotations.summary }}**
+          {{ .Annotations.description }}
+          
+          {{ if .Annotations.runbook_url }}Runbook: {{ .Annotations.runbook_url }}{{ end }}
+          {{ end }}
+        color: 'warning'
+
+  - name: 'infrastructure-alerts'
+    slack_configs:
+      - channel: '#alerts-infrastructure'
+        title: '🖥️ Infrastructure Alert: {{ .GroupLabels.alertname }}'
+        text: |
+          {{ range .Alerts }}
+          **{{ .Annotations.summary }}**
+          {{ .Annotations.description }}
+          
+          {{ if .Annotations.runbook_url }}Runbook: {{ .Annotations.runbook_url }}{{ end }}
+          {{ end }}
+        color: 'warning'

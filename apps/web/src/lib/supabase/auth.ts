@@ -146,3 +146,13 @@ export async function updatePassword(newPassword: string) {
   const supabase = createClient()
   return await supabase.auth.updateUser({ password: newPassword })
 }
+
+// Export a mock useAuth hook for now - this should be replaced with proper context
+export function useAuth() {
+  return {
+    user: null,
+    loading: false,
+    error: null,
+    signOut,
+  }
+}

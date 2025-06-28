@@ -4,6 +4,10 @@ import Script from "next/script";
 import { Toaster } from "sonner";
 import { headers } from "next/headers";
 import { WhiteLabelProvider } from "../components/white-label/white-label-provider";
+import { ErrorBoundary } from "../components/error-boundary";
+import { ThemeProvider } from "@/lib/theme/theme-provider";
+import { ShortcutProvider } from "@/lib/shortcuts/shortcut-provider";
+import { CommandPalette } from "@/components/ui/command-palette";
 import "./globals.css";
 
 const inter = Inter({
@@ -109,7 +113,7 @@ export default function RootLayout({
   };
 
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Dynamic favicon based on white-label */}
         {faviconUrl ? (
@@ -135,23 +139,38 @@ export default function RootLayout({
         )}
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
-        <WhiteLabelProvider
-          isWhiteLabel={isWhiteLabel}
-          workspaceId={workspaceId}
-          domain={domain}
-          branding={brandingHeaders}
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
         >
-          {children}
-        </WhiteLabelProvider>
-        
-        <Toaster 
-          richColors 
-          theme="dark" 
-          position="top-right"
-          style={isWhiteLabel && brandingHeaders.primaryColor ? {
-            '--toast-primary': brandingHeaders.primaryColor
-          } as React.CSSProperties : undefined}
-        />
+          <ShortcutProvider>
+            <ErrorBoundary>
+              <WhiteLabelProvider
+                isWhiteLabel={isWhiteLabel}
+                workspaceId={workspaceId}
+                domain={domain}
+                branding={brandingHeaders}
+              >
+                {children}
+                <CommandPalette />
+              </WhiteLabelProvider>
+            </ErrorBoundary>
+            
+            <Toaster 
+              richColors 
+              position="top-right"
+              toastOptions={{
+                style: {
+                  background: 'hsl(var(--background))',
+                  color: 'hsl(var(--foreground))',
+                  border: '1px solid hsl(var(--border))',
+                }
+              }}
+            />
+          </ShortcutProvider>
+        </ThemeProvider>
         
         <Script
           strategy="afterInteractive"

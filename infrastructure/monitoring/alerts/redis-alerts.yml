@@ -1,0 +1,132 @@
+groups:
+  - name: redis_alerts
+    interval: 30s
+    rules:
+      # Memory alerts
+      - alert: RedisHighMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.8
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis high memory usage on {{ $labels.instance }}"
+          description: "Redis memory usage is above 80% (current: {{ $value | humanizePercentage }})"
+
+      - alert: RedisCriticalMemoryUsage
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.95
+        for: 2m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis critical memory usage on {{ $labels.instance }}"
+          description: "Redis memory usage is above 95% (current: {{ $value | humanizePercentage }})"
+
+      # Connection alerts
+      - alert: RedisTooManyConnections
+        expr: redis_connected_clients > 950
+        for: 2m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Too many connections to Redis on {{ $labels.instance }}"
+          description: "Redis has {{ $value }} connected clients (limit: 1000)"
+
+      - alert: RedisRejectedConnections
+        expr: rate(redis_rejected_connections_total[5m]) > 5
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis rejecting connections on {{ $labels.instance }}"
+          description: "Redis is rejecting {{ $value }} connections per second"
+
+      # Performance alerts
+      - alert: RedisHighLatency
+        expr: redis_commands_duration_seconds_total / redis_commands_processed_total > 0.01
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis high latency on {{ $labels.instance }}"
+          description: "Average command latency is {{ $value }}s (threshold: 10ms)"
+
+      - alert: RedisSlowCommands
+        expr: redis_slowlog_length > 10
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis slow commands detected on {{ $labels.instance }}"
+          description: "{{ $value }} slow commands in the slow log"
+
+      # Availability alerts
+      - alert: RedisDown
+        expr: up{job="redis"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis is down on {{ $labels.instance }}"
+          description: "Redis has been down for more than 1 minute"
+
+      - alert: RedisMasterDown
+        expr: redis_instance_info{role="master"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: redis
+        annotations:
+          summary: "Redis master is down"
+          description: "No Redis master instance available"
+
+      # Persistence alerts
+      - alert: RedisRDBLastSaveFailed
+        expr: redis_rdb_last_save_timestamp_seconds == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis RDB save failed on {{ $labels.instance }}"
+          description: "Last RDB save failed or never completed"
+
+      - alert: RedisAOFRewriteFailed
+        expr: redis_aof_last_rewrite_duration_sec == -1
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis AOF rewrite failed on {{ $labels.instance }}"
+          description: "Last AOF rewrite failed"
+
+      # Hit rate alerts
+      - alert: RedisLowHitRate
+        expr: |
+          (redis_keyspace_hits_total / 
+           (redis_keyspace_hits_total + redis_keyspace_misses_total)) < 0.5
+        for: 10m
+        labels:
+          severity: info
+          service: redis
+        annotations:
+          summary: "Redis low hit rate on {{ $labels.instance }}"
+          description: "Cache hit rate is {{ $value | humanizePercentage }} (below 50%)"
+
+      # Eviction alerts
+      - alert: RedisHighEvictionRate
+        expr: rate(redis_evicted_keys_total[5m]) > 100
+        for: 5m
+        labels:
+          severity: warning
+          service: redis
+        annotations:
+          summary: "Redis high eviction rate on {{ $labels.instance }}"
+          description: "Redis is evicting {{ $value }} keys per second"

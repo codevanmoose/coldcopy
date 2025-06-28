@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { createClient } from '@/lib/supabase/client'
 import { useAuthStore } from '@/stores/auth'
+import { api } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
@@ -25,12 +25,14 @@ import {
   CheckCheck,
   Clock,
   AlertCircle,
-  Users as UsersIcon
+  Users as UsersIcon,
+  Wifi,
+  WifiOff
 } from 'lucide-react'
 import { ThreadList } from '@/components/inbox/thread-list'
 import { ThreadView } from '@/components/inbox/thread-view'
 import { ThreadFilters } from '@/components/inbox/thread-filters'
-import type { RealtimeChannel } from '@supabase/supabase-js'
+import { useRealtimeSubscription, usePresence } from '@/hooks/use-realtime'
 
 interface EmailThread {
   id: string
@@ -90,9 +92,7 @@ export default function InboxPage() {
   const [selectedThread, setSelectedThread] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [filter, setFilter] = useState<InboxFilter>('all')
-  const [realtimeChannel, setRealtimeChannel] = useState<RealtimeChannel | null>(null)
   const queryClient = useQueryClient()
-  const supabase = createClient()
 
   // Fetch threads
   const { data: threads = [], isLoading } = useQuery({
@@ -100,124 +100,50 @@ export default function InboxPage() {
     queryFn: async () => {
       if (!workspace) return []
 
-      let query = supabase
-        .from('email_threads')
-        .select(`
-          *,
-          lead:leads(*),
-          assigned_user:users!assigned_to(*),
-          messages:email_messages(
-            *
-          ),
-          participants:thread_participants(
-            *,
-            user:users(*)
-          )
-        `)
-        .eq('workspace_id', workspace.id)
-        .order('last_message_at', { ascending: false })
-
-      // Apply filters
-      switch (filter) {
-        case 'unread':
-          query = query.eq('is_read', false)
-          break
-        case 'assigned':
-          query = query.eq('assigned_to', dbUser?.id)
-          break
-        case 'unassigned':
-          query = query.is('assigned_to', null)
-          break
-        case 'closed':
-          query = query.eq('status', 'closed')
-          break
-        default:
-          query = query.neq('status', 'archived').neq('status', 'spam')
+      const params: any = {
+        filter,
+        search: searchQuery,
+        assignedTo: filter === 'assigned' ? dbUser?.id : undefined,
       }
 
-      if (searchQuery) {
-        query = query.or(`subject.ilike.%${searchQuery}%,last_message_from.ilike.%${searchQuery}%`)
-      }
-
-      const { data, error } = await query
-
-      if (error) throw error
-      return data as EmailThread[]
+      const response = await api.inbox.threads.list(workspace.id, params)
+      if (response.error) throw new Error(response.error)
+      return response.data as EmailThread[]
     },
     enabled: !!workspace,
   })
 
-  // Set up real-time subscriptions
-  useEffect(() => {
-    if (!workspace) return
-
-    const channel = supabase
-      .channel(`inbox:${workspace.id}`)
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'email_threads',
-          filter: `workspace_id=eq.${workspace.id}`,
-        },
-        (payload) => {
-          console.log('Thread change:', payload)
-          queryClient.invalidateQueries({ queryKey: ['inbox-threads'] })
-        }
-      )
-      .on(
-        'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'email_messages',
-        },
-        (payload) => {
-          console.log('New message:', payload)
-          queryClient.invalidateQueries({ queryKey: ['inbox-threads'] })
-          
-          // Show notification for new inbound messages
-          if (payload.new && (payload.new as any).direction === 'inbound') {
-            toast.info('New message received', {
-              description: `From: ${(payload.new as any).from_email}`,
-            })
-          }
-        }
-      )
-      .on(
-        'presence',
-        { event: 'sync' },
-        () => {
-          console.log('Presence sync')
-        }
-      )
-      .subscribe((status) => {
-        if (status === 'SUBSCRIBED') {
-          // Track user presence
-          channel.track({
-            user_id: dbUser?.id,
-            online_at: new Date().toISOString(),
+  // Set up real-time subscriptions for inbox updates
+  const { isConnected } = useRealtimeSubscription({
+    channelName: `inbox:${workspace?.id}`,
+    tables: ['email_threads', 'email_messages'],
+    trackPresence: true,
+    onTableChange: (event) => {
+      console.log('Inbox change:', event)
+      queryClient.invalidateQueries({ queryKey: ['inbox-threads'] })
+      
+      // Handle new messages
+      if (event.table === 'email_messages' && event.action === 'INSERT' && event.new_record) {
+        const isInbound = event.new_record.direction === 'inbound'
+        if (isInbound && event.new_record.from_email) {
+          toast.info('New message received', {
+            description: `From: ${event.new_record.from_email}`,
           })
         }
-      })
+      }
+    },
+  })
 
-    setRealtimeChannel(channel)
-
-    return () => {
-      supabase.removeChannel(channel)
-    }
-  }, [workspace, dbUser, supabase, queryClient])
+  // Track team presence
+  const { presenceUsers, onlineUserCount } = usePresence()
 
   // Mark thread as read
   const markAsReadMutation = useMutation({
     mutationFn: async (threadId: string) => {
-      const { error } = await supabase
-        .from('email_threads')
-        .update({ is_read: true })
-        .eq('id', threadId)
-
-      if (error) throw error
+      if (!workspace) throw new Error('No workspace')
+      
+      const response = await api.inbox.threads.markRead(workspace.id, threadId)
+      if (response.error) throw new Error(response.error)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inbox-threads'] })
@@ -233,12 +159,10 @@ export default function InboxPage() {
       threadId: string
       updates: Partial<EmailThread> 
     }) => {
-      const { error } = await supabase
-        .from('email_threads')
-        .update(updates)
-        .eq('id', threadId)
-
-      if (error) throw error
+      if (!workspace) throw new Error('No workspace')
+      
+      const response = await api.inbox.threads.update(workspace.id, threadId, updates)
+      if (response.error) throw new Error(response.error)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['inbox-threads'] })
@@ -265,8 +189,21 @@ export default function InboxPage() {
             <h1 className="text-2xl font-bold flex items-center gap-2">
               <InboxIcon className="h-6 w-6" />
               Inbox
+              {isConnected ? (
+                <Wifi className="h-4 w-4 text-green-500" title="Real-time connected" />
+              ) : (
+                <WifiOff className="h-4 w-4 text-red-500" title="Real-time disconnected" />
+              )}
             </h1>
-            <Badge variant="secondary">{stats.unread} unread</Badge>
+            <div className="flex items-center gap-2">
+              <Badge variant="secondary">{stats.unread} unread</Badge>
+              {onlineUserCount > 1 && (
+                <Badge variant="outline" className="gap-1">
+                  <UsersIcon className="h-3 w-3" />
+                  {onlineUserCount} online
+                </Badge>
+              )}
+            </div>
           </div>
 
           <div className="relative">

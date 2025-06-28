@@ -5,8 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { createClient } from '@/lib/supabase/client'
 import { useAuthStore } from '@/stores/auth'
+import { api } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -27,7 +27,6 @@ export default function WorkspaceSettingsPage() {
   const router = useRouter()
   const { workspace, setWorkspace } = useAuthStore()
   const [isLoading, setIsLoading] = useState(false)
-  const supabase = createClient()
 
   const {
     register,
@@ -58,24 +57,18 @@ export default function WorkspaceSettingsPage() {
 
     setIsLoading(true)
     try {
-      const { data: updatedWorkspace, error } = await supabase
-        .from('workspaces')
-        .update({
-          name: data.name,
-          domain: data.domain || null,
-          settings: {
-            ...workspace.settings,
-            description: data.description,
-          },
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', workspace.id)
-        .select()
-        .single()
+      const response = await api.workspaces.update(workspace.id, {
+        name: data.name,
+        domain: data.domain || null,
+        settings: {
+          ...workspace.settings,
+          description: data.description,
+        },
+      })
 
-      if (error) throw error
+      if (response.error) throw new Error(response.error)
 
-      setWorkspace(updatedWorkspace)
+      setWorkspace(response.data)
       toast.success('Workspace settings updated successfully')
       reset(data)
     } catch (error) {

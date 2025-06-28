@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { createClient } from '@/lib/supabase/client'
+import { api } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -38,7 +38,6 @@ export function TestEmailDialog() {
     message: string
   } | null>(null)
   
-  const supabase = createClient()
 
   const {
     register,
@@ -58,22 +57,17 @@ export function TestEmailDialog() {
     setResult(null)
 
     try {
-      const response = await fetch('/api/email/send', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          to: [data.to],
-          subject: data.subject,
-          content: data.content,
-        }),
+      const response = await api.email.send({
+        to: [data.to],
+        subject: data.subject,
+        content: data.content,
+        trackOpens: false,
+        trackClicks: false,
+        checkConsent: false,
       })
 
-      const result = await response.json()
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Failed to send test email')
+      if (response.error) {
+        throw new Error(response.error)
       }
 
       setResult({

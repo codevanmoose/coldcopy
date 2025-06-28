@@ -344,6 +344,7 @@ export const cacheKeys = {
   // Email deliverability
   domainReputation: (domain: string) => `deliverability:domain:${domain}`,
   spamScore: (contentHash: string) => `deliverability:spam:${contentHash}`,
+  deliverabilityMetrics: (workspaceId: string) => `deliverability:metrics:${workspaceId}`,
   
   // Sales intelligence
   intentSignals: (workspaceId: string, leadId: string) => 

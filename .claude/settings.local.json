@@ -40,7 +40,16 @@
       "WebFetch(domain:coldcopy-web.vercel.app)",
       "Bash(git push:*)",
       "Bash(export:*)",
-      "Bash(grep:*)"
+      "Bash(grep:*)",
+      "Bash(node:*)",
+      "Bash(NODE_ENV=production npm run build 2 >& 1)",
+      "Bash(NODE_ENV=production npm run build)",
+      "Bash(echo:*)",
+      "Bash(/dev/null)",
+      "Bash(npm ci:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:vercel.com)",
+      "Bash(supabase:*)"
     ],
     "deny": []
   }

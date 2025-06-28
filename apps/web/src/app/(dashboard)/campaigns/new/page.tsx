@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
-import { createClient } from '@/lib/supabase/client'
+import { api } from '@/lib/api-client'
 import { useAuthStore } from '@/stores/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -64,7 +64,6 @@ export default function NewCampaignPage() {
     excludeWeekends: true,
   })
   
-  const supabase = createClient()
 
   const {
     register,
@@ -87,28 +86,16 @@ export default function NewCampaignPage() {
 
     setIsCreating(true)
     try {
-      // Create campaign
-      const { data: campaign, error: campaignError } = await supabase
-        .from('campaigns')
-        .insert({
-          workspace_id: workspace.id,
-          name: data.name,
-          description: data.description,
-          type: data.type,
-          status: 'draft',
-          timezone: scheduleSettings.timezone,
-          schedule_settings: scheduleSettings,
-          daily_limit: scheduleSettings.dailyLimit,
-        })
-        .select()
-        .single()
-
-      if (campaignError) throw campaignError
-
-      // Create sequences
-      if (sequences.length > 0) {
-        const sequenceData = sequences.map((seq, index) => ({
-          campaign_id: campaign.id,
+      // Create campaign with sequences and leads
+      const campaignData = {
+        name: data.name,
+        description: data.description,
+        type: data.type,
+        status: 'draft',
+        timezone: scheduleSettings.timezone,
+        schedule_settings: scheduleSettings,
+        daily_limit: scheduleSettings.dailyLimit,
+        sequences: sequences.map((seq, index) => ({
           sequence_number: index + 1,
           name: `Step ${index + 1}`,
           subject: seq.subject,
@@ -117,29 +104,15 @@ export default function NewCampaignPage() {
           delay_hours: seq.delayHours,
           condition_type: seq.condition?.type || 'always',
           condition_value: seq.condition?.value,
-        }))
-
-        const { error: sequenceError } = await supabase
-          .from('campaign_sequences')
-          .insert(sequenceData)
-
-        if (sequenceError) throw sequenceError
+        })),
+        lead_ids: selectedLeads,
       }
 
-      // Add leads to campaign
-      if (selectedLeads.length > 0) {
-        const leadData = selectedLeads.map(leadId => ({
-          campaign_id: campaign.id,
-          lead_id: leadId,
-          status: 'pending',
-        }))
-
-        const { error: leadError } = await supabase
-          .from('campaign_leads')
-          .insert(leadData)
-
-        if (leadError) throw leadError
-      }
+      const response = await api.campaigns.create(workspace.id, campaignData)
+      
+      if (response.error) throw new Error(response.error)
+      
+      const campaign = response.data
 
       toast.success('Campaign created successfully!')
       router.push(`/campaigns/${campaign.id}`)

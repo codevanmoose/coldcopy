@@ -12,17 +12,22 @@ import { Input } from "../../../components/ui/input";
 import { Label } from "../../../components/ui/label";
 import { Separator } from "../../../components/ui/separator";
 
-export default function WhiteLabelLoginPage({
+// Enable ISR with 300 second (5 minutes) revalidation for white-label pages
+// Shorter revalidation since content depends on dynamic headers
+export const revalidate = 300
+
+export default async function WhiteLabelLoginPage({
   searchParams,
 }: {
-  searchParams: { redirectTo?: string };
+  searchParams: Promise<{ redirectTo?: string }>;
 }) {
-  const headersList = headers();
+  const params = await searchParams;
+  const headersList = await headers();
   const isAuthenticated = headersList.get('x-authenticated') === 'true';
   
   // Redirect authenticated users
   if (isAuthenticated) {
-    const redirectTo = searchParams.redirectTo || '/white-label/dashboard';
+    const redirectTo = params.redirectTo || '/white-label/dashboard';
     redirect(redirectTo);
   }
 
@@ -74,7 +79,7 @@ export default function WhiteLabelLoginPage({
               <input 
                 type="hidden" 
                 name="redirectTo" 
-                value={searchParams.redirectTo || '/white-label/dashboard'} 
+                value={params.redirectTo || '/white-label/dashboard'} 
               />
               
               <div className="space-y-2">

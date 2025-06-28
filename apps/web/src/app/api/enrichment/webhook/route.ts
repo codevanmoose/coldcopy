@@ -513,7 +513,10 @@ export async function GET(request: NextRequest) {
 // Webhook Registration Helper
 // ====================================
 
-export async function registerWebhook(
+// NOTE: This function should be moved to a separate utility file
+// as Next.js API routes only allow HTTP method exports
+/*
+async function registerWebhook(
   providerId: string,
   events: string[],
   jobId?: string
@@ -534,3 +537,4 @@ export async function registerWebhook(
 
   return { webhookUrl }
 }
+*/

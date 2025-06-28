@@ -460,7 +460,7 @@ export class TwitterService {
       follows_per_day: 400,
       follows_per_hour: 20,
       likes_per_hour: 1000,
-      searches_per_15min: limits.resources?.search?.'/search/tweets'?.limit || 180,
+      searches_per_15min: limits.resources?.search?.['/search/tweets']?.limit || 180,
     };
   }
 

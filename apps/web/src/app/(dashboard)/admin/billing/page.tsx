@@ -17,7 +17,7 @@ import {
   Search, MoreVertical, TrendingUp, TrendingDown, DollarSign,
   CreditCard, AlertCircle, CheckCircle, Clock, Users,
   BarChart3, Calendar, Download, RefreshCw, Zap,
-  XCircle, ArrowUpRight, ArrowDownRight, Activity
+  XCircle, ArrowUpRight, ArrowDownRight, Activity, Mail
 } from "lucide-react"
 import { format, formatDistanceToNow, subDays, startOfMonth, endOfMonth } from "date-fns"
 import {

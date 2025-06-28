@@ -1,0 +1,290 @@
+{
+  "dashboard": {
+    "id": null,
+    "title": "ColdCopy - Business Metrics",
+    "tags": ["coldcopy", "business"],
+    "style": "dark",
+    "timezone": "browser",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Active Workspaces",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "coldcopy_active_workspaces"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 0,
+          "y": 0
+        }
+      },
+      {
+        "id": 2,
+        "title": "Active Campaigns",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "coldcopy_campaigns_active"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 6,
+          "y": 0
+        }
+      },
+      {
+        "id": 3,
+        "title": "Emails Sent (24h)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "increase(coldcopy_emails_sent_total[24h])"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 12,
+          "y": 0
+        }
+      },
+      {
+        "id": 4,
+        "title": "AI Tokens Used (24h)",
+        "type": "stat",
+        "targets": [
+          {
+            "expr": "increase(coldcopy_ai_tokens_used_total[24h])"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "color": {
+              "mode": "palette-classic"
+            },
+            "unit": "short"
+          }
+        },
+        "gridPos": {
+          "h": 8,
+          "w": 6,
+          "x": 18,
+          "y": 0
+        }
+      },
+      {
+        "id": 5,
+        "title": "Emails Sent Over Time",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum by (status) (rate(coldcopy_emails_sent_total[5m]))",
+            "legendFormat": "{{status}}"
+          }
+        ],
+        "gridPos": {
+          "h": 9,
+          "w": 12,
+          "x": 0,
+          "y": 8
+        },
+        "yAxes": [
+          {
+            "unit": "emailsps",
+            "label": "Emails per second"
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "title": "AI Usage by Provider",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum by (provider) (rate(coldcopy_ai_requests_total[5m]))",
+            "legendFormat": "{{provider}}"
+          }
+        ],
+        "gridPos": {
+          "h": 9,
+          "w": 12,
+          "x": 12,
+          "y": 8
+        },
+        "yAxes": [
+          {
+            "unit": "reqps",
+            "label": "Requests per second"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Lead Creation Rate",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum by (source) (rate(coldcopy_leads_total[5m]))",
+            "legendFormat": "{{source}}"
+          }
+        ],
+        "gridPos": {
+          "h": 9,
+          "w": 8,
+          "x": 0,
+          "y": 17
+        },
+        "yAxes": [
+          {
+            "unit": "leadsps",
+            "label": "Leads per second"
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "title": "File Upload Activity",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum by (file_type) (rate(coldcopy_file_uploads_total[5m]))",
+            "legendFormat": "{{file_type}}"
+          }
+        ],
+        "gridPos": {
+          "h": 9,
+          "w": 8,
+          "x": 8,
+          "y": 17
+        },
+        "yAxes": [
+          {
+            "unit": "uploadsps",
+            "label": "Uploads per second"
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "title": "Authentication Activity",
+        "type": "graph",
+        "targets": [
+          {
+            "expr": "sum by (status) (rate(coldcopy_authentication_attempts_total[5m]))",
+            "legendFormat": "{{status}}"
+          }
+        ],
+        "gridPos": {
+          "h": 9,
+          "w": 8,
+          "x": 16,
+          "y": 17
+        },
+        "yAxes": [
+          {
+            "unit": "attemptsps",
+            "label": "Attempts per second"
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "title": "Top Workspaces by Email Volume",
+        "type": "table",
+        "targets": [
+          {
+            "expr": "topk(10, sum by (workspace_id) (increase(coldcopy_emails_sent_total[24h])))",
+            "format": "table",
+            "instant": true
+          }
+        ],
+        "gridPos": {
+          "h": 9,
+          "w": 12,
+          "x": 0,
+          "y": 26
+        },
+        "transformations": [
+          {
+            "id": "organize",
+            "options": {
+              "excludeByName": {},
+              "indexByName": {},
+              "renameByName": {
+                "workspace_id": "Workspace ID",
+                "Value": "Emails Sent (24h)"
+              }
+            }
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "title": "AI Model Usage Distribution",
+        "type": "piechart",
+        "targets": [
+          {
+            "expr": "sum by (model) (increase(coldcopy_ai_requests_total[24h]))"
+          }
+        ],
+        "gridPos": {
+          "h": 9,
+          "w": 12,
+          "x": 12,
+          "y": 26
+        },
+        "options": {
+          "reduceOptions": {
+            "calcs": ["lastNotNull"]
+          },
+          "pieType": "pie",
+          "tooltip": {
+            "mode": "single"
+          },
+          "legend": {
+            "displayMode": "visible",
+            "placement": "bottom"
+          }
+        }
+      }
+    ],
+    "time": {
+      "from": "now-24h",
+      "to": "now"
+    },
+    "refresh": "1m",
+    "schemaVersion": 30,
+    "version": 0,
+    "gnetId": null
+  }
+}

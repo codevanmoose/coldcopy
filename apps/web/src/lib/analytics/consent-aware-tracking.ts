@@ -3,6 +3,7 @@
  * Wraps analytics functionality with consent checks
  */
 
+import React from 'react'
 import { ConsentType } from '@/lib/gdpr/types'
 
 // Types
@@ -340,7 +341,7 @@ export function withTrackingConsent<P extends object>(
   Component: React.ComponentType<P & { trackingConsent: TrackingConsent }>
 ): React.ComponentType<P> {
   return function WrappedComponent(props: P) {
-    return <Component {...props} trackingConsent={consentState} />
+    return React.createElement(Component, { ...props, trackingConsent: consentState } as P & { trackingConsent: TrackingConsent })
   }
 }
 

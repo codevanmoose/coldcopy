@@ -2,7 +2,7 @@
 
 import { useState, useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { createClient } from '@/lib/supabase/client'
+import { api } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -60,7 +60,6 @@ export function ImportLeadsDialog({
   const [validation, setValidation] = useState<ValidationResult | null>(null)
   const [existingEmails, setExistingEmails] = useState<Set<string>>(new Set())
   
-  const supabase = createClient()
   const queryClient = useQueryClient()
 
   const validateEmail = (email: string): boolean => {
@@ -86,18 +85,14 @@ export function ImportLeadsDialog({
   }
 
   const checkExistingEmails = async (emails: string[]) => {
-    const { data, error } = await supabase
-      .from('leads')
-      .select('email')
-      .eq('workspace_id', workspaceId)
-      .in('email', emails)
-
-    if (error) {
-      console.error('Error checking existing emails:', error)
+    const response = await api.leads.list(workspaceId, { emails: emails.join(',') })
+    
+    if (response.error) {
+      console.error('Error checking existing emails:', response.error)
       return new Set<string>()
     }
 
-    return new Set(data.map(lead => lead.email))
+    return new Set(response.data.map((lead: any) => lead.email))
   }
 
   const validateLeads = async (leads: ParsedLead[]): Promise<ValidationResult> => {
@@ -195,7 +190,6 @@ export function ImportLeadsDialog({
       
       for (const batch of batches) {
         const leadsToInsert = batch.map(lead => ({
-          workspace_id: workspaceId,
           email: lead.email.toLowerCase(),
           first_name: lead.first_name || null,
           last_name: lead.last_name || null,
@@ -206,13 +200,11 @@ export function ImportLeadsDialog({
           custom_fields: {},
         }))
 
-        const { error } = await supabase
-          .from('leads')
-          .insert(leadsToInsert)
+        const response = await api.leads.create(workspaceId, { leads: leadsToInsert })
 
-        if (error) {
-          console.error('Import error:', error)
-          toast.error(`Failed to import batch: ${error.message}`)
+        if (response.error) {
+          console.error('Import error:', response.error)
+          toast.error(`Failed to import batch: ${response.error}`)
           break
         }
 

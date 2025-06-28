@@ -288,7 +288,9 @@ export async function POST(request: NextRequest) {
 }
 
 // Progress endpoint for Server-Sent Events
-export async function GET_PROGRESS(request: NextRequest) {
+// This should be moved to a separate route file (e.g., /progress/route.ts)
+// as Next.js only supports standard HTTP method names
+async function GET_PROGRESS(request: NextRequest) {
   const syncId = request.nextUrl.pathname.split('/').pop();
   const workspaceId = request.nextUrl.searchParams.get('workspaceId');
 

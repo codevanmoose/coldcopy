@@ -2,8 +2,8 @@
 
 import { useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { createClient } from '@/lib/supabase/client'
 import { useAuthStore } from '@/stores/auth'
+import { api } from '@/lib/api-client'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -97,7 +97,6 @@ export default function CampaignsPage() {
   const { workspace } = useAuthStore()
   const [searchQuery, setSearchQuery] = useState('')
   const queryClient = useQueryClient()
-  const supabase = createClient()
 
   // Fetch campaigns
   const { data: campaigns = [], isLoading } = useQuery({
@@ -105,35 +104,17 @@ export default function CampaignsPage() {
     queryFn: async () => {
       if (!workspace) return []
 
-      let query = supabase
-        .from('campaigns')
-        .select(`
-          *,
-          campaign_leads!inner(count),
-          email_events(count)
-        `)
-        .eq('workspace_id', workspace.id)
-        .order('created_at', { ascending: false })
-
+      const params: any = {}
       if (searchQuery) {
-        query = query.ilike('name', `%${searchQuery}%`)
+        params.search = searchQuery
       }
 
-      const { data, error } = await query
+      const response = await api.campaigns.list(workspace.id, params)
+      
+      if (response.error) throw new Error(response.error)
 
-      if (error) throw error
-
-      // Transform data to include metrics
-      return data.map((campaign: any) => ({
-        ...campaign,
-        metrics: {
-          total_leads: campaign.campaign_leads?.[0]?.count || 0,
-          sent: campaign.email_events?.filter((e: any) => e.event_type === 'sent').length || 0,
-          opened: campaign.email_events?.filter((e: any) => e.event_type === 'opened').length || 0,
-          clicked: campaign.email_events?.filter((e: any) => e.event_type === 'clicked').length || 0,
-          replied: campaign.email_events?.filter((e: any) => e.event_type === 'replied').length || 0,
-        },
-      }))
+      // The API should return campaigns with metrics included
+      return response.data || []
     },
     enabled: !!workspace,
   })
@@ -141,12 +122,11 @@ export default function CampaignsPage() {
   // Update campaign status mutation
   const updateStatusMutation = useMutation({
     mutationFn: async ({ campaignId, status }: { campaignId: string; status: string }) => {
-      const { error } = await supabase
-        .from('campaigns')
-        .update({ status, updated_at: new Date().toISOString() })
-        .eq('id', campaignId)
-
-      if (error) throw error
+      if (!workspace) throw new Error('No workspace')
+      
+      const response = await api.campaigns.update(workspace.id, campaignId, { status })
+      
+      if (response.error) throw new Error(response.error)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] })
@@ -161,12 +141,11 @@ export default function CampaignsPage() {
   // Delete campaign mutation
   const deleteCampaignMutation = useMutation({
     mutationFn: async (campaignId: string) => {
-      const { error } = await supabase
-        .from('campaigns')
-        .delete()
-        .eq('id', campaignId)
-
-      if (error) throw error
+      if (!workspace) throw new Error('No workspace')
+      
+      const response = await api.campaigns.delete(workspace.id, campaignId)
+      
+      if (response.error) throw new Error(response.error)
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['campaigns'] })

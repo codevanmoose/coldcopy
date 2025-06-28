@@ -6,8 +6,9 @@ import PDFDocument from 'pdfkit';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { syncId: string } }
+  { params }: { params: Promise<{ syncId: string }> }
 ) {
+  const { syncId } = await params;
   try {
     const supabase = createRouteHandlerClient({ cookies });
     const { data: { user } } = await supabase.auth.getUser();
@@ -44,7 +45,7 @@ export async function GET(
           full_name
         )
       `)
-      .eq('id', params.syncId)
+      .eq('id', syncId)
       .eq('workspace_id', workspaceId)
       .single();
 
@@ -68,7 +69,7 @@ export async function GET(
       return new Response(report, {
         headers: {
           'Content-Type': 'text/markdown',
-          'Content-Disposition': `attachment; filename="pipedrive-sync-report-${params.syncId}.md"`,
+          'Content-Disposition': `attachment; filename="pipedrive-sync-report-${syncId}.md"`,
         },
       });
     }
@@ -84,7 +85,7 @@ export async function GET(
       return new Response(pdfBuffer, {
         headers: {
           'Content-Type': 'application/pdf',
-          'Content-Disposition': `attachment; filename="pipedrive-sync-report-${params.syncId}.pdf"`,
+          'Content-Disposition': `attachment; filename="pipedrive-sync-report-${syncId}.pdf"`,
         },
       });
     });
@@ -161,14 +162,14 @@ export async function GET(
     doc.end();
 
     // Wait for PDF generation to complete
-    return new Promise((resolve) => {
+    return new Promise<Response>((resolve) => {
       doc.on('end', () => {
         const pdfBuffer = Buffer.concat(chunks);
         resolve(
           new Response(pdfBuffer, {
             headers: {
               'Content-Type': 'application/pdf',
-              'Content-Disposition': `attachment; filename="pipedrive-sync-report-${params.syncId}.pdf"`,
+              'Content-Disposition': `attachment; filename="pipedrive-sync-report-${syncId}.pdf"`,
             },
           })
         );

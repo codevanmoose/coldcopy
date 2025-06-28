@@ -1,7 +1,7 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { createClient } from '@/lib/supabase/client'
+import { api } from '@/lib/api-client'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
@@ -22,42 +22,20 @@ interface EmailTrackingStatsProps {
 }
 
 export function EmailTrackingStats({ campaignId, emailId, workspaceId }: EmailTrackingStatsProps) {
-  const supabase = createClient()
 
   const { data: stats, isLoading } = useQuery({
     queryKey: ['email-tracking-stats', campaignId, emailId],
     queryFn: async () => {
       if (emailId) {
         // Single email stats
-        const { data: events } = await supabase
-          .from('email_events')
-          .select('*')
-          .eq('email_id', emailId)
-          .order('created_at', { ascending: true })
-
-        const sent = events?.find(e => e.event_type === 'sent')
-        const opened = events?.find(e => e.event_type === 'opened')
-        const clicks = events?.filter(e => e.event_type === 'clicked') || []
-        const replied = events?.find(e => e.event_type === 'replied')
-
-        return {
-          sent: sent ? 1 : 0,
-          opened: opened ? 1 : 0,
-          clicked: clicks.length > 0 ? 1 : 0,
-          clickCount: clicks.length,
-          replied: replied ? 1 : 0,
-          firstOpenTime: opened?.created_at,
-          lastClickTime: clicks[clicks.length - 1]?.created_at,
-          clickedLinks: clicks.map(c => c.metadata?.url).filter(Boolean),
-        }
+        const response = await api.analytics.emailEvents(workspaceId, emailId)
+        if (response.error) throw new Error(response.error)
+        return response.data
       } else if (campaignId) {
         // Campaign stats
-        const { data } = await supabase
-          .rpc('get_campaign_tracking_stats', {
-            p_campaign_id: campaignId
-          })
-
-        return data
+        const response = await api.analytics.campaignTracking(workspaceId, campaignId)
+        if (response.error) throw new Error(response.error)
+        return response.data
       }
     },
     enabled: !!workspaceId && (!!campaignId || !!emailId),

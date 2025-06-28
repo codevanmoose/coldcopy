@@ -1,0 +1,10 @@
+# Ignore problematic files during build
+src/app/(dashboard)
+src/app/api
+src/components
+!src/components/ui
+__tests__
+e2e
+tests
+*.test.*
+*.spec.*

@@ -9,6 +9,10 @@ import { redirect } from "next/navigation";
 import { Button } from "../../components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../../components/ui/card";
 
+// Enable ISR with 300 second (5 minutes) revalidation for white-label pages
+// Shorter revalidation since content depends on dynamic headers
+export const revalidate = 300
+
 export default function WhiteLabelLandingPage() {
   const headersList = headers();
   const isAuthenticated = headersList.get('x-authenticated') === 'true';

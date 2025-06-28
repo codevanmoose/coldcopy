@@ -3,8 +3,9 @@ import { createClient } from '@/lib/supabase/server'
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { workspaceId: string; invitationId: string } }
+  { params }: { params: Promise<{ workspaceId: string; invitationId: string }> }
 ) {
+  const { workspaceId } = await params;
   try {
     const supabase = await createClient()
     
@@ -20,7 +21,7 @@ export async function DELETE(
     const { data: hasPermission } = await supabase
       .rpc('check_user_permission', {
         p_user_id: user.id,
-        p_workspace_id: params.workspaceId,
+        p_workspace_id: workspaceId,
         p_permission: 'team:manage'
       })
 
@@ -36,7 +37,7 @@ export async function DELETE(
       .from('workspace_invitations')
       .select('email')
       .eq('id', params.invitationId)
-      .eq('workspace_id', params.workspaceId)
+      .eq('workspace_id', workspaceId)
       .single()
 
     if (!invitation) {
@@ -51,7 +52,7 @@ export async function DELETE(
       .from('workspace_invitations')
       .delete()
       .eq('id', params.invitationId)
-      .eq('workspace_id', params.workspaceId)
+      .eq('workspace_id', workspaceId)
 
     if (error) {
       throw error
@@ -59,7 +60,7 @@ export async function DELETE(
 
     // Create audit log
     await supabase.from('audit_logs').insert({
-      workspace_id: params.workspaceId,
+      workspace_id: workspaceId,
       user_id: user.id,
       action: 'invitation_cancelled',
       resource_type: 'workspace_invitation',
