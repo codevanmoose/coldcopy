@@ -33,6 +33,8 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
+    // Reduce memory usage during build
+    memoryBasedWorker: false,
   },
   
   // Security headers
@@ -109,6 +111,33 @@ const nextConfig: NextConfig = {
   
   // Webpack configuration
   webpack: (config, { isServer }) => {
+    // Reduce memory usage
+    config.optimization = {
+      ...config.optimization,
+      splitChunks: {
+        chunks: 'all',
+        cacheGroups: {
+          default: false,
+          vendors: false,
+          // Vendor chunk
+          vendor: {
+            name: 'vendor',
+            chunks: 'all',
+            test: /node_modules/,
+            enforce: true,
+            priority: 20,
+          },
+          // Common chunk
+          common: {
+            minChunks: 2,
+            chunks: 'all',
+            enforce: true,
+            priority: 10,
+          },
+        },
+      },
+    }
+    
     // Ignore node_modules in client bundle
     if (!isServer) {
       config.resolve.fallback = {
