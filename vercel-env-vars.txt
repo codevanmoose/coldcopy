@@ -1,0 +1,75 @@
+# Vercel Environment Variables for ColdCopy
+# Copy these one by one into Vercel Dashboard
+# https://vercel.com/vanmooseprojects/coldcopy/settings/environment-variables
+
+# === CRITICAL - Add These First ===
+
+NEXT_PUBLIC_SUPABASE_URL=https://zicipvpablahehxstbfr.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY2lwdnBhYmxhaGVoeHN0YmZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEwMDY3NTEsImV4cCI6MjA2NjU4Mjc1MX0.4i08GOhX0UPWjv4YdLRBXXEi2WMYiFgAica8LM9fRB8
+SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY2lwdnBhYmxhaGVoeHN0YmZyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1MTAwNjc1MSwiZXhwIjoyMDY2NTgyNzUxfQ.FuHhzGlvQaA4HXPhKvR1UZIn3UPr4EgtydupNTdJjow
+
+# === Authentication ===
+
+NEXTAUTH_SECRET=qltJzWq5hx1ikfB9WsmER4CrYZqLTtKdyfTriXlLmnw=
+NEXTAUTH_URL=https://coldcopy.vercel.app
+JWT_SECRET=mKx7bV5vf9h/4sWWXFCbK6o1WpOkxoQNpPA0y/HhHy0=
+ENCRYPTION_KEY=ee1c3e1682247a7c606811d5804c6a0f1ab8ea0209c092ba134d54aedb24863c
+
+# === Application URLs ===
+
+NEXT_PUBLIC_APP_URL=https://coldcopy.vercel.app
+NEXT_PUBLIC_API_URL=https://api.coldcopy.cc
+NEXT_PUBLIC_ENVIRONMENT=production
+
+# === AI Services (Add your own keys) ===
+
+OPENAI_API_KEY=sk-your-openai-key-here
+ANTHROPIC_API_KEY=sk-ant-your-anthropic-key-here
+
+# === Email Service (Optional - Add later) ===
+
+# AWS_ACCESS_KEY_ID=your-aws-access-key
+# AWS_SECRET_ACCESS_KEY=your-aws-secret-key
+# AWS_REGION=us-east-1
+# SES_CONFIGURATION_SET=coldcopy-transactional
+# SES_FROM_EMAIL=noreply@coldcopy.cc
+
+# === Redis (Optional - Default to localhost) ===
+
+REDIS_URL=redis://localhost:6379
+
+# === Stripe (Optional - Add when ready) ===
+
+# STRIPE_SECRET_KEY=sk_test_your-stripe-key
+# NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_your-stripe-key
+# STRIPE_WEBHOOK_SECRET=whsec_your-webhook-secret
+
+# === Lead Enrichment (Optional) ===
+
+# HUNTER_API_KEY=your-hunter-key
+# CLEARBIT_API_KEY=your-clearbit-key
+# APOLLO_API_KEY=your-apollo-key
+
+# === Social Media (Optional) ===
+
+# LINKEDIN_CLIENT_ID=your-linkedin-id
+# LINKEDIN_CLIENT_SECRET=your-linkedin-secret
+# LINKEDIN_REDIRECT_URI=https://coldcopy.vercel.app/api/auth/linkedin/callback
+
+# === Monitoring (Optional) ===
+
+# SENTRY_DSN=your-sentry-dsn
+# NEXT_PUBLIC_POSTHOG_KEY=your-posthog-key
+# NEXT_PUBLIC_POSTHOG_HOST=https://app.posthog.com
+
+# === Feature Flags ===
+
+ENABLE_LINKEDIN_INTEGRATION=false
+ENABLE_TWITTER_INTEGRATION=false
+ENABLE_SALES_INTELLIGENCE=false
+ENABLE_AI_MEETING_SCHEDULER=false
+
+# === Webhook Secrets ===
+
+WEBHOOK_SECRET=generate-random-secret-here
+CRON_SECRET=generate-random-secret-here

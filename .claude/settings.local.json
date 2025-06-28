@@ -53,7 +53,9 @@
       "Bash(openssl rand:*)",
       "WebFetch(domain:supabase.com)",
       "Bash(./scripts/monitor-deployment.sh:*)",
-      "Bash(\"/Users/jasper/Documents/Poetsen/Van Moose Projects/ColdCopy/scripts/monitor-deployment.sh\")"
+      "Bash(\"/Users/jasper/Documents/Poetsen/Van Moose Projects/ColdCopy/scripts/monitor-deployment.sh\")",
+      "Bash(npx supabase:*)",
+      "Bash(cat:*)"
     ],
     "deny": []
   }
