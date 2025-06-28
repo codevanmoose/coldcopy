@@ -33,6 +33,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
+    serverComponentsExternalPackages: ['prom-client', 'bull', 'ioredis', 'sharp'],
   },
   
   // Security headers
@@ -108,32 +109,14 @@ const nextConfig: NextConfig = {
   },
   
   // Webpack configuration
-  webpack: (config, { isServer }) => {
-    // Reduce memory usage
-    config.optimization = {
-      ...config.optimization,
-      splitChunks: {
-        chunks: 'all',
-        cacheGroups: {
-          default: false,
-          vendors: false,
-          // Vendor chunk
-          vendor: {
-            name: 'vendor',
-            chunks: 'all',
-            test: /node_modules/,
-            enforce: true,
-            priority: 20,
-          },
-          // Common chunk
-          common: {
-            minChunks: 2,
-            chunks: 'all',
-            enforce: true,
-            priority: 10,
-          },
-        },
-      },
+  webpack: (config, { isServer, webpack }) => {
+    // Add polyfill for 'self' in server bundle
+    if (isServer) {
+      config.plugins.push(
+        new webpack.DefinePlugin({
+          self: 'global',
+        })
+      )
     }
     
     // Ignore node_modules in client bundle
@@ -143,14 +126,10 @@ const nextConfig: NextConfig = {
         fs: false,
         net: false,
         tls: false,
-      }
-      
-      // Exclude problematic packages from client bundle
-      config.externals = {
-        ...config.externals,
-        'prom-client': 'commonjs prom-client',
-        'bull': 'commonjs bull',
-        'ioredis': 'commonjs ioredis',
+        crypto: false,
+        stream: false,
+        path: false,
+        os: false,
       }
     }
     
