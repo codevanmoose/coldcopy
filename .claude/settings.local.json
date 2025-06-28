@@ -49,7 +49,9 @@
       "Bash(npm ci:*)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:vercel.com)",
-      "Bash(supabase:*)"
+      "Bash(supabase:*)",
+      "Bash(openssl rand:*)",
+      "WebFetch(domain:supabase.com)"
     ],
     "deny": []
   }
