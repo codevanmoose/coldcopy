@@ -33,8 +33,6 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: '2mb',
     },
-    // Reduce memory usage during build
-    memoryBasedWorker: false,
   },
   
   // Security headers
@@ -146,6 +144,14 @@ const nextConfig: NextConfig = {
         net: false,
         tls: false,
       }
+      
+      // Exclude problematic packages from client bundle
+      config.externals = {
+        ...config.externals,
+        'prom-client': 'commonjs prom-client',
+        'bull': 'commonjs bull',
+        'ioredis': 'commonjs ioredis',
+      }
     }
     
     // Add bundle analyzer in development
@@ -177,6 +183,9 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
+
+  // Exclude problematic packages from client bundle
+  serverComponentsExternalPackages: ['prom-client', 'bull', 'ioredis'],
 };
 
 export default nextConfig;
