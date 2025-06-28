@@ -183,9 +183,6 @@ const nextConfig: NextConfig = {
   eslint: {
     ignoreDuringBuilds: true,
   },
-
-  // Exclude problematic packages from client bundle
-  serverComponentsExternalPackages: ['prom-client', 'bull', 'ioredis'],
 };
 
 export default nextConfig;
