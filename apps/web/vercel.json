@@ -177,14 +177,14 @@
       "permanent": false
     }
   ],
-  "buildCommand": "NODE_OPTIONS='--max-old-space-size=1800' npm run build",
+  "buildCommand": "NODE_OPTIONS='--max-old-space-size=3008' npm run build",
   "outputDirectory": ".next",
   "installCommand": "npm ci",
   "framework": "nextjs",
   "regions": ["iad1"],
   "build": {
     "env": {
-      "NODE_OPTIONS": "--max-old-space-size=1800",
+      "NODE_OPTIONS": "--max-old-space-size=3008",
       "NEXT_TELEMETRY_DISABLED": "1"
     }
   },
