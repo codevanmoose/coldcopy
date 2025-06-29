@@ -1,0 +1,100 @@
+# ===================================
+# ESSENTIAL ENVIRONMENT VARIABLES
+# Copy these to Vercel Dashboard
+# ===================================
+
+# 1. SUPABASE (REQUIRED - Get from Supabase Dashboard)
+NEXT_PUBLIC_SUPABASE_URL=https://zicipvpablahehxstbfr.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InppY2lwdnBhYmxhaGVoeHN0YmZyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEwMDY3NTEsImV4cCI6MjA2NjU4Mjc1MX0.4i08GOhX0UPWjv4YdLRBXXEi2WMYiFgAica8LM9fRB8
+SUPABASE_SERVICE_ROLE_KEY=[GET_FROM_SUPABASE_DASHBOARD_SETTINGS_API_SERVICE_ROLE]
+
+# 2. AUTHENTICATION SECRETS (REQUIRED)
+NEXTAUTH_SECRET=GSlyMXDuN5NDzesGXo1ExHskupEKIYvtCwWTe4uVlak=
+NEXTAUTH_URL=https://coldcopy.vercel.app
+JWT_SECRET=3j+z/BpaIF+usn0sdU9uy/0eWKCp8kmSXLs2VLSIv90=
+ENCRYPTION_KEY=0207997ff9812a7f6c9be63eebd80ff75ec899f42a416315124e4ea9511845d5
+
+# 3. APPLICATION URLs (REQUIRED)
+NEXT_PUBLIC_API_URL=https://coldcopy.vercel.app/api
+NEXT_PUBLIC_APP_URL=https://coldcopy.vercel.app
+
+# 4. WEBHOOK & CRON SECRETS (REQUIRED)
+WEBHOOK_SECRET=KUtgepvxWi9x8bgiwv6iZdo8jaOBocSEDLIVpWNPLAE=
+CRON_SECRET=TJ+/q+3cFYdQ1TepHEbvffEOYU09yPQ/27g6IdPE4GU=
+
+# 5. FEATURE FLAGS (REQUIRED)
+ENABLE_LINKEDIN_INTEGRATION=false
+ENABLE_TWITTER_INTEGRATION=false
+ENABLE_SALES_INTELLIGENCE=true
+ENABLE_AI_MEETING_SCHEDULER=true
+
+# ===================================
+# PLACEHOLDER VALUES FOR BUILD
+# These allow the app to build but features won't work without real keys
+# ===================================
+
+# Email (Replace with real AWS SES credentials)
+AWS_ACCESS_KEY_ID=PLACEHOLDER_ACCESS_KEY
+AWS_SECRET_ACCESS_KEY=PLACEHOLDER_SECRET_KEY
+AWS_REGION=us-east-1
+SES_CONFIGURATION_SET=coldcopy-transactional
+SES_FROM_EMAIL=noreply@coldcopy.vercel.app
+
+# AI Services (Replace with real API keys)
+OPENAI_API_KEY=sk-placeholder-key
+ANTHROPIC_API_KEY=sk-ant-placeholder-key
+
+# Payment (Replace with real Stripe keys)
+STRIPE_SECRET_KEY=sk_test_placeholder
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_placeholder
+STRIPE_WEBHOOK_SECRET=whsec_placeholder
+
+# Lead Enrichment (Optional - features won't work without real keys)
+HUNTER_API_KEY=placeholder
+CLEARBIT_API_KEY=placeholder
+APOLLO_API_KEY=placeholder
+
+# Social Media (Optional - features won't work without real keys)
+LINKEDIN_CLIENT_ID=placeholder
+LINKEDIN_CLIENT_SECRET=placeholder
+LINKEDIN_REDIRECT_URI=https://coldcopy.vercel.app/api/auth/linkedin/callback
+TWITTER_API_KEY=placeholder
+TWITTER_API_SECRET=placeholder
+TWITTER_ACCESS_TOKEN=placeholder
+TWITTER_ACCESS_SECRET=placeholder
+
+# Redis (Optional - caching won't work without real URL)
+REDIS_URL=redis://localhost:6379
+
+# File Storage (Optional)
+DO_SPACES_KEY=placeholder
+DO_SPACES_SECRET=placeholder
+DO_SPACES_ENDPOINT=https://nyc3.digitaloceanspaces.com
+DO_SPACES_REGION=nyc3
+DO_SPACES_BUCKET=coldcopy-uploads
+
+# OAuth (Optional)
+GOOGLE_CLIENT_ID=placeholder
+GOOGLE_CLIENT_SECRET=placeholder
+MICROSOFT_CLIENT_ID=placeholder
+MICROSOFT_CLIENT_SECRET=placeholder
+MICROSOFT_TENANT_ID=common
+
+# Monitoring (Optional)
+SENTRY_DSN=
+SENTRY_AUTH_TOKEN=
+NEXT_PUBLIC_POSTHOG_KEY=
+NEXT_PUBLIC_POSTHOG_HOST=https://app.posthog.com
+
+# CRM Integrations (Optional)
+SALESFORCE_CLIENT_ID=placeholder
+SALESFORCE_CLIENT_SECRET=placeholder
+SALESFORCE_REDIRECT_URI=https://coldcopy.vercel.app/api/integrations/salesforce/callback
+HUBSPOT_CLIENT_ID=placeholder
+HUBSPOT_CLIENT_SECRET=placeholder
+HUBSPOT_REDIRECT_URI=https://coldcopy.vercel.app/api/integrations/hubspot/callback
+
+# Email Tracking
+TRACKING_PIXEL_URL=https://coldcopy.vercel.app/api/track/pixel
+TRACKING_DOMAIN=coldcopy.vercel.app
+

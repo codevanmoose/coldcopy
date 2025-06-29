@@ -55,7 +55,9 @@
       "Bash(./scripts/monitor-deployment.sh:*)",
       "Bash(\"/Users/jasper/Documents/Poetsen/Van Moose Projects/ColdCopy/scripts/monitor-deployment.sh\")",
       "Bash(npx supabase:*)",
-      "Bash(cat:*)"
+      "Bash(cat:*)",
+      "Bash(./scripts/generate-env-vars.sh:*)",
+      "Bash(./scripts/test-deployment.sh:*)"
     ],
     "deny": []
   }
