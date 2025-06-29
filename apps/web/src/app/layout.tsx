@@ -3,11 +3,9 @@ import { Inter } from "next/font/google";
 import Script from "next/script";
 import { Toaster } from "sonner";
 import { headers } from "next/headers";
-import { WhiteLabelProvider } from "../components/white-label/white-label-provider";
 import { ErrorBoundary } from "../components/error-boundary";
 import { ThemeProvider } from "@/lib/theme/theme-provider";
 import { ShortcutProvider } from "@/lib/shortcuts/shortcut-provider";
-import { CommandPalette } from "@/components/ui/command-palette";
 import "./globals.css";
 
 const inter = Inter({
@@ -147,15 +145,8 @@ export default function RootLayout({
         >
           <ShortcutProvider>
             <ErrorBoundary>
-              <WhiteLabelProvider
-                isWhiteLabel={isWhiteLabel}
-                workspaceId={workspaceId}
-                domain={domain}
-                branding={brandingHeaders}
-              >
-                {children}
-                <CommandPalette />
-              </WhiteLabelProvider>
+              {/* Note: WhiteLabelProvider moved to individual layouts that have QueryProvider */}
+              {children}
             </ErrorBoundary>
             
             <Toaster 

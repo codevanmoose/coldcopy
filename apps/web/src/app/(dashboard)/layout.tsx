@@ -3,6 +3,8 @@
 import { useAuthStore } from '@/stores/auth'
 import { AuthProvider } from '@/components/providers/auth-provider'
 import { QueryProvider } from '@/components/providers/query-provider'
+import { WhiteLabelProvider } from '@/components/white-label/white-label-provider'
+import { CommandPalette } from '@/components/ui/command-palette'
 import { Sidebar } from '@/components/layout/sidebar'
 import { Header } from '@/components/layout/header'
 import { TrialBanner } from '@/components/billing/trial-banner'
@@ -16,7 +18,10 @@ export default function DashboardLayout({
   return (
     <QueryProvider>
       <AuthProvider>
-        <DashboardContent>{children}</DashboardContent>
+        <WhiteLabelProvider>
+          <DashboardContent>{children}</DashboardContent>
+          <CommandPalette />
+        </WhiteLabelProvider>
       </AuthProvider>
     </QueryProvider>
   )

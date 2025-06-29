@@ -23,7 +23,13 @@ export default function Home() {
         </div>
         <div className="mt-12 text-sm text-gray-500">
           <p>🚀 Your platform is live!</p>
-          <p className="mt-2">API: https://api.coldcopy.cc</p>
+          <p className="mt-2">Environment Status:</p>
+          <p className="mt-1 text-xs">
+            Supabase URL: {process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅ Configured' : '❌ Missing'}
+          </p>
+          <p className="text-xs">
+            Supabase Key: {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '✅ Configured' : '❌ Missing'}
+          </p>
         </div>
       </div>
     </main>

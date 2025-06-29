@@ -36,12 +36,22 @@ export function ThemeProvider({
   disableTransitionOnChange = false,
   ...props
 }: ThemeProviderProps) {
-  const [theme, setTheme] = useState<Theme>(
-    () => (localStorage?.getItem(storageKey) as Theme) || defaultTheme
-  )
+  const [theme, setTheme] = useState<Theme>(defaultTheme)
   const [resolvedTheme, setResolvedTheme] = useState<'dark' | 'light'>('light')
+  const [mounted, setMounted] = useState(false)
+
+  // Only run on client side
+  useEffect(() => {
+    setMounted(true)
+    const savedTheme = localStorage.getItem(storageKey) as Theme
+    if (savedTheme) {
+      setTheme(savedTheme)
+    }
+  }, [storageKey])
 
   useEffect(() => {
+    if (!mounted) return
+
     const root = window.document.documentElement
 
     root.classList.remove('light', 'dark')
@@ -103,7 +113,7 @@ export function ThemeProvider({
       root.style.setProperty('--ring', '262.1 83.3% 57.8%')
       root.style.setProperty('--radius', '0.5rem')
     }
-  }, [theme, attribute])
+  }, [theme, attribute, mounted])
 
   useEffect(() => {
     const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')

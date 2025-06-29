@@ -6,6 +6,7 @@ export interface User {
   name?: string
   avatar_url?: string
   role: UserRole
+  workspace_id?: string
   created_at: string
   updated_at: string
 }
