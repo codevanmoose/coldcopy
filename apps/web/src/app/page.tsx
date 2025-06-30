@@ -30,6 +30,9 @@ export default function Home() {
           <p className="text-xs">
             Supabase Key: {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '✅ Configured' : '❌ Missing'}
           </p>
+          <p className="text-xs">
+            AWS SES: {process.env.AWS_ACCESS_KEY_ID ? '✅ Configured' : '❌ Not configured'}
+          </p>
         </div>
       </div>
     </main>

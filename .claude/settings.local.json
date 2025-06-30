@@ -57,7 +57,9 @@
       "Bash(npx supabase:*)",
       "Bash(cat:*)",
       "Bash(./scripts/generate-env-vars.sh:*)",
-      "Bash(./scripts/test-deployment.sh:*)"
+      "Bash(./scripts/test-deployment.sh:*)",
+      "Bash(dig +short:*)",
+      "WebFetch(domain:www.coldcopy.cc)"
     ],
     "deny": []
   }
