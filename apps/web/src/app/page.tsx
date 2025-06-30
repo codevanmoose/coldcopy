@@ -21,19 +21,6 @@ export default function Home() {
             Dashboard
           </a>
         </div>
-        <div className="mt-12 text-sm text-gray-500">
-          <p>🚀 Your platform is live!</p>
-          <p className="mt-2">Environment Status:</p>
-          <p className="mt-1 text-xs">
-            Supabase URL: {process.env.NEXT_PUBLIC_SUPABASE_URL ? '✅ Configured' : '❌ Missing'}
-          </p>
-          <p className="text-xs">
-            Supabase Key: {process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ? '✅ Configured' : '❌ Missing'}
-          </p>
-          <p className="text-xs">
-            AWS SES: {process.env.AWS_ACCESS_KEY_ID ? '✅ Configured' : '❌ Not configured'}
-          </p>
-        </div>
       </div>
     </main>
   )
