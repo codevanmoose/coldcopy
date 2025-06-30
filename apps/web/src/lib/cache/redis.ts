@@ -37,8 +37,34 @@ const redisConfig = {
   },
 };
 
-// Create Redis client
-const redis = new Redis(redisConfig);
+// Create Redis client lazily
+let redis: Redis | null = null;
+
+const getRedisClient = () => {
+  if (!redis) {
+    // Skip Redis in build time
+    if (process.env.NEXT_PHASE === 'phase-production-build' || (process.env.NODE_ENV === 'production' && !process.env.REDIS_URL)) {
+      return null;
+    }
+    
+    redis = new Redis(redisConfig);
+    
+    // Setup error handling
+    redis.on('error', (err) => {
+      console.error('Redis Client Error:', err);
+      stats.errors++;
+    });
+
+    redis.on('connect', () => {
+      console.log('Redis Client Connected');
+    });
+
+    redis.on('reconnecting', () => {
+      console.log('Reconnecting to Redis...');
+    });
+  }
+  return redis;
+};
 
 // In-memory LRU cache for hot data
 const memoryCache = new LRUCache<string, any>({
@@ -67,15 +93,7 @@ export class CacheService {
   private compressionThreshold = 1024; // 1KB
 
   private constructor() {
-    // Setup error handling
-    redis.on('error', (err) => {
-      console.error('Redis Client Error:', err);
-      stats.errors++;
-    });
-
-    redis.on('connect', () => {
-      console.log('Redis Client Connected');
-    });
+    // Redis client is created lazily
   }
 
   static getInstance(): CacheService {
@@ -98,7 +116,10 @@ export class CacheService {
       }
 
       // Check Redis
-      const value = await redis.get(key);
+      const redisClient = getRedisClient();
+      if (!redisClient) return null;
+      
+      const value = await redisClient.get(key);
       if (!value) {
         stats.misses++;
         return null;
@@ -121,7 +142,7 @@ export class CacheService {
 
       // Refresh TTL if requested
       if (options?.refreshOnGet && options.ttl) {
-        await redis.expire(key, options.ttl);
+        await redisClient.expire(key, options.ttl);
       }
 
       return parsed;
@@ -151,7 +172,14 @@ export class CacheService {
       }
 
       // Set in Redis
-      await redis.setex(key, ttl, serialized);
+      const redisClient = getRedisClient();
+      if (!redisClient) {
+        // If Redis is not available, only use memory cache
+        memoryCache.set(key, value, { ttl: ttl * 1000 });
+        return true;
+      }
+      
+      await redisClient.setex(key, ttl, serialized);
 
       // Set in memory cache
       memoryCache.set(key, value, { ttl: ttl * 1000 });
@@ -176,8 +204,9 @@ export class CacheService {
       keys.forEach(k => memoryCache.delete(k));
 
       // Delete from Redis
-      if (keys.length > 0) {
-        await redis.del(...keys);
+      const redisClient = getRedisClient();
+      if (redisClient && keys.length > 0) {
+        await redisClient.del(...keys);
       }
 
       stats.deletes += keys.length;
@@ -194,14 +223,17 @@ export class CacheService {
    */
   async deletePattern(pattern: string): Promise<number> {
     try {
-      const keys = await redis.keys(pattern);
+      const redisClient = getRedisClient();
+      if (!redisClient) return 0;
+      
+      const keys = await redisClient.keys(pattern);
       if (keys.length === 0) return 0;
 
       // Delete from memory cache
       keys.forEach(k => memoryCache.delete(k));
 
       // Delete from Redis
-      await redis.del(...keys);
+      await redisClient.del(...keys);
       
       stats.deletes += keys.length;
       return keys.length;
@@ -222,7 +254,10 @@ export class CacheService {
         return true;
       }
 
-      const exists = await redis.exists(key);
+      const redisClient = getRedisClient();
+      if (!redisClient) return false;
+      
+      const exists = await redisClient.exists(key);
       return exists === 1;
     } catch (error) {
       console.error('Cache exists error:', error);
@@ -236,7 +271,10 @@ export class CacheService {
    */
   async ttl(key: string): Promise<number> {
     try {
-      const ttl = await redis.ttl(key);
+      const redisClient = getRedisClient();
+      if (!redisClient) return -1;
+      
+      const ttl = await redisClient.ttl(key);
       return ttl;
     } catch (error) {
       console.error('Cache TTL error:', error);
@@ -250,7 +288,10 @@ export class CacheService {
   async clear(): Promise<void> {
     try {
       memoryCache.clear();
-      await redis.flushdb();
+      const redisClient = getRedisClient();
+      if (redisClient) {
+        await redisClient.flushdb();
+      }
       console.log('Cache cleared');
     } catch (error) {
       console.error('Cache clear error:', error);
