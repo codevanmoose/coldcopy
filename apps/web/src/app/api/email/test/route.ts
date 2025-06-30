@@ -83,11 +83,27 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Email test error:', error)
     
+    // Check for common SES errors
+    let errorMessage = 'Failed to send test email'
+    let suggestion = ''
+    
+    if (error.name === 'MessageRejected' || error.Code === 'MessageRejected') {
+      errorMessage = 'Email address not verified'
+      suggestion = 'Your SES account is in sandbox mode. You can only send emails to verified email addresses. Please verify the recipient email in AWS SES console first.'
+    } else if (error.message?.includes('Email address is not verified')) {
+      errorMessage = 'Recipient email not verified'
+      suggestion = 'In sandbox mode, you must verify each recipient email address in AWS SES before sending.'
+    } else if (error.message?.includes('Daily sending quota exceeded')) {
+      errorMessage = 'Daily sending limit reached'
+      suggestion = 'You have reached your daily sending limit. In sandbox mode, the limit is 200 emails per day.'
+    }
+    
     return NextResponse.json(
       { 
-        error: 'Failed to send test email',
+        error: errorMessage,
         details: error.message,
-        code: error.Code
+        code: error.Code || error.name,
+        suggestion: suggestion
       },
       { status: 500 }
     )

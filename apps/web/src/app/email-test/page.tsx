@@ -9,7 +9,7 @@ import { Loader2, Mail, CheckCircle, XCircle } from 'lucide-react'
 export default function EmailTestPage() {
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<{ success: boolean; message: string } | null>(null)
+  const [result, setResult] = useState<{ success: boolean; message: string; suggestion?: string } | null>(null)
 
   const sendTestEmail = async () => {
     if (!email) {
@@ -32,7 +32,11 @@ export default function EmailTestPage() {
       if (response.ok) {
         setResult({ success: true, message: data.message })
       } else {
-        setResult({ success: false, message: data.error || 'Failed to send email' })
+        setResult({ 
+          success: false, 
+          message: data.error || 'Failed to send email',
+          suggestion: data.suggestion
+        })
       }
     } catch (error) {
       setResult({ success: false, message: 'Network error - please try again' })
@@ -97,7 +101,12 @@ export default function EmailTestPage() {
                 ) : (
                   <XCircle className="h-5 w-5 mt-0.5" />
                 )}
-                <p className="text-sm">{result.message}</p>
+                <div>
+                  <p className="text-sm font-medium">{result.message}</p>
+                  {result.suggestion && (
+                    <p className="text-sm mt-1 opacity-90">{result.suggestion}</p>
+                  )}
+                </div>
               </div>
             )}
 
