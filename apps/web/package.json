@@ -34,7 +34,15 @@
     "deploy:verify": "npm run env:verify && npm run build && npm run typecheck && npm run lint",
     "deploy:production": "vercel --prod",
     "verify:deployment": "tsx scripts/verify-deployment.ts",
-    "verify:quick": "./scripts/quick-verify.sh"
+    "verify:quick": "./scripts/quick-verify.sh",
+    "test:prod": "playwright test tests/e2e/production-tests.spec.ts",
+    "diagnose": "node scripts/diagnose-deployment.js",
+    "monitor": "ts-node scripts/monitor-production.ts",
+    "test:all": "./scripts/test-production.sh",
+    "test:comprehensive": "ts-node scripts/run-production-test.ts",
+    "verify:full": "npm run diagnose && npm run test:prod",
+    "setup:tools": "npm install playwright tesseract.js pixelmatch pngjs commander && npx playwright install",
+    "verify:tools": "node scripts/verify-tools.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.24.0",

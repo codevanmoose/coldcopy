@@ -18,6 +18,7 @@ import {
   CreditCard,
   Activity,
   Brain,
+  Sparkles,
 } from 'lucide-react'
 
 const navigation = [
@@ -32,6 +33,7 @@ const navigation = [
   { name: 'Privacy', href: '/privacy', icon: Shield },
   { name: 'Settings', href: '/settings', icon: Settings },
   { name: 'Test API', href: '/test-api', icon: Activity }, // Temporary for testing
+  { name: 'AI Dashboard', href: '/ai-dashboard', icon: Sparkles }, // AI features overview
 ]
 
 const adminNavigation = [
