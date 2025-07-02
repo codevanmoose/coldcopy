@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, Suspense } from 'react'
+import { useState, Suspense, useEffect } from 'react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
@@ -22,10 +22,18 @@ type LoginForm = z.infer<typeof loginSchema>
 
 function LoginForm() {
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const redirectTo = searchParams.get('redirectTo') || '/dashboard'
+  const [redirectTo, setRedirectTo] = useState('/dashboard')
   const [error, setError] = useState<string | null>(null)
+  const [isLoading, setIsLoading] = useState(true)
   const supabase = createClient()
+
+  useEffect(() => {
+    // Get redirect parameter from URL on client side
+    const params = new URLSearchParams(window.location.search)
+    const redirect = params.get('redirectTo') || '/dashboard'
+    setRedirectTo(redirect)
+    setIsLoading(false)
+  }, [])
 
   const {
     register,
@@ -53,6 +61,16 @@ function LoginForm() {
     } catch (err) {
       setError('An unexpected error occurred')
     }
+  }
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader className="space-y-1">
+          <CardTitle className="text-2xl font-bold">Loading...</CardTitle>
+        </CardHeader>
+      </Card>
+    )
   }
 
   return (
@@ -135,15 +153,5 @@ function LoginForm() {
 }
 
 export default function LoginPage() {
-  return (
-    <Suspense fallback={
-      <Card>
-        <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold">Loading...</CardTitle>
-        </CardHeader>
-      </Card>
-    }>
-      <LoginForm />
-    </Suspense>
-  )
+  return <LoginForm />
 }
