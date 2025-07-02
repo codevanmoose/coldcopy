@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
@@ -8,8 +8,6 @@ import { Badge } from '@/components/ui/badge'
 import { CheckCircle2, Circle, ArrowRight, Loader2, AlertCircle, PlayCircle } from 'lucide-react'
 import { useToast } from '@/components/ui/use-toast'
 import { useRouter } from 'next/navigation'
-import { useAuth } from '@/hooks/use-auth'
-import { useWorkspace } from '@/hooks/use-workspace'
 
 interface JourneyStep {
   id: string
@@ -22,11 +20,25 @@ interface JourneyStep {
 
 export default function TestUserJourneyPage() {
   const router = useRouter()
-  const { user } = useAuth()
-  const { workspace } = useWorkspace()
   const { toast } = useToast()
   const [running, setRunning] = useState(false)
   const [currentStep, setCurrentStep] = useState(0)
+  const [user, setUser] = useState(null)
+  const [workspace, setWorkspace] = useState(null)
+  
+  // Initialize auth and workspace on client side
+  useEffect(() => {
+    try {
+      const { useAuth } = require('@/hooks/use-auth')
+      const { useWorkspace } = require('@/hooks/use-workspace')
+      const authUser = useAuth()?.user
+      const currentWorkspace = useWorkspace()?.workspace
+      setUser(authUser)
+      setWorkspace(currentWorkspace)
+    } catch (error) {
+      console.log('Auth/workspace hooks not available')
+    }
+  }, [])
   
   const [steps, setSteps] = useState<JourneyStep[]>([
     {

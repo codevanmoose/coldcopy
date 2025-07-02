@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -137,7 +137,8 @@ export default function AIDashboardPage() {
 
   const checkAPIStatus = async () => {
     try {
-      const response = await fetch('/api/test-ai-config')
+      const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://www.coldcopy.cc'
+      const response = await fetch(`${baseUrl}/api/test-ai-config`)
       const data = await response.json()
       setApiStatus({
         openai: data.config?.openai?.configured || false,
@@ -149,9 +150,11 @@ export default function AIDashboardPage() {
     }
   }
 
-  useState(() => {
-    checkAPIStatus()
-  })
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      checkAPIStatus()
+    }
+  }, [])
 
   const getStatusBadge = (status: AIFeature['status']) => {
     switch (status) {
