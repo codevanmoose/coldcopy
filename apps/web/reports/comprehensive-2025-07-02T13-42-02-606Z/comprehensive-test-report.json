@@ -1,0 +1,212 @@
+{
+  "timestamp": "2025-07-02T13:42:02.605Z",
+  "baseUrl": "https://coldcopy.cc",
+  "duration": 78168,
+  "infrastructure": {
+    "health": {
+      "vercel": {
+        "name": "Vercel",
+        "status": "healthy",
+        "details": {
+          "responseTime": 470,
+          "headers": {
+            "server": "Vercel",
+            "x-vercel-id": "fra1::iad1::2x6cz-1751463646282-be4cae7ae194",
+            "x-vercel-cache": "STALE"
+          },
+          "contentDetected": true,
+          "issues": []
+        },
+        "responseTime": 470,
+        "lastChecked": "2025-07-02T13:40:46.487Z"
+      },
+      "supabase": {
+        "name": "Supabase",
+        "status": "critical",
+        "details": {
+          "status": "Supabase Configuration Check",
+          "config": {
+            "url_configured": true,
+            "key_configured": true,
+            "url_preview": "https://zicipvpablahehxstbfr.s...",
+            "key_preview": "eyJhbGciOiJIUzI1NiIs...",
+            "connection_test": "success",
+            "session_check": "working"
+          },
+          "message": "✅ Supabase is configured and accessible",
+          "issues": [
+            "Database connection failed"
+          ]
+        },
+        "responseTime": 355,
+        "lastChecked": "2025-07-02T13:40:46.843Z"
+      },
+      "redis": {
+        "name": "Redis",
+        "status": "warning",
+        "details": {
+          "status": "not_configured",
+          "message": "Redis URL points to localhost",
+          "hint": "Use Vercel KV integration or configure Upstash Redis",
+          "availableConfig": {
+            "upstash": false,
+            "vercelKv": false,
+            "redisUrl": true,
+            "redisUrlValue": "redis://localhost:6379"
+          },
+          "recommendations": [
+            "Option 1: Use Vercel KV integration (easiest)",
+            "Option 2: Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN",
+            "Option 3: Platform works without Redis (just no caching optimization)"
+          ],
+          "issues": [
+            "Redis connection failed - caching disabled"
+          ],
+          "note": "Redis improves performance but is not required for core functionality"
+        },
+        "responseTime": 397,
+        "lastChecked": "2025-07-02T13:40:47.243Z"
+      },
+      "stripe": {
+        "name": "Stripe",
+        "status": "warning",
+        "details": {
+          "status": "Stripe Configuration Check",
+          "config": {
+            "secret_key_configured": true,
+            "publishable_key_configured": true,
+            "webhook_secret_configured": true,
+            "mode": "test",
+            "keys_match": true,
+            "secret_key_preview": "sk_test_pl...",
+            "publishable_key_preview": "pk_test_pl..."
+          },
+          "message": "⚠️ Stripe is configured with TEST keys. Replace with LIVE keys for production.",
+          "warnings": [],
+          "issues": [
+            "Stripe not properly configured"
+          ]
+        },
+        "responseTime": 361,
+        "lastChecked": "2025-07-02T13:40:47.607Z"
+      },
+      "ses": {
+        "name": "Amazon SES",
+        "status": "critical",
+        "details": {
+          "status": "connected",
+          "message": "✅ Successfully connected to AWS SES",
+          "config": {
+            "AWS_ACCESS_KEY_ID": "✅ Set",
+            "AWS_SECRET_ACCESS_KEY": "✅ Set",
+            "AWS_REGION": "✅ us-east-1",
+            "SES_FROM_EMAIL": "✅ noreply@coldcopy.cc",
+            "SES_CONFIGURATION_SET": "coldcopy-transactional"
+          },
+          "ses": {
+            "sendingEnabled": "✅ Yes",
+            "region": "us-east-1"
+          },
+          "nextSteps": [
+            "Visit https://console.aws.amazon.com/ses/ to:",
+            "- Check domain verification status",
+            "- View sending statistics",
+            "- Request production access if still in sandbox"
+          ],
+          "issues": [
+            "SES not configured - email sending disabled"
+          ]
+        },
+        "responseTime": 486,
+        "lastChecked": "2025-07-02T13:40:48.094Z"
+      },
+      "aiServices": {
+        "openai": {
+          "name": "OpenAI",
+          "status": "critical",
+          "details": {
+            "issues": [
+              "OpenAI API not configured"
+            ]
+          },
+          "responseTime": 332,
+          "lastChecked": "2025-07-02T13:40:48.428Z"
+        },
+        "anthropic": {
+          "name": "Anthropic",
+          "status": "critical",
+          "details": {
+            "issues": [
+              "Anthropic API not configured"
+            ]
+          },
+          "responseTime": 177,
+          "lastChecked": "2025-07-02T13:40:48.606Z"
+        }
+      },
+      "overall": "critical"
+    },
+    "aiTests": {
+      "gpt4": {
+        "name": "GPT-4 Generation",
+        "status": "healthy",
+        "details": {
+          "success": true,
+          "contentLength": 1611,
+          "issues": [
+            "AI generation taking too long"
+          ]
+        },
+        "responseTime": 13447,
+        "lastChecked": "2025-07-02T13:41:02.073Z"
+      },
+      "claude": {
+        "name": "Claude Generation",
+        "status": "healthy",
+        "details": {
+          "success": true,
+          "contentLength": 1841,
+          "issues": [
+            "AI generation taking too long"
+          ]
+        },
+        "responseTime": 11261,
+        "lastChecked": "2025-07-02T13:41:13.336Z"
+      }
+    },
+    "summary": {
+      "vercel": "healthy",
+      "supabase": "critical",
+      "redis": "warning",
+      "stripe": "warning",
+      "ses": "critical",
+      "openai": "critical",
+      "anthropic": "critical",
+      "overall": "critical"
+    }
+  },
+  "playwrightResults": {
+    "exitCode": 1,
+    "success": false,
+    "stdout": "",
+    "stderr": "error: unknown option '--output-dir=test-results/comprehensive'\n",
+    "results": null
+  },
+  "recommendations": [
+    "🚨 5 critical issues require immediate attention",
+    "• Fix: Critical infrastructure issues detected",
+    "• Fix: Database connection failed",
+    "• Fix: Landing page not functioning",
+    "• Fix: Authentication system not working",
+    "• Fix: All AI services unavailable",
+    "💾 Set up Redis caching for better performance"
+  ],
+  "criticalIssues": [
+    "Critical infrastructure issues detected",
+    "Database connection failed",
+    "Landing page not functioning",
+    "Authentication system not working",
+    "All AI services unavailable"
+  ],
+  "overallStatus": "critical"
+}

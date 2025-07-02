@@ -1,0 +1,258 @@
+{
+  "timestamp": "2025-07-02T14:23:41.337Z",
+  "baseUrl": "https://coldcopy.cc",
+  "summary": {
+    "total": 8,
+    "passed": 6,
+    "failed": 0,
+    "warnings": 2,
+    "totalDuration": 21371
+  },
+  "results": [
+    {
+      "name": "Landing Page Test",
+      "status": "passed",
+      "duration": 2501,
+      "errors": [],
+      "screenshot": "screenshots/landing-page-2025-07-02T14-23-22-237Z.png"
+    },
+    {
+      "name": "Authentication Flow Test",
+      "status": "passed",
+      "duration": 2354,
+      "errors": [],
+      "screenshot": "screenshots/login-page-2025-07-02T14-23-23-482Z.png"
+    },
+    {
+      "name": "User Journey Test",
+      "status": "warning",
+      "duration": 1915,
+      "errors": [
+        "No journey steps found on test page"
+      ],
+      "screenshot": "screenshots/user-journey-test-2025-07-02T14-23-25-728Z.png",
+      "data": {
+        "stepsFound": 0
+      }
+    },
+    {
+      "name": "AI Features Test",
+      "status": "passed",
+      "duration": 2159,
+      "errors": [],
+      "data": {
+        "/api/test-ai-generation": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "message": "AI Generation Test Endpoint",
+            "usage": "POST to this endpoint with { \"model\": \"gpt-4\" | \"claude\", \"prompt\": \"...\", \"leadData\": {...} }"
+          }
+        },
+        "/api/test-ai-config": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "status": "AI Configuration Check",
+            "config": {
+              "openai": {
+                "configured": true,
+                "keyPreview": "sk-proj...ZqkA"
+              },
+              "anthropic": {
+                "configured": true,
+                "keyPreview": "sk-ant-...FgAA"
+              },
+              "environment": "production",
+              "vercel": true,
+              "vercelEnv": "production"
+            },
+            "message": "✅ All AI providers are configured"
+          }
+        },
+        "/test-ai": {
+          "status": 200,
+          "ok": true,
+          "data": null
+        },
+        "/test-smart-reply": {
+          "status": 200,
+          "ok": true,
+          "data": null
+        },
+        "/test-sentiment": {
+          "status": 200,
+          "ok": true,
+          "data": null
+        }
+      }
+    },
+    {
+      "name": "Integrations Test",
+      "status": "passed",
+      "duration": 1890,
+      "errors": [],
+      "data": {
+        "/api/health": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "status": "ok",
+            "timestamp": "2025-07-02T14:23:29.312Z",
+            "region": "iad1"
+          }
+        },
+        "/api/ses-status": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "status": "connected",
+            "message": "✅ Successfully connected to AWS SES",
+            "config": {
+              "AWS_ACCESS_KEY_ID": "✅ Set",
+              "AWS_SECRET_ACCESS_KEY": "✅ Set",
+              "AWS_REGION": "✅ us-east-1",
+              "SES_FROM_EMAIL": "✅ noreply@coldcopy.cc",
+              "SES_CONFIGURATION_SET": "coldcopy-transactional"
+            },
+            "ses": {
+              "sendingEnabled": "✅ Yes",
+              "region": "us-east-1"
+            },
+            "nextSteps": [
+              "Visit https://console.aws.amazon.com/ses/ to:",
+              "- Check domain verification status",
+              "- View sending statistics",
+              "- Request production access if still in sandbox"
+            ]
+          }
+        },
+        "/api/test-redis": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "status": "not_configured",
+            "message": "Redis URL points to localhost",
+            "hint": "Use Vercel KV integration or configure Upstash Redis",
+            "availableConfig": {
+              "upstash": true,
+              "vercelKv": false,
+              "redisUrl": true,
+              "redisUrlValue": "redis://localhost:6379"
+            },
+            "recommendations": [
+              "Option 1: Use Vercel KV integration (easiest)",
+              "Option 2: Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN",
+              "Option 3: Platform works without Redis (just no caching optimization)"
+            ]
+          }
+        },
+        "/api/test-supabase-config": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "status": "Supabase Configuration Check",
+            "config": {
+              "url_configured": true,
+              "key_configured": true,
+              "url_preview": "https://zicipvpablahehxstbfr.s...",
+              "key_preview": "eyJhbGciOiJIUzI1NiIs...",
+              "connection_test": "success",
+              "session_check": "working"
+            },
+            "message": "✅ Supabase is configured and accessible"
+          }
+        },
+        "/api/test-stripe-config": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "status": "Stripe Configuration Check",
+            "config": {
+              "secret_key_configured": true,
+              "publishable_key_configured": true,
+              "webhook_secret_configured": true,
+              "mode": "test",
+              "keys_match": true,
+              "secret_key_preview": "sk_test_pl...",
+              "publishable_key_preview": "pk_test_pl..."
+            },
+            "message": "⚠️ Stripe is configured with TEST keys. Replace with LIVE keys for production.",
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "name": "Performance Test",
+      "status": "passed",
+      "duration": 5775,
+      "errors": [],
+      "data": {
+        "loadTime": 766,
+        "webVitals": {},
+        "apiCalls": [
+          {
+            "url": "https://www.coldcopy.cc/demo?_rsc=1ld0r",
+            "duration": 52.5,
+            "status": 404
+          },
+          {
+            "url": "https://www.coldcopy.cc/pricing?_rsc=1ld0r",
+            "duration": 60.70000000298023,
+            "status": 200
+          },
+          {
+            "url": "https://www.coldcopy.cc/login?_rsc=1ld0r",
+            "duration": 73.29999999701977,
+            "status": 200
+          },
+          {
+            "url": "https://www.coldcopy.cc/signup?_rsc=1ld0r",
+            "duration": 82.80000000074506,
+            "status": 404
+          }
+        ],
+        "slowApiCalls": []
+      }
+    },
+    {
+      "name": "Visual Regression Test",
+      "status": "passed",
+      "duration": 3841,
+      "errors": [],
+      "data": {
+        "screenshots": [
+          "screenshots/visual-landing-2025-07-02T14-23-37-284Z.png",
+          "screenshots/visual-login-2025-07-02T14-23-38-209Z.png",
+          "screenshots/visual-signup-2025-07-02T14-23-39-030Z.png",
+          "screenshots/visual-pricing-2025-07-02T14-23-40-244Z.png"
+        ]
+      }
+    },
+    {
+      "name": "Mobile Experience Test",
+      "status": "warning",
+      "duration": 936,
+      "errors": [
+        "Mobile menu not found"
+      ],
+      "screenshot": "screenshots/mobile-view-2025-07-02T14-23-41-188Z.png"
+    }
+  ],
+  "screenshots": [
+    "screenshots/landing-page-2025-07-02T14-23-22-237Z.png",
+    "screenshots/login-page-2025-07-02T14-23-23-482Z.png",
+    "screenshots/signup-page-2025-07-02T14-23-24-712Z.png",
+    "screenshots/user-journey-test-2025-07-02T14-23-25-728Z.png",
+    "screenshots/visual-landing-2025-07-02T14-23-37-284Z.png",
+    "screenshots/visual-login-2025-07-02T14-23-38-209Z.png",
+    "screenshots/visual-signup-2025-07-02T14-23-39-030Z.png",
+    "screenshots/visual-pricing-2025-07-02T14-23-40-244Z.png",
+    "screenshots/mobile-view-2025-07-02T14-23-41-188Z.png"
+  ],
+  "recommendations": [
+    "⚠️ 2 tests have warnings - review and fix when possible",
+    "📱 Mobile experience needs improvement - check responsive design and touch interactions"
+  ]
+}

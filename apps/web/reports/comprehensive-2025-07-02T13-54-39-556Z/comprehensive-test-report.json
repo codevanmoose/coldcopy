@@ -1,0 +1,200 @@
+{
+  "timestamp": "2025-07-02T13:54:39.556Z",
+  "baseUrl": "https://coldcopy.cc",
+  "duration": 82407,
+  "infrastructure": {
+    "health": {
+      "vercel": {
+        "name": "Vercel",
+        "status": "healthy",
+        "details": {
+          "responseTime": 237,
+          "headers": {
+            "server": "Vercel",
+            "x-vercel-id": "fra1::iad1::95884-1751464397482-ebbf5222c289",
+            "x-vercel-cache": "STALE"
+          },
+          "contentDetected": true,
+          "issues": []
+        },
+        "responseTime": 237,
+        "lastChecked": "2025-07-02T13:53:17.537Z"
+      },
+      "supabase": {
+        "name": "Supabase",
+        "status": "healthy",
+        "details": {
+          "status": "Supabase Configuration Check",
+          "config": {
+            "url_configured": true,
+            "key_configured": true,
+            "url_preview": "https://zicipvpablahehxstbfr.s...",
+            "key_preview": "eyJhbGciOiJIUzI1NiIs...",
+            "connection_test": "success",
+            "session_check": "working"
+          },
+          "message": "✅ Supabase is configured and accessible",
+          "issues": []
+        },
+        "responseTime": 189,
+        "lastChecked": "2025-07-02T13:53:17.728Z"
+      },
+      "redis": {
+        "name": "Redis",
+        "status": "warning",
+        "details": {
+          "status": "not_configured",
+          "message": "Redis URL points to localhost",
+          "hint": "Use Vercel KV integration or configure Upstash Redis",
+          "availableConfig": {
+            "upstash": false,
+            "vercelKv": false,
+            "redisUrl": true,
+            "redisUrlValue": "redis://localhost:6379"
+          },
+          "recommendations": [
+            "Option 1: Use Vercel KV integration (easiest)",
+            "Option 2: Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN",
+            "Option 3: Platform works without Redis (just no caching optimization)"
+          ],
+          "issues": [
+            "Redis connection failed - caching disabled"
+          ],
+          "note": "Redis improves performance but is not required for core functionality"
+        },
+        "responseTime": 183,
+        "lastChecked": "2025-07-02T13:53:17.912Z"
+      },
+      "stripe": {
+        "name": "Stripe",
+        "status": "warning",
+        "details": {
+          "status": "Stripe Configuration Check",
+          "config": {
+            "secret_key_configured": true,
+            "publishable_key_configured": true,
+            "webhook_secret_configured": true,
+            "mode": "test",
+            "keys_match": true,
+            "secret_key_preview": "sk_test_pl...",
+            "publishable_key_preview": "pk_test_pl..."
+          },
+          "message": "⚠️ Stripe is configured with TEST keys. Replace with LIVE keys for production.",
+          "warnings": [],
+          "issues": [
+            "Stripe not properly configured"
+          ]
+        },
+        "responseTime": 183,
+        "lastChecked": "2025-07-02T13:53:18.097Z"
+      },
+      "ses": {
+        "name": "Amazon SES",
+        "status": "healthy",
+        "details": {
+          "status": "connected",
+          "message": "✅ Successfully connected to AWS SES",
+          "config": {
+            "AWS_ACCESS_KEY_ID": "✅ Set",
+            "AWS_SECRET_ACCESS_KEY": "✅ Set",
+            "AWS_REGION": "✅ us-east-1",
+            "SES_FROM_EMAIL": "✅ noreply@coldcopy.cc",
+            "SES_CONFIGURATION_SET": "coldcopy-transactional"
+          },
+          "ses": {
+            "sendingEnabled": "✅ Yes",
+            "region": "us-east-1"
+          },
+          "nextSteps": [
+            "Visit https://console.aws.amazon.com/ses/ to:",
+            "- Check domain verification status",
+            "- View sending statistics",
+            "- Request production access if still in sandbox"
+          ],
+          "issues": []
+        },
+        "responseTime": 237,
+        "lastChecked": "2025-07-02T13:53:18.336Z"
+      },
+      "aiServices": {
+        "openai": {
+          "name": "OpenAI",
+          "status": "healthy",
+          "details": {
+            "configured": true,
+            "issues": []
+          },
+          "responseTime": 167,
+          "lastChecked": "2025-07-02T13:53:18.503Z"
+        },
+        "anthropic": {
+          "name": "Anthropic",
+          "status": "healthy",
+          "details": {
+            "configured": true,
+            "issues": []
+          },
+          "responseTime": 226,
+          "lastChecked": "2025-07-02T13:53:18.730Z"
+        }
+      },
+      "overall": "healthy"
+    },
+    "aiTests": {
+      "gpt4": {
+        "name": "GPT-4 Generation",
+        "status": "healthy",
+        "details": {
+          "success": true,
+          "contentLength": 1713,
+          "issues": [
+            "AI generation taking too long"
+          ]
+        },
+        "responseTime": 17263,
+        "lastChecked": "2025-07-02T13:53:36.011Z"
+      },
+      "claude": {
+        "name": "Claude Generation",
+        "status": "healthy",
+        "details": {
+          "success": true,
+          "contentLength": 1850,
+          "issues": [
+            "AI generation taking too long"
+          ]
+        },
+        "responseTime": 15301,
+        "lastChecked": "2025-07-02T13:53:51.313Z"
+      }
+    },
+    "summary": {
+      "vercel": "healthy",
+      "supabase": "healthy",
+      "redis": "warning",
+      "stripe": "warning",
+      "ses": "healthy",
+      "openai": "healthy",
+      "anthropic": "healthy",
+      "overall": "healthy"
+    }
+  },
+  "playwrightResults": {
+    "exitCode": 1,
+    "success": false,
+    "stdout": "",
+    "stderr": "error: unknown option '--output-dir=test-results/comprehensive'\n",
+    "results": null
+  },
+  "recommendations": [
+    "🚨 2 critical issues require immediate attention",
+    "• Fix: Landing page not functioning",
+    "• Fix: Authentication system not working",
+    "💾 Set up Redis caching for better performance"
+  ],
+  "criticalIssues": [
+    "Landing page not functioning",
+    "Authentication system not working"
+  ],
+  "overallStatus": "critical"
+}

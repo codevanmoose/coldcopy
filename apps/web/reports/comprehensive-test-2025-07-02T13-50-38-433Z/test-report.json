@@ -1,0 +1,264 @@
+{
+  "timestamp": "2025-07-02T13:50:38.433Z",
+  "baseUrl": "https://coldcopy.cc",
+  "summary": {
+    "total": 8,
+    "passed": 4,
+    "failed": 2,
+    "warnings": 2,
+    "totalDuration": 46753
+  },
+  "results": [
+    {
+      "name": "Landing Page Test",
+      "status": "failed",
+      "duration": 1302,
+      "errors": [
+        "Landing page test failed: page.evaluate: ReferenceError: __name is not defined\n    at eval (eval at evaluate (:291:30), <anonymous>:1:24)\n    at UtilityScript.evaluate (<anonymous>:293:16)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+      ],
+      "screenshot": "screenshots/landing-page-2025-07-02T13-49-52-798Z.png"
+    },
+    {
+      "name": "Authentication Flow Test",
+      "status": "failed",
+      "duration": 31922,
+      "errors": [
+        "Authentication test failed: page.waitForURL: Timeout 30000ms exceeded.\n=========================== logs ===========================\nwaiting for navigation to \"**/signup\" until \"load\"\n  navigated to \"https://www.coldcopy.cc/register\"\n  navigated to \"https://www.coldcopy.cc/register\"\n============================================================"
+      ],
+      "screenshot": "screenshots/login-page-2025-07-02T13-49-53-757Z.png"
+    },
+    {
+      "name": "User Journey Test",
+      "status": "warning",
+      "duration": 921,
+      "errors": [
+        "No journey steps found on test page"
+      ],
+      "screenshot": "screenshots/user-journey-test-2025-07-02T13-50-25-301Z.png",
+      "data": {
+        "stepsFound": 0
+      }
+    },
+    {
+      "name": "AI Features Test",
+      "status": "passed",
+      "duration": 1050,
+      "errors": [],
+      "data": {
+        "/api/test-ai-generation": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "message": "AI Generation Test Endpoint",
+            "usage": "POST to this endpoint with { \"model\": \"gpt-4\" | \"claude\", \"prompt\": \"...\", \"leadData\": {...} }"
+          }
+        },
+        "/api/test-ai-config": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "status": "AI Configuration Check",
+            "config": {
+              "openai": {
+                "configured": true,
+                "keyPreview": "sk-proj...ZqkA"
+              },
+              "anthropic": {
+                "configured": true,
+                "keyPreview": "sk-ant-...FgAA"
+              },
+              "environment": "production",
+              "vercel": true,
+              "vercelEnv": "production"
+            },
+            "message": "✅ All AI providers are configured"
+          }
+        },
+        "/test-ai": {
+          "status": 200,
+          "ok": true,
+          "data": null
+        },
+        "/test-smart-reply": {
+          "status": 200,
+          "ok": true,
+          "data": null
+        },
+        "/test-sentiment": {
+          "status": 200,
+          "ok": true,
+          "data": null
+        }
+      }
+    },
+    {
+      "name": "Integrations Test",
+      "status": "passed",
+      "duration": 1285,
+      "errors": [],
+      "data": {
+        "/api/health": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "status": "ok",
+            "timestamp": "2025-07-02T13:50:27.072Z",
+            "region": "iad1"
+          }
+        },
+        "/api/ses-status": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "status": "connected",
+            "message": "✅ Successfully connected to AWS SES",
+            "config": {
+              "AWS_ACCESS_KEY_ID": "✅ Set",
+              "AWS_SECRET_ACCESS_KEY": "✅ Set",
+              "AWS_REGION": "✅ us-east-1",
+              "SES_FROM_EMAIL": "✅ noreply@coldcopy.cc",
+              "SES_CONFIGURATION_SET": "coldcopy-transactional"
+            },
+            "ses": {
+              "sendingEnabled": "✅ Yes",
+              "region": "us-east-1"
+            },
+            "nextSteps": [
+              "Visit https://console.aws.amazon.com/ses/ to:",
+              "- Check domain verification status",
+              "- View sending statistics",
+              "- Request production access if still in sandbox"
+            ]
+          }
+        },
+        "/api/test-redis": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "status": "not_configured",
+            "message": "Redis URL points to localhost",
+            "hint": "Use Vercel KV integration or configure Upstash Redis",
+            "availableConfig": {
+              "upstash": false,
+              "vercelKv": false,
+              "redisUrl": true,
+              "redisUrlValue": "redis://localhost:6379"
+            },
+            "recommendations": [
+              "Option 1: Use Vercel KV integration (easiest)",
+              "Option 2: Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN",
+              "Option 3: Platform works without Redis (just no caching optimization)"
+            ]
+          }
+        },
+        "/api/test-supabase-config": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "status": "Supabase Configuration Check",
+            "config": {
+              "url_configured": true,
+              "key_configured": true,
+              "url_preview": "https://zicipvpablahehxstbfr.s...",
+              "key_preview": "eyJhbGciOiJIUzI1NiIs...",
+              "connection_test": "success",
+              "session_check": "working"
+            },
+            "message": "✅ Supabase is configured and accessible"
+          }
+        },
+        "/api/test-stripe-config": {
+          "status": 200,
+          "ok": true,
+          "data": {
+            "status": "Stripe Configuration Check",
+            "config": {
+              "secret_key_configured": true,
+              "publishable_key_configured": true,
+              "webhook_secret_configured": true,
+              "mode": "test",
+              "keys_match": true,
+              "secret_key_preview": "sk_test_pl...",
+              "publishable_key_preview": "pk_test_pl..."
+            },
+            "message": "⚠️ Stripe is configured with TEST keys. Replace with LIVE keys for production.",
+            "warnings": []
+          }
+        }
+      }
+    },
+    {
+      "name": "Performance Test",
+      "status": "passed",
+      "duration": 5868,
+      "errors": [],
+      "data": {
+        "loadTime": 855,
+        "webVitals": {},
+        "apiCalls": [
+          {
+            "url": "https://www.coldcopy.cc/pricing?_rsc=1ld0r",
+            "duration": 56.69999999925494,
+            "status": 200
+          },
+          {
+            "url": "https://www.coldcopy.cc/login?_rsc=1ld0r",
+            "duration": 58.400000002235174,
+            "status": 200
+          },
+          {
+            "url": "https://www.coldcopy.cc/demo?_rsc=1ld0r",
+            "duration": 63.600000001490116,
+            "status": 404
+          },
+          {
+            "url": "https://www.coldcopy.cc/signup?_rsc=1ld0r",
+            "duration": 82.59999999776483,
+            "status": 404
+          }
+        ],
+        "slowApiCalls": []
+      }
+    },
+    {
+      "name": "Visual Regression Test",
+      "status": "passed",
+      "duration": 3497,
+      "errors": [],
+      "data": {
+        "screenshots": [
+          "screenshots/visual-landing-2025-07-02T13-50-34-920Z.png",
+          "screenshots/visual-login-2025-07-02T13-50-35-837Z.png",
+          "screenshots/visual-signup-2025-07-02T13-50-36-539Z.png",
+          "screenshots/visual-pricing-2025-07-02T13-50-37-412Z.png"
+        ]
+      }
+    },
+    {
+      "name": "Mobile Experience Test",
+      "status": "warning",
+      "duration": 908,
+      "errors": [
+        "Mobile menu not found"
+      ],
+      "screenshot": "screenshots/mobile-view-2025-07-02T13-50-38-317Z.png"
+    }
+  ],
+  "screenshots": [
+    "screenshots/landing-page-2025-07-02T13-49-52-798Z.png",
+    "screenshots/login-page-2025-07-02T13-49-53-757Z.png",
+    "screenshots/user-journey-test-2025-07-02T13-50-25-301Z.png",
+    "screenshots/visual-landing-2025-07-02T13-50-34-920Z.png",
+    "screenshots/visual-login-2025-07-02T13-50-35-837Z.png",
+    "screenshots/visual-signup-2025-07-02T13-50-36-539Z.png",
+    "screenshots/visual-pricing-2025-07-02T13-50-37-412Z.png",
+    "screenshots/mobile-view-2025-07-02T13-50-38-317Z.png"
+  ],
+  "recommendations": [
+    "🚨 2 critical tests failed - immediate attention required",
+    "⚠️ 2 tests have warnings - review and fix when possible",
+    "🏠 Landing page issues detected - check hero section and navigation",
+    "🔐 Authentication flow issues - verify form validation and signup process",
+    "📱 Mobile experience needs improvement - check responsive design and touch interactions"
+  ]
+}

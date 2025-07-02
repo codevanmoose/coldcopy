@@ -1,0 +1,156 @@
+{
+  "timestamp": "2025-07-02T14:42:37.331Z",
+  "baseUrl": "https://coldcopy.cc",
+  "overall": "healthy",
+  "summary": {
+    "healthy": 5,
+    "warning": 2,
+    "critical": 0,
+    "unknown": 0
+  },
+  "services": {
+    "vercel": {
+      "name": "Vercel",
+      "status": "healthy",
+      "details": {
+        "responseTime": 198,
+        "headers": {
+          "server": "Vercel",
+          "x-vercel-id": "fra1::iad1::9wbcj-1751467355847-dd7e05120f26",
+          "x-vercel-cache": "STALE"
+        },
+        "contentDetected": true,
+        "issues": []
+      },
+      "responseTime": 198,
+      "lastChecked": "2025-07-02T14:42:35.901Z"
+    },
+    "supabase": {
+      "name": "Supabase",
+      "status": "healthy",
+      "details": {
+        "status": "Supabase Configuration Check",
+        "config": {
+          "url_configured": true,
+          "key_configured": true,
+          "url_preview": "https://zicipvpablahehxstbfr.s...",
+          "key_preview": "eyJhbGciOiJIUzI1NiIs...",
+          "connection_test": "success",
+          "session_check": "working"
+        },
+        "message": "✅ Supabase is configured and accessible",
+        "issues": []
+      },
+      "responseTime": 236,
+      "lastChecked": "2025-07-02T14:42:36.138Z"
+    },
+    "redis": {
+      "name": "Redis",
+      "status": "warning",
+      "details": {
+        "status": "connected",
+        "message": "Redis connection successful",
+        "test": {
+          "written": {
+            "timestamp": "2025-07-02T14:42:36.294Z",
+            "message": "ColdCopy Redis connection successful"
+          },
+          "retrieved": null,
+          "match": false
+        },
+        "stats": {
+          "totalKeys": 0,
+          "timestamp": "2025-07-02T14:42:36.340Z"
+        },
+        "info": {
+          "connected": true,
+          "provider": "Upstash Redis"
+        },
+        "issues": [
+          "Redis connection failed - caching disabled"
+        ],
+        "note": "Redis improves performance but is not required for core functionality"
+      },
+      "responseTime": 335,
+      "lastChecked": "2025-07-02T14:42:36.474Z"
+    },
+    "stripe": {
+      "name": "Stripe",
+      "status": "warning",
+      "details": {
+        "status": "Stripe Configuration Check",
+        "config": {
+          "secret_key_configured": true,
+          "publishable_key_configured": true,
+          "webhook_secret_configured": true,
+          "mode": "test",
+          "keys_match": true,
+          "secret_key_preview": "sk_test_pl...",
+          "publishable_key_preview": "pk_test_pl..."
+        },
+        "message": "⚠️ Stripe is configured with TEST keys. Replace with LIVE keys for production.",
+        "warnings": [],
+        "issues": [
+          "Stripe not properly configured"
+        ]
+      },
+      "responseTime": 184,
+      "lastChecked": "2025-07-02T14:42:36.660Z"
+    },
+    "ses": {
+      "name": "Amazon SES",
+      "status": "healthy",
+      "details": {
+        "status": "connected",
+        "message": "✅ Successfully connected to AWS SES",
+        "config": {
+          "AWS_ACCESS_KEY_ID": "✅ Set",
+          "AWS_SECRET_ACCESS_KEY": "✅ Set",
+          "AWS_REGION": "✅ us-east-1",
+          "SES_FROM_EMAIL": "✅ noreply@coldcopy.cc",
+          "SES_CONFIGURATION_SET": "coldcopy-transactional"
+        },
+        "ses": {
+          "sendingEnabled": "✅ Yes",
+          "region": "us-east-1"
+        },
+        "nextSteps": [
+          "Visit https://console.aws.amazon.com/ses/ to:",
+          "- Check domain verification status",
+          "- View sending statistics",
+          "- Request production access if still in sandbox"
+        ],
+        "issues": []
+      },
+      "responseTime": 294,
+      "lastChecked": "2025-07-02T14:42:36.956Z"
+    },
+    "aiServices": {
+      "openai": {
+        "name": "OpenAI",
+        "status": "healthy",
+        "details": {
+          "configured": true,
+          "issues": []
+        },
+        "responseTime": 175,
+        "lastChecked": "2025-07-02T14:42:37.132Z"
+      },
+      "anthropic": {
+        "name": "Anthropic",
+        "status": "healthy",
+        "details": {
+          "configured": true,
+          "issues": []
+        },
+        "responseTime": 197,
+        "lastChecked": "2025-07-02T14:42:37.330Z"
+      }
+    },
+    "overall": "healthy"
+  },
+  "recommendations": [
+    "⚡ Redis caching unavailable - reduced performance expected",
+    "💳 Payment processing issues - billing functionality affected"
+  ]
+}

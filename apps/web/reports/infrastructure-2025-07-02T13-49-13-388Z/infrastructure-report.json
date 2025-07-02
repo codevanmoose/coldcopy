@@ -1,0 +1,162 @@
+{
+  "timestamp": "2025-07-02T13:49:13.388Z",
+  "baseUrl": "https://coldcopy.cc",
+  "overall": "critical",
+  "summary": {
+    "healthy": 1,
+    "warning": 2,
+    "critical": 4,
+    "unknown": 0
+  },
+  "services": {
+    "vercel": {
+      "name": "Vercel",
+      "status": "healthy",
+      "details": {
+        "responseTime": 326,
+        "headers": {
+          "server": "Vercel",
+          "x-vercel-id": "fra1::iad1::qp4tg-1751464151957-02cdc36d0509",
+          "x-vercel-cache": "STALE"
+        },
+        "contentDetected": true,
+        "issues": []
+      },
+      "responseTime": 326,
+      "lastChecked": "2025-07-02T13:49:12.044Z"
+    },
+    "supabase": {
+      "name": "Supabase",
+      "status": "critical",
+      "details": {
+        "status": "Supabase Configuration Check",
+        "config": {
+          "url_configured": true,
+          "key_configured": true,
+          "url_preview": "https://zicipvpablahehxstbfr.s...",
+          "key_preview": "eyJhbGciOiJIUzI1NiIs...",
+          "connection_test": "success",
+          "session_check": "working"
+        },
+        "message": "✅ Supabase is configured and accessible",
+        "issues": [
+          "Database connection failed"
+        ]
+      },
+      "responseTime": 260,
+      "lastChecked": "2025-07-02T13:49:12.305Z"
+    },
+    "redis": {
+      "name": "Redis",
+      "status": "warning",
+      "details": {
+        "status": "not_configured",
+        "message": "Redis URL points to localhost",
+        "hint": "Use Vercel KV integration or configure Upstash Redis",
+        "availableConfig": {
+          "upstash": false,
+          "vercelKv": false,
+          "redisUrl": true,
+          "redisUrlValue": "redis://localhost:6379"
+        },
+        "recommendations": [
+          "Option 1: Use Vercel KV integration (easiest)",
+          "Option 2: Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN",
+          "Option 3: Platform works without Redis (just no caching optimization)"
+        ],
+        "issues": [
+          "Redis connection failed - caching disabled"
+        ],
+        "note": "Redis improves performance but is not required for core functionality"
+      },
+      "responseTime": 193,
+      "lastChecked": "2025-07-02T13:49:12.501Z"
+    },
+    "stripe": {
+      "name": "Stripe",
+      "status": "warning",
+      "details": {
+        "status": "Stripe Configuration Check",
+        "config": {
+          "secret_key_configured": true,
+          "publishable_key_configured": true,
+          "webhook_secret_configured": true,
+          "mode": "test",
+          "keys_match": true,
+          "secret_key_preview": "sk_test_pl...",
+          "publishable_key_preview": "pk_test_pl..."
+        },
+        "message": "⚠️ Stripe is configured with TEST keys. Replace with LIVE keys for production.",
+        "warnings": [],
+        "issues": [
+          "Stripe not properly configured"
+        ]
+      },
+      "responseTime": 191,
+      "lastChecked": "2025-07-02T13:49:12.694Z"
+    },
+    "ses": {
+      "name": "Amazon SES",
+      "status": "critical",
+      "details": {
+        "status": "connected",
+        "message": "✅ Successfully connected to AWS SES",
+        "config": {
+          "AWS_ACCESS_KEY_ID": "✅ Set",
+          "AWS_SECRET_ACCESS_KEY": "✅ Set",
+          "AWS_REGION": "✅ us-east-1",
+          "SES_FROM_EMAIL": "✅ noreply@coldcopy.cc",
+          "SES_CONFIGURATION_SET": "coldcopy-transactional"
+        },
+        "ses": {
+          "sendingEnabled": "✅ Yes",
+          "region": "us-east-1"
+        },
+        "nextSteps": [
+          "Visit https://console.aws.amazon.com/ses/ to:",
+          "- Check domain verification status",
+          "- View sending statistics",
+          "- Request production access if still in sandbox"
+        ],
+        "issues": [
+          "SES not configured - email sending disabled"
+        ]
+      },
+      "responseTime": 290,
+      "lastChecked": "2025-07-02T13:49:12.984Z"
+    },
+    "aiServices": {
+      "openai": {
+        "name": "OpenAI",
+        "status": "critical",
+        "details": {
+          "issues": [
+            "OpenAI API not configured"
+          ]
+        },
+        "responseTime": 203,
+        "lastChecked": "2025-07-02T13:49:13.188Z"
+      },
+      "anthropic": {
+        "name": "Anthropic",
+        "status": "critical",
+        "details": {
+          "issues": [
+            "Anthropic API not configured"
+          ]
+        },
+        "responseTime": 197,
+        "lastChecked": "2025-07-02T13:49:13.387Z"
+      }
+    },
+    "overall": "critical"
+  },
+  "recommendations": [
+    "🚨 CRITICAL: Platform has critical issues that prevent core functionality",
+    "💾 Database connection failed - all data operations will fail",
+    "⚡ Redis caching unavailable - reduced performance expected",
+    "💳 Payment processing issues - billing functionality affected",
+    "📧 Email sending disabled - all email functionality unavailable",
+    "🤖 All AI services unavailable - core AI features disabled"
+  ]
+}
