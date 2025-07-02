@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, Suspense, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
@@ -20,12 +20,22 @@ const loginSchema = z.object({
 
 type LoginForm = z.infer<typeof loginSchema>
 
-export default function SimpleLoginPage() {
+function LoginForm() {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
+  const [redirectTo, setRedirectTo] = useState('/dashboard')
   
-  // Initialize Supabase client on each render (safe for client components)
+  // Get Supabase client
   const supabase = createClient()
+
+  useEffect(() => {
+    // Get redirect parameter from URL on client side
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      const redirect = params.get('redirectTo') || '/dashboard'
+      setRedirectTo(redirect)
+    }
+  }, [])
 
   const {
     register,
@@ -48,8 +58,7 @@ export default function SimpleLoginPage() {
         return
       }
 
-      // Redirect to dashboard on success
-      router.push('/dashboard')
+      router.push(redirectTo)
       router.refresh()
     } catch (err) {
       setError('An unexpected error occurred')
@@ -133,4 +142,8 @@ export default function SimpleLoginPage() {
       </form>
     </Card>
   )
+}
+
+export default function LoginPage() {
+  return <LoginForm />
 }
