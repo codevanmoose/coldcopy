@@ -95,11 +95,6 @@ const nextConfig: NextConfig = {
         destination: '/login',
         permanent: true,
       },
-      {
-        source: '/signup',
-        destination: '/register',
-        permanent: true,
-      },
     ]
   },
   
