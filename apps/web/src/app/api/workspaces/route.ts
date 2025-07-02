@@ -1,10 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { onWorkspaceCreated } from '@/lib/demo-content'
 
 const createWorkspaceSchema = z.object({
   name: z.string().min(1).max(255),
   slug: z.string().min(1).max(255).regex(/^[a-z0-9-]+$/),
+  skipDemoContent: z.boolean().optional(),
 })
 
 export async function GET(request: NextRequest) {
@@ -39,7 +41,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { name, slug } = createWorkspaceSchema.parse(body)
+    const { name, slug, skipDemoContent } = createWorkspaceSchema.parse(body)
 
     const supabase = await createClient()
     
@@ -108,6 +110,9 @@ export async function POST(request: NextRequest) {
         slug,
       },
     })
+
+    // Seed demo content for new workspace (async, non-blocking)
+    onWorkspaceCreated(workspace.id, skipDemoContent)
 
     return NextResponse.json({ workspace })
   } catch (error) {
