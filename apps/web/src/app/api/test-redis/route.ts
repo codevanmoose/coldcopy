@@ -1,106 +1,95 @@
 import { NextResponse } from 'next/server'
+import { getRedisClient, setCache, getCache, delCache, isRedisConnected } from '@/lib/redis/client'
 
 export async function GET() {
   try {
-    // Check if Redis is configured (either Upstash REST API or standard Redis URL)
-    const hasUpstashConfig = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
-    const hasRedisUrl = !!process.env.REDIS_URL
+    // Try to get Redis client
+    const client = await getRedisClient()
     
-    if (!hasUpstashConfig && !hasRedisUrl) {
-      return NextResponse.json({ 
+    if (!client) {
+      // Check what configuration we have
+      const hasUpstashConfig = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+      const hasKvConfig = !!process.env.KV_REST_API_URL
+      const hasRedisUrl = !!process.env.REDIS_URL
+      
+      let message = 'Redis not configured'
+      let hint = 'Configure Redis to enable caching'
+      
+      if (hasRedisUrl && process.env.REDIS_URL?.includes('localhost')) {
+        message = 'Redis URL points to localhost'
+        hint = 'Use Vercel KV integration or configure Upstash Redis'
+      }
+      
+      return NextResponse.json({
         status: 'not_configured',
-        message: 'Redis environment variables not set',
-        requiredVars: [
-          'UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN',
-          'or REDIS_URL'
-        ],
-        docs: 'See UPSTASH_REDIS_SETUP.md for configuration instructions'
-      })
-    }
-
-    // Try to import and use Upstash Redis
-    try {
-      const { Redis } = await import('@upstash/redis')
-      
-      let redis
-      
-      // If we have Upstash REST API credentials, use those
-      if (hasUpstashConfig) {
-        redis = new Redis({
-          url: process.env.UPSTASH_REDIS_REST_URL,
-          token: process.env.UPSTASH_REDIS_REST_TOKEN,
-        })
-      } 
-      // Otherwise, try to parse the REDIS_URL for Upstash
-      else if (hasRedisUrl) {
-        const redisUrl = process.env.REDIS_URL!
-        
-        // Check if it's localhost (common dev/misconfiguration)
-        if (redisUrl.includes('localhost') || redisUrl.includes('127.0.0.1')) {
-          return NextResponse.json({
-            status: 'configuration_error',
-            message: 'Redis URL points to localhost',
-            hint: 'Please configure Upstash Redis credentials or use Vercel KV integration',
-            redisUrl: redisUrl,
-            docs: 'See REDIS_FIX_GUIDE.md for setup instructions'
-          }, { status: 503 })
-        }
-        
-        // Upstash Redis URL format: redis://default:token@endpoint.upstash.io:port
-        const url = new URL(redisUrl)
-        const token = url.password || url.username // Token might be in password or username field
-        const restUrl = `https://${url.hostname}`
-        
-        redis = new Redis({
-          url: restUrl,
-          token: token,
-        })
-      }
-
-      // Test write
-      const testKey = 'test:connection:' + Date.now()
-      const testValue = {
-        timestamp: new Date().toISOString(),
-        message: 'ColdCopy Redis connection successful'
-      }
-      
-      await redis.set(testKey, testValue, { ex: 60 }) // Expire after 60 seconds
-      
-      // Test read
-      const retrievedValue = await redis.get(testKey)
-      
-      // Get database size
-      const dbSize = await redis.dbsize()
-      
-      // Clean up test key
-      await redis.del(testKey)
-
-      return NextResponse.json({
-        status: 'connected',
-        message: 'Redis connection successful',
-        test: {
-          written: testValue,
-          retrieved: retrievedValue,
-          match: JSON.stringify(testValue) === JSON.stringify(retrievedValue)
+        message,
+        hint,
+        availableConfig: {
+          upstash: hasUpstashConfig,
+          vercelKv: hasKvConfig,
+          redisUrl: hasRedisUrl,
+          redisUrlValue: hasRedisUrl ? process.env.REDIS_URL : undefined
         },
-        stats: {
-          totalKeys: dbSize,
-          timestamp: new Date().toISOString()
-        }
+        recommendations: [
+          'Option 1: Use Vercel KV integration (easiest)',
+          'Option 2: Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN',
+          'Option 3: Platform works without Redis (just no caching optimization)'
+        ]
       })
-    } catch (redisError: any) {
-      return NextResponse.json({
-        status: 'connection_error',
-        message: 'Failed to connect to Redis',
-        error: redisError.message,
-        hint: 'Check that your Upstash credentials are correct'
-      }, { status: 500 })
     }
+
+    // Test Redis operations
+    const testKey = 'test:connection:' + Date.now()
+    const testValue = {
+      timestamp: new Date().toISOString(),
+      message: 'ColdCopy Redis connection successful'
+    }
+    
+    // Test write
+    const writeSuccess = await setCache(testKey, testValue, 60)
+    if (!writeSuccess) {
+      throw new Error('Failed to write to cache')
+    }
+    
+    // Test read
+    const retrievedValue = await getCache(testKey)
+    
+    // Test delete
+    await delCache(testKey)
+    
+    // Get database size if possible
+    let dbSize = 0
+    try {
+      dbSize = await client.dbsize()
+    } catch (e) {
+      // Some Redis providers don't support dbsize
+      dbSize = -1
+    }
+
+    return NextResponse.json({
+      status: 'connected',
+      message: 'Redis connection successful',
+      test: {
+        written: testValue,
+        retrieved: retrievedValue,
+        match: JSON.stringify(testValue) === JSON.stringify(retrievedValue)
+      },
+      stats: {
+        totalKeys: dbSize,
+        timestamp: new Date().toISOString()
+      },
+      info: {
+        connected: isRedisConnected(),
+        provider: 'Upstash Redis'
+      }
+    })
+    
   } catch (error: any) {
     return NextResponse.json({
       status: 'error',
-      message: 'Unexpected error',
-      error: error.message
+      message: 'Redis connection error',
+      error: error.message,
+      hint: 'Check Redis configuration and credentials'
     }, { status: 500 })
   }
 }
