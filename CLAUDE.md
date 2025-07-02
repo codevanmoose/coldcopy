@@ -19,6 +19,12 @@ ColdCopy is an AI-powered cold outreach automation platform designed for agencie
 
 **Status**: ✅ **FULLY OPERATIONAL WITH REDIS CACHING - READY FOR REAL USERS**
 
+### ⚠️ Email Configuration Status (January 2, 2025)
+- **Current Setup**: Using Supabase built-in email service (3 emails/hour limit)
+- **AWS SES**: Production access requested, pending approval (24-48 hours)
+- **Next Steps**: After AWS approval, create SMTP credentials and configure in Supabase
+- **Impact**: Platform fully functional but limited to 3 signups per hour until SES approved
+
 ### Live Production Services
 - **Frontend**: ✅ https://coldcopy.cc (Professional landing page with conversion copy)
 - **Backend API**: ✅ Vercel API routes (all endpoints working)
