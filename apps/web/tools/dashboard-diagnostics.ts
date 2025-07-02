@@ -243,10 +243,10 @@ export class DashboardDiagnostics {
 
       const data = await response.json();
       
-      let status: 'healthy' | 'warning' | 'critical' = data.connected ? 'healthy' : 'warning';
+      let status: 'healthy' | 'warning' | 'critical' = data.status === 'connected' ? 'healthy' : 'warning';
       const issues: string[] = [];
 
-      if (!data.connected) {
+      if (data.status !== 'connected') {
         issues.push('Redis connection failed - caching disabled');
       }
 
