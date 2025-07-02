@@ -2,16 +2,17 @@ import { NextResponse } from 'next/server'
 
 export async function GET() {
   try {
-    // Check if Upstash Redis is configured
-    const isConfigured = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+    // Check if Redis is configured (either Upstash REST API or standard Redis URL)
+    const hasUpstashConfig = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+    const hasRedisUrl = !!process.env.REDIS_URL
     
-    if (!isConfigured) {
+    if (!hasUpstashConfig && !hasRedisUrl) {
       return NextResponse.json({ 
         status: 'not_configured',
-        message: 'Upstash Redis environment variables not set',
+        message: 'Redis environment variables not set',
         requiredVars: [
-          'UPSTASH_REDIS_REST_URL',
-          'UPSTASH_REDIS_REST_TOKEN'
+          'UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN',
+          'or REDIS_URL'
         ],
         docs: 'See UPSTASH_REDIS_SETUP.md for configuration instructions'
       })
@@ -21,10 +22,27 @@ export async function GET() {
     try {
       const { Redis } = await import('@upstash/redis')
       
-      const redis = new Redis({
-        url: process.env.UPSTASH_REDIS_REST_URL,
-        token: process.env.UPSTASH_REDIS_REST_TOKEN,
-      })
+      let redis
+      
+      // If we have Upstash REST API credentials, use those
+      if (hasUpstashConfig) {
+        redis = new Redis({
+          url: process.env.UPSTASH_REDIS_REST_URL,
+          token: process.env.UPSTASH_REDIS_REST_TOKEN,
+        })
+      } 
+      // Otherwise, try to parse the REDIS_URL for Upstash
+      else if (hasRedisUrl) {
+        // Upstash Redis URL format: redis://default:token@endpoint.upstash.io:port
+        const url = new URL(process.env.REDIS_URL!)
+        const token = url.password || url.username // Token might be in password or username field
+        const restUrl = `https://${url.hostname}`
+        
+        redis = new Redis({
+          url: restUrl,
+          token: token,
+        })
+      }
 
       // Test write
       const testKey = 'test:connection:' + Date.now()

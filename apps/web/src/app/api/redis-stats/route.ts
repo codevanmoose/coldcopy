@@ -3,18 +3,34 @@ import { NextResponse } from 'next/server'
 export async function GET() {
   try {
     // Check if Redis is configured
-    if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
+    const hasUpstashConfig = !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN)
+    const hasRedisUrl = !!process.env.REDIS_URL
+    
+    if (!hasUpstashConfig && !hasRedisUrl) {
       return NextResponse.json({ 
         error: 'Redis not configured',
-        message: 'Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN in environment variables'
+        message: 'Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN or REDIS_URL in environment variables'
       }, { status: 503 })
     }
 
     const { Redis } = await import('@upstash/redis')
-    const redis = new Redis({
-      url: process.env.UPSTASH_REDIS_REST_URL,
-      token: process.env.UPSTASH_REDIS_REST_TOKEN,
-    })
+    let redis
+    
+    if (hasUpstashConfig) {
+      redis = new Redis({
+        url: process.env.UPSTASH_REDIS_REST_URL,
+        token: process.env.UPSTASH_REDIS_REST_TOKEN,
+      })
+    } else if (hasRedisUrl) {
+      const url = new URL(process.env.REDIS_URL!)
+      const token = url.password || url.username
+      const restUrl = `https://${url.hostname}`
+      
+      redis = new Redis({
+        url: restUrl,
+        token: token,
+      })
+    }
 
     // Get basic stats
     const dbSize = await redis.dbsize()

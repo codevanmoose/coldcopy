@@ -8,6 +8,9 @@
 - **Database & Auth**: Supabase for real-time database, authentication, and storage
 - **Version Control**: GitHub for all code and documentation
 
+I've set up authentication for GitHub (SSH key), Vercel (logged in as vanmoose), Supabase (API token configured), Stripe CLI for your account (Van
+  Moose), Upstash, and DigitalOcean (authenticated with mailto:jaspervanmoose@gmail.com), on this machine. All CLIs are installed and authenticated. The authentication persists across restarts.
+
 ## Repository Architecture
 
 ### Monorepo Structure (Preferred)
