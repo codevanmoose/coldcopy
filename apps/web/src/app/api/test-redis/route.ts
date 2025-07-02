@@ -33,8 +33,21 @@ export async function GET() {
       } 
       // Otherwise, try to parse the REDIS_URL for Upstash
       else if (hasRedisUrl) {
+        const redisUrl = process.env.REDIS_URL!
+        
+        // Check if it's localhost (common dev/misconfiguration)
+        if (redisUrl.includes('localhost') || redisUrl.includes('127.0.0.1')) {
+          return NextResponse.json({
+            status: 'configuration_error',
+            message: 'Redis URL points to localhost',
+            hint: 'Please configure Upstash Redis credentials or use Vercel KV integration',
+            redisUrl: redisUrl,
+            docs: 'See REDIS_FIX_GUIDE.md for setup instructions'
+          }, { status: 503 })
+        }
+        
         // Upstash Redis URL format: redis://default:token@endpoint.upstash.io:port
-        const url = new URL(process.env.REDIS_URL!)
+        const url = new URL(redisUrl)
         const token = url.password || url.username // Token might be in password or username field
         const restUrl = `https://${url.hostname}`
         
