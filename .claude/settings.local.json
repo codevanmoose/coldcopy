@@ -62,7 +62,18 @@
       "WebFetch(domain:www.coldcopy.cc)",
       "Bash(cd:*)",
       "WebFetch(domain:coldcopy.cc)",
-      "Bash(upstash:*)"
+      "Bash(upstash:*)",
+      "Bash(doctl apps:*)",
+      "Bash(gh repo view:*)",
+      "Bash(aws configure:*)",
+      "Bash(/Users/jasper/Documents/Poetsen/Van Moose Projects/ColdCopy/update-supabase-smtp.sh)",
+      "Bash(aws ses get-send-quota:*)",
+      "Bash(aws ses list-identities:*)",
+      "Bash(aws ses get-identity-verification-attributes:*)",
+      "Bash(aws iam create-user:*)",
+      "Bash(pip3 install:*)",
+      "Bash(aws ses send-email:*)",
+      "Bash(aws ses verify-email-identity:*)"
     ],
     "deny": []
   }
