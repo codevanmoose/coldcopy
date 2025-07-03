@@ -174,6 +174,6 @@ const sentryWebpackPluginOptions = {
 }
 
 // Export with Sentry wrapper if DSN is configured
-export default process.env.NEXT_PUBLIC_SENTRY_DSN 
+export default process.env.NEXT_PUBLIC_SENTRY_DSN && process.env.SENTRY_AUTH_TOKEN
   ? withSentryConfig(nextConfig, sentryWebpackPluginOptions)
   : nextConfig;
