@@ -1,8 +1,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { IridescenceShader } from '@/components/ui/iridescent-shader'
+import { AnimatedGradient } from '@/components/ui/animated-gradient'
 import { ArrowRight, CheckCircle2, Zap, Shield, TrendingUp, Users, Mail, Brain, Menu } from 'lucide-react'
-import { Suspense } from 'react'
 
 // Enable ISR with 60 second revalidation
 export const revalidate = 60
@@ -43,20 +42,11 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="relative min-h-screen overflow-hidden">
-        {/* Iridescent Shader Background */}
-        <Suspense fallback={
-          <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900" />
-        }>
-          <IridescenceShader 
-            className="absolute inset-0"
-            color={[0.8, 0.4, 1]}
-            speed={0.6}
-            amplitude={0.12}
-          />
-        </Suspense>
+        {/* Animated Gradient Background */}
+        <AnimatedGradient className="absolute inset-0" />
         
         {/* Dark overlay for better text readability */}
-        <div className="absolute inset-0 bg-black/20"></div>
+        <div className="absolute inset-0 bg-black/30"></div>
         
         {/* Hero Content */}
         <div className="relative z-30 flex items-center justify-center min-h-screen px-6">

@@ -79,7 +79,8 @@
       "Bash(npm ls:*)",
       "Bash(aws ses describe-configuration-sets:*)",
       "Bash(cd:*)",
-      "WebFetch(domain:aurachat.io)"
+      "WebFetch(domain:aurachat.io)",
+      "Bash(open https://www.coldcopy.cc)"
     ],
     "deny": []
   }
