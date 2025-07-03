@@ -2,6 +2,81 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Animated Background Keyframes */
+@keyframes gradient-shift {
+  0%, 100% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+}
+
+@keyframes gradient-pulse {
+  0%, 100% {
+    opacity: 0.6;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@keyframes orb-float {
+  0%, 100% {
+    transform: translateX(0px) translateY(0px) scale(1);
+  }
+  33% {
+    transform: translateX(30px) translateY(-20px) scale(1.1);
+  }
+  66% {
+    transform: translateX(-20px) translateY(20px) scale(0.9);
+  }
+}
+
+@keyframes orb-float-delayed {
+  0%, 100% {
+    transform: translateX(0px) translateY(0px) scale(1);
+  }
+  33% {
+    transform: translateX(-25px) translateY(30px) scale(0.8);
+  }
+  66% {
+    transform: translateX(35px) translateY(-15px) scale(1.2);
+  }
+}
+
+@keyframes orb-float-slow {
+  0%, 100% {
+    transform: translateX(0px) translateY(0px) scale(1) rotate(0deg);
+  }
+  50% {
+    transform: translateX(20px) translateY(-30px) scale(1.1) rotate(180deg);
+  }
+}
+
+.animate-gradient-shift {
+  background-size: 200% 200%;
+  animation: gradient-shift 8s ease-in-out infinite;
+}
+
+.animate-gradient-pulse {
+  animation: gradient-pulse 4s ease-in-out infinite;
+}
+
+.animate-orb-float {
+  animation: orb-float 12s ease-in-out infinite;
+}
+
+.animate-orb-float-delayed {
+  animation: orb-float-delayed 15s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+.animate-orb-float-slow {
+  animation: orb-float-slow 20s ease-in-out infinite;
+  animation-delay: 4s;
+}
+
 @layer base {
   :root {
     --background: 0 0% 100%;

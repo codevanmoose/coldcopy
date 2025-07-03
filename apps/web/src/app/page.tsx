@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { AnimatedGradient } from '@/components/ui/animated-gradient'
+import { PlatformStats } from '@/components/platform-stats'
 import { ArrowRight, CheckCircle2, Zap, Shield, TrendingUp, Users, Mail, Brain, Menu } from 'lucide-react'
 
 // Enable ISR with 60 second revalidation
@@ -46,7 +47,7 @@ export default function Home() {
         <AnimatedGradient className="absolute inset-0" />
         
         {/* Dark overlay for better text readability */}
-        <div className="absolute inset-0 bg-black/30"></div>
+        <div className="absolute inset-0 bg-black/10"></div>
         
         {/* Hero Content */}
         <div className="relative z-30 flex items-center justify-center min-h-screen px-6">
@@ -122,23 +123,6 @@ export default function Home() {
             <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center">
               <div className="w-1 h-3 bg-white/60 rounded-full mt-2 animate-bounce"></div>
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Social Proof */}
-      <section className="py-12 bg-black/90 border-y border-white/10">
-        <div className="max-w-6xl mx-auto px-6 lg:px-24">
-          <div className="text-center mb-4">
-            <p className="text-white/60 font-medium">Trusted by 500+ high-growth companies</p>
-          </div>
-          <div className="flex flex-wrap justify-center items-center gap-8 opacity-60">
-            {/* Placeholder for company logos */}
-            <div className="text-2xl font-bold text-white/40">TechCorp</div>
-            <div className="text-2xl font-bold text-white/40">SaaS Co</div>
-            <div className="text-2xl font-bold text-white/40">Growth Inc</div>
-            <div className="text-2xl font-bold text-white/40">Scale Up</div>
-            <div className="text-2xl font-bold text-white/40">Innovate</div>
           </div>
         </div>
       </section>
@@ -252,31 +236,7 @@ export default function Home() {
             The Numbers Don't Lie
           </h2>
           
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            <div>
-              <div className="text-5xl font-bold bg-gradient-to-r from-violet-400 to-pink-400 bg-clip-text text-transparent mb-2">312%</div>
-              <div className="text-white/70">Average ROI in 90 days</div>
-            </div>
-            <div>
-              <div className="text-5xl font-bold bg-gradient-to-r from-violet-400 to-pink-400 bg-clip-text text-transparent mb-2">73%</div>
-              <div className="text-white/70">Less time spent on outreach</div>
-            </div>
-            <div>
-              <div className="text-5xl font-bold bg-gradient-to-r from-violet-400 to-pink-400 bg-clip-text text-transparent mb-2">4.2x</div>
-              <div className="text-white/70">More qualified meetings</div>
-            </div>
-          </div>
-          
-          <p className="text-lg text-white/70 mb-8">
-            Join 500+ companies that have transformed their sales process with ColdCopy
-          </p>
-          
-          <Link href="/signup">
-            <Button className="bg-gradient-to-r from-orange-400 to-pink-400 hover:from-orange-500 hover:to-pink-500 text-white font-semibold px-8 py-4 text-lg">
-              Start Your Free Trial
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </Link>
+          <PlatformStats />
         </div>
       </section>
 
