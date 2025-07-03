@@ -1,10 +1,55 @@
-# Ignore problematic files during build
-src/app/(dashboard)
-src/app/api
-src/components
-!src/components/ui
-__tests__
-e2e
-tests
-*.test.*
-*.spec.*
+# Test files and directories that shouldn't be deployed
+__tests__/
+e2e/
+tests/
+scripts/
+tools/
+workers/
+coverage/
+reports/
+screenshots/
+videos/
+test-results/
+playwright-report/
+
+# Test artifacts
+*.test.ts
+*.test.tsx
+*.spec.ts
+*.spec.tsx
+
+# Screenshots and videos
+*.png
+*.webm
+*.mp4
+
+# Documentation (except README)
+*.md
+!README.md
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Development environment files
+.env.local
+.env.development.local
+.env.test.local
+
+# IDE files
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+*.tsbuildinfo
+tsconfig.tsbuildinfo
+
+# Backup files
+*.backup
+*.bak
