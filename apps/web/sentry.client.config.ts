@@ -42,7 +42,7 @@ if (SENTRY_DSN) {
     beforeSend(event, hint) {
       // Filter out non-application errors
       if (event.exception) {
-        const error = hint.originalException
+        const error = hint.originalException as Error
         
         // Filter out errors from browser extensions
         if (error && error.stack && error.stack.includes('extension://')) {

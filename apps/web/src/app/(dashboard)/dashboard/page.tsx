@@ -261,6 +261,3 @@ export default function DashboardPage() {
   )
 }
 
-function cn(...classes: string[]) {
-  return classes.filter(Boolean).join(' ')
-}

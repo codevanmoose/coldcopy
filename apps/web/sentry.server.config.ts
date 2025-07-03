@@ -14,7 +14,6 @@ if (SENTRY_DSN) {
     release: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA,
     
     // Server-specific options
-    autoSessionTracking: true,
     
     // Filtering
     ignoreErrors: [
@@ -32,12 +31,13 @@ if (SENTRY_DSN) {
           delete event.request.headers['cookie']
         }
         
-        if (event.request.data) {
+        if (event.request.data && typeof event.request.data === 'object') {
           // Remove sensitive fields
           const sensitiveFields = ['password', 'token', 'api_key', 'secret']
+          const data = event.request.data as Record<string, any>
           sensitiveFields.forEach(field => {
-            if (event.request.data[field]) {
-              event.request.data[field] = '[REDACTED]'
+            if (data[field]) {
+              data[field] = '[REDACTED]'
             }
           })
         }

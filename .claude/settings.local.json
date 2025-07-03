@@ -77,7 +77,8 @@
       "Bash(open https://coldcopy.cc)",
       "Bash(open https://coldcopy.cc/login)",
       "Bash(npm ls:*)",
-      "Bash(aws ses describe-configuration-sets:*)"
+      "Bash(aws ses describe-configuration-sets:*)",
+      "Bash(cd:*)"
     ],
     "deny": []
   }

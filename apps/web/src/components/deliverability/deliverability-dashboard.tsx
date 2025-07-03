@@ -32,7 +32,7 @@ import {
 } from 'lucide-react'
 import { SpamChecker } from '@/lib/deliverability/spam-checker'
 import { DNSChecker } from '@/lib/deliverability/dns-checker'
-import { useAuthStore } from '@/lib/stores/auth-store'
+import { useAuthStore } from '@/stores/auth'
 
 interface DeliverabilityStats {
   overallScore: number

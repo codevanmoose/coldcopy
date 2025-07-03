@@ -102,24 +102,17 @@ export function trackPerformance(
   // Only track in production to avoid noise
   if (process.env.NODE_ENV !== 'production') return
 
-  const transaction = Sentry.getCurrentHub().getScope()?.getTransaction()
-  
-  if (transaction) {
-    const span = transaction.startChild({
-      op: operation,
-      description: `${operation} completed`,
-    })
-    
-    span.setData('duration_ms', duration)
-    
-    if (tags) {
-      Object.entries(tags).forEach(([key, value]) => {
-        span.setTag(key, value)
-      })
-    }
-    
-    span.finish()
-  }
+  // Use breadcrumb for performance tracking instead of transactions
+  Sentry.addBreadcrumb({
+    message: `Performance: ${operation}`,
+    category: 'performance',
+    level: 'info',
+    data: {
+      duration_ms: duration,
+      ...tags,
+    },
+    timestamp: Date.now() / 1000,
+  })
 }
 
 /**
@@ -159,24 +152,20 @@ function sanitizeData(data: any): any {
 }
 
 /**
- * Create a Sentry transaction for monitoring
+ * Create a Sentry breadcrumb for monitoring (replacement for deprecated transactions)
  */
-export function startTransaction(
+export function trackOperation(
   name: string,
   op: string,
   data?: Record<string, any>
-): Sentry.Transaction {
-  const transaction = Sentry.startTransaction({
-    name,
-    op,
+) {
+  Sentry.addBreadcrumb({
+    message: `Operation: ${name}`,
+    category: op,
+    level: 'info',
     data,
+    timestamp: Date.now() / 1000,
   })
-
-  Sentry.getCurrentHub().configureScope((scope) => {
-    scope.setSpan(transaction)
-  })
-
-  return transaction
 }
 
 /**
@@ -195,16 +184,23 @@ export async function withSentry<T>(
 }
 
 /**
- * Track business metrics
+ * Track business metrics using breadcrumbs (replacement for deprecated metrics API)
  */
 export const metrics = {
   // Revenue metrics
   trackRevenue: (amount: number, currency: string = 'USD', plan?: string) => {
     if (process.env.NODE_ENV !== 'production') return
     
-    Sentry.metrics.increment('revenue.amount', amount, {
-      tags: { currency, plan: plan || 'unknown' },
-      unit: currency.toLowerCase(),
+    Sentry.addBreadcrumb({
+      message: 'Revenue tracked',
+      category: 'business',
+      level: 'info',
+      data: {
+        amount,
+        currency,
+        plan: plan || 'unknown',
+      },
+      timestamp: Date.now() / 1000,
     })
   },
 
@@ -212,8 +208,12 @@ export const metrics = {
   trackUserAction: (action: string, metadata?: Record<string, any>) => {
     if (process.env.NODE_ENV !== 'production') return
     
-    Sentry.metrics.increment(`user.action.${action}`, 1, {
-      tags: metadata,
+    Sentry.addBreadcrumb({
+      message: `User action: ${action}`,
+      category: 'user_action',
+      level: 'info',
+      data: metadata,
+      timestamp: Date.now() / 1000,
     })
   },
 
@@ -221,9 +221,16 @@ export const metrics = {
   trackDuration: (metric: string, duration: number, tags?: Record<string, string>) => {
     if (process.env.NODE_ENV !== 'production') return
     
-    Sentry.metrics.distribution(metric, duration, {
-      tags,
-      unit: 'millisecond',
+    Sentry.addBreadcrumb({
+      message: `Performance: ${metric}`,
+      category: 'performance',
+      level: 'info',
+      data: {
+        duration,
+        unit: 'millisecond',
+        ...tags,
+      },
+      timestamp: Date.now() / 1000,
     })
   },
 
@@ -231,8 +238,12 @@ export const metrics = {
   trackFeatureUsage: (feature: string, metadata?: Record<string, any>) => {
     if (process.env.NODE_ENV !== 'production') return
     
-    Sentry.metrics.increment(`feature.usage.${feature}`, 1, {
-      tags: metadata,
+    Sentry.addBreadcrumb({
+      message: `Feature used: ${feature}`,
+      category: 'feature_usage',
+      level: 'info',
+      data: metadata,
+      timestamp: Date.now() / 1000,
     })
   },
 }

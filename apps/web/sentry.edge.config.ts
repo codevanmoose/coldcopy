@@ -14,11 +14,5 @@ if (SENTRY_DSN) {
     release: process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA,
     
     // Edge-specific options
-    transportOptions: {
-      // Reduce timeout for edge functions
-      fetchOptions: {
-        timeout: 3000,
-      },
-    },
   })
 }
