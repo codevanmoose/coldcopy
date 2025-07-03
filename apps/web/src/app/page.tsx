@@ -44,10 +44,10 @@ export default function Home() {
       {/* Hero Section */}
       <section className="relative min-h-screen overflow-hidden">
         {/* Animated Gradient Background */}
-        <AnimatedGradient className="absolute inset-0" />
+        <AnimatedGradient className="absolute inset-0 z-0" />
         
         {/* Dark overlay for better text readability */}
-        <div className="absolute inset-0 bg-black/10"></div>
+        <div className="absolute inset-0 bg-black/10 z-10"></div>
         
         {/* Hero Content */}
         <div className="relative z-30 flex items-center justify-center min-h-screen px-6">

@@ -80,7 +80,8 @@
       "Bash(aws ses describe-configuration-sets:*)",
       "Bash(cd:*)",
       "WebFetch(domain:aurachat.io)",
-      "Bash(open https://www.coldcopy.cc)"
+      "Bash(open https://www.coldcopy.cc)",
+      "Bash(open test-gradient.html)"
     ],
     "deny": []
   }

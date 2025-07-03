@@ -6,12 +6,13 @@ interface AnimatedGradientProps {
 
 export function AnimatedGradient({ className = '' }: AnimatedGradientProps) {
   return (
-    <div className={`relative ${className}`}>
+    <div className={`absolute inset-0 ${className}`}>
       {/* Base animated gradient */}
-      <div className="absolute inset-0 animate-gradient-shift" 
+      <div className="absolute inset-0" 
            style={{ 
-             backgroundImage: 'linear-gradient(45deg, #6366f1, #8b5cf6, #a855f7, #d946ef, #ec4899, #06b6d4)',
+             background: 'linear-gradient(45deg, #6366f1, #8b5cf6, #a855f7, #d946ef, #ec4899, #06b6d4)',
              backgroundSize: '200% 200%',
+             animation: 'gradient-shift 8s ease-in-out infinite',
            }} />
       
       {/* Animated overlay gradients with custom animations */}
