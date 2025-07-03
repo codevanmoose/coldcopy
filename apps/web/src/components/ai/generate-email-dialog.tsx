@@ -24,8 +24,13 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Card, CardContent } from '@/components/ui/card'
 import { toast } from 'sonner'
-import { Sparkles, Loader2, Copy, RotateCw, AlertCircle, Zap } from 'lucide-react'
+import { Sparkles, Loader2, Copy, RotateCw, AlertCircle, Zap, ChevronDown, ChevronUp, Code } from 'lucide-react'
 import type { EmailTone, EmailStyle } from '@/lib/ai/types'
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible'
 
 const generateSchema = z.object({
   // Lead info is passed as props
@@ -56,6 +61,9 @@ interface GenerateEmailDialogProps {
 export function GenerateEmailDialog({ leadInfo, onGenerated, trigger }: GenerateEmailDialogProps) {
   const [open, setOpen] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [generationStatus, setGenerationStatus] = useState<string>('')
+  const [showRequestDetails, setShowRequestDetails] = useState(false)
+  const [lastRequest, setLastRequest] = useState<any>(null)
   const [generatedEmail, setGeneratedEmail] = useState<{
     subject: string
     body: string
@@ -85,6 +93,7 @@ export function GenerateEmailDialog({ leadInfo, onGenerated, trigger }: Generate
   const onSubmit = async (data: GenerateForm) => {
     setIsGenerating(true)
     setGeneratedEmail(null)
+    setGenerationStatus('Preparing your request...')
 
     try {
       // Parse benefits into array
@@ -92,26 +101,36 @@ export function GenerateEmailDialog({ leadInfo, onGenerated, trigger }: Generate
         ? data.benefits.split('\n').map(b => b.trim()).filter(Boolean)
         : undefined
 
+      setGenerationStatus('Connecting to AI service...')
+
+      const requestBody = {
+        leadInfo,
+        productInfo: {
+          name: data.productName,
+          description: data.productDescription,
+          benefits,
+          useCase: data.useCase,
+        },
+        tone: data.tone,
+        style: data.style,
+        customInstructions: data.customInstructions,
+        includeUnsubscribe: data.includeUnsubscribe,
+      }
+
+      // Show what we're sending (for transparency)
+      console.log('Sending AI request:', requestBody)
+      setLastRequest(requestBody)
+      setGenerationStatus('Generating personalized email with AI...')
+
       const response = await fetch('/api/ai/generate-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          leadInfo,
-          productInfo: {
-            name: data.productName,
-            description: data.productDescription,
-            benefits,
-            useCase: data.useCase,
-          },
-          tone: data.tone,
-          style: data.style,
-          customInstructions: data.customInstructions,
-          includeUnsubscribe: data.includeUnsubscribe,
-        }),
+        body: JSON.stringify(requestBody),
       })
 
+      setGenerationStatus('Processing AI response...')
       const result = await response.json()
 
       if (!response.ok) {
@@ -125,12 +144,24 @@ export function GenerateEmailDialog({ leadInfo, onGenerated, trigger }: Generate
       })
       setRemainingTokens(result.remainingTokens)
 
+      setGenerationStatus('Email generated successfully!')
       toast.success('Email generated successfully!')
+      
+      // Log the generated content for transparency
+      console.log('Generated email:', {
+        subject: result.subject,
+        bodyLength: result.body.length,
+        tokensUsed: result.usage?.totalTokens
+      })
     } catch (error) {
       console.error('Generation error:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to generate email')
+      setGenerationStatus('')
     } finally {
-      setIsGenerating(false)
+      setTimeout(() => {
+        setIsGenerating(false)
+        setGenerationStatus('')
+      }, 1000)
     }
   }
 
@@ -317,6 +348,47 @@ export function GenerateEmailDialog({ leadInfo, onGenerated, trigger }: Generate
                   </>
                 )}
               </Button>
+
+              {isGenerating && generationStatus && (
+                <Alert>
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertDescription className="flex items-center gap-2">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    {generationStatus}
+                  </AlertDescription>
+                </Alert>
+              )}
+
+              {lastRequest && (
+                <Collapsible
+                  open={showRequestDetails}
+                  onOpenChange={setShowRequestDetails}
+                  className="mt-4"
+                >
+                  <CollapsibleTrigger asChild>
+                    <Button variant="ghost" size="sm" className="w-full justify-between">
+                      <span className="flex items-center gap-2">
+                        <Code className="h-4 w-4" />
+                        View Request Details
+                      </span>
+                      {showRequestDetails ? (
+                        <ChevronUp className="h-4 w-4" />
+                      ) : (
+                        <ChevronDown className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="mt-2">
+                    <Card>
+                      <CardContent className="pt-4">
+                        <pre className="text-xs overflow-x-auto">
+                          {JSON.stringify(lastRequest, null, 2)}
+                        </pre>
+                      </CardContent>
+                    </Card>
+                  </CollapsibleContent>
+                </Collapsible>
+              )}
             </form>
           </TabsContent>
 

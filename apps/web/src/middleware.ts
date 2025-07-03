@@ -40,6 +40,7 @@ export async function middleware(request: NextRequest) {
       '/api/webhooks/', '/api/track/', '/track/',
       '/favicon.ico', '/robots.txt', '/sitemap.xml',
       '/pricing', '/', // Allow access to pricing and landing page
+      '/privacy-policy', '/terms-of-service', // Legal pages should be public
     ]
     
     const isPublicRoute = publicRoutes.some(route => pathname.startsWith(route))

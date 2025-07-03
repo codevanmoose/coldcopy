@@ -5,6 +5,7 @@ import { AlertCircle, RefreshCw, Home } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import Link from 'next/link'
+import * as Sentry from '@sentry/nextjs'
 
 interface ErrorBoundaryProps {
   children: ReactNode
@@ -37,9 +38,18 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
       console.error('ErrorBoundary caught an error:', error, errorInfo)
     }
 
+    // Send to Sentry
+    Sentry.withScope((scope) => {
+      scope.setExtras({
+        componentStack: errorInfo.componentStack,
+        props: this.props,
+      })
+      scope.setLevel('error')
+      Sentry.captureException(error)
+    })
+
     // Log to external service in production
     if (process.env.NODE_ENV === 'production') {
-      // TODO: Send to error tracking service like Sentry
       this.logErrorToService(error, errorInfo)
     }
 

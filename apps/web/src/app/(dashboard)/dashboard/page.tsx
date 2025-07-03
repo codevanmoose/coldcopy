@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { TrialOnboarding } from '@/components/onboarding/trial-onboarding'
 import { OnboardingWidget } from '@/components/onboarding/onboarding-widget'
+import { AIFeaturesSection } from '@/components/dashboard/ai-features-section'
 import { useWorkspace } from '@/hooks/use-workspace'
 import { api } from '@/lib/api-client'
 import { cn } from '@/lib/utils'
@@ -163,8 +164,8 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <Card className="md:col-span-1">
           <CardHeader>
             <CardTitle>Campaign Performance</CardTitle>
             <CardDescription>
@@ -213,7 +214,7 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="md:col-span-1">
           <CardHeader>
             <CardTitle>Recent Activity</CardTitle>
             <CardDescription>
@@ -249,6 +250,11 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+
+        {/* AI Features Section */}
+        <div className="md:col-span-2 lg:col-span-1">
+          <AIFeaturesSection />
+        </div>
       </div>
     </div>
     </>

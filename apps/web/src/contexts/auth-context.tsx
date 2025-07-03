@@ -4,6 +4,8 @@ import React, { createContext, useContext, useEffect, useState } from 'react'
 import { User } from '@supabase/supabase-js'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { trackEvents } from '@/lib/analytics/gtag'
+import { setSentryUser } from '@/lib/sentry/helpers'
 
 interface AuthContextType {
   user: User | null
@@ -27,13 +29,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Check active sessions and sets the user
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setUser(session?.user ?? null)
+      const user = session?.user ?? null
+      setUser(user)
+      setSentryUser(user)
       setLoading(false)
     })
 
     // Listen for changes on auth state (logged in, signed out, etc.)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null)
+      const user = session?.user ?? null
+      setUser(user)
+      setSentryUser(user)
       setLoading(false)
     })
 
@@ -45,6 +51,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null)
       const { error } = await supabase.auth.signInWithPassword({ email, password })
       if (error) throw error
+      trackEvents.login()
       router.push('/dashboard')
     } catch (error) {
       setError(error as Error)
@@ -57,6 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null)
       const { error } = await supabase.auth.signUp({ email, password })
       if (error) throw error
+      trackEvents.signup()
     } catch (error) {
       setError(error as Error)
       throw error
@@ -68,6 +76,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null)
       const { error } = await supabase.auth.signOut()
       if (error) throw error
+      trackEvents.logout()
       router.push('/login')
     } catch (error) {
       setError(error as Error)

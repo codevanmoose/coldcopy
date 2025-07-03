@@ -4,6 +4,8 @@ import Script from "next/script";
 import { Toaster } from "sonner";
 import { ThemeProvider } from "@/lib/theme/theme-provider";
 import { ShortcutProvider } from "@/lib/shortcuts/shortcut-provider";
+import { GoogleAnalytics } from "@/components/analytics/google-analytics";
+import { AnalyticsProvider } from "@/components/analytics/analytics-provider";
 import "./globals.css";
 
 const inter = Inter({
@@ -64,6 +66,7 @@ export default function RootLayout({
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
       </head>
       <body className={`${inter.variable} font-sans antialiased`}>
+        <GoogleAnalytics />
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -71,6 +74,7 @@ export default function RootLayout({
           disableTransitionOnChange
         >
           <ShortcutProvider>
+            <AnalyticsProvider />
             {children}
             <Toaster 
               richColors 

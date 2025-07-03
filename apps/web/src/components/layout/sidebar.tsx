@@ -18,22 +18,22 @@ import {
   CreditCard,
   Activity,
   Brain,
-  Sparkles,
+  Briefcase,
 } from 'lucide-react'
 
 const navigation = [
   { name: 'Dashboard', href: '/dashboard', icon: Home },
+  { name: 'Inbox', href: '/inbox', icon: Inbox },
   { name: 'Campaigns', href: '/campaigns', icon: Target },
   { name: 'Templates', href: '/templates', icon: FileText },
   { name: 'Email Deliverability', href: '/deliverability', icon: Shield },
   { name: 'Leads', href: '/leads', icon: Users },
-  { name: 'Inbox', href: '/inbox', icon: Inbox },
+  { name: 'Enterprise Leads', href: '/leads/dynamics', icon: Briefcase },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Sales Intelligence', href: '/intelligence', icon: Brain },
   { name: 'Privacy', href: '/privacy', icon: Shield },
   { name: 'Settings', href: '/settings', icon: Settings },
   { name: 'Test API', href: '/test-api', icon: Activity }, // Temporary for testing
-  { name: 'AI Dashboard', href: '/ai-dashboard', icon: Sparkles }, // AI features overview
 ]
 
 const adminNavigation = [
@@ -129,14 +129,14 @@ export function Sidebar() {
               Privacy Policy
             </Link>
             <Link
-              href="/terms"
+              href="/terms-of-service"
               className="block text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
               Terms of Service
             </Link>
           </div>
           <p className="text-xs text-muted-foreground mt-4">
-            © 2024 ColdCopy
+            © {new Date().getFullYear()} ColdCopy
           </p>
         </div>
       </div>

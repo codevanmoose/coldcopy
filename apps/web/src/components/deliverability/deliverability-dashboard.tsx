@@ -32,6 +32,7 @@ import {
 } from 'lucide-react'
 import { SpamChecker } from '@/lib/deliverability/spam-checker'
 import { DNSChecker } from '@/lib/deliverability/dns-checker'
+import { useAuthStore } from '@/lib/stores/auth-store'
 
 interface DeliverabilityStats {
   overallScore: number
@@ -43,21 +44,37 @@ interface DeliverabilityStats {
   bounceRate: number
   complaintRate: number
   reputation: 'excellent' | 'good' | 'fair' | 'poor'
+  domainPerformance?: Array<{
+    domain: string
+    sent: number
+    delivered: number
+    bounced: number
+    rate: number
+  }>
+  suppressionStats?: {
+    totalSuppressed: number
+    hardBounces: number
+    softBounces: number
+    complaints: number
+    unsubscribes: number
+    manual: number
+  }
 }
 
 export function DeliverabilityDashboard() {
   const [activeTab, setActiveTab] = useState('overview')
-  const [isLoading, setIsLoading] = useState(false)
+  const [isLoading, setIsLoading] = useState(true)
+  const [isRefreshing, setIsRefreshing] = useState(false)
   const [stats, setStats] = useState<DeliverabilityStats>({
-    overallScore: 85,
-    emailsSent: 10450,
-    delivered: 10123,
-    bounced: 245,
-    complained: 12,
-    deliveryRate: 96.9,
-    bounceRate: 2.3,
-    complaintRate: 0.1,
-    reputation: 'good'
+    overallScore: 0,
+    emailsSent: 0,
+    delivered: 0,
+    bounced: 0,
+    complained: 0,
+    deliveryRate: 0,
+    bounceRate: 0,
+    complaintRate: 0,
+    reputation: 'fair'
   })
 
   // Spam Check State
@@ -73,15 +90,49 @@ export function DeliverabilityDashboard() {
   const [dnsCheckDomain, setDnsCheckDomain] = useState('example.com')
   const [dnsResult, setDnsResult] = useState<any>(null)
 
-  // Suppression List State
-  const [suppressionStats, setSuppressionStats] = useState({
-    totalSuppressed: 1245,
-    hardBounces: 856,
-    softBounces: 234,
-    complaints: 89,
-    unsubscribes: 45,
-    manual: 21
-  })
+  // Get workspace ID from auth store
+  const { selectedWorkspace } = useAuthStore()
+  
+  // Fetch deliverability stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!selectedWorkspace?.id) return
+      
+      setIsLoading(true)
+      try {
+        const response = await fetch(`/api/deliverability/stats?workspace_id=${selectedWorkspace.id}&period=30d`)
+        if (response.ok) {
+          const data = await response.json()
+          setStats(data)
+        } else {
+          console.error('Failed to fetch deliverability stats')
+        }
+      } catch (error) {
+        console.error('Error fetching deliverability stats:', error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+    
+    fetchStats()
+  }, [selectedWorkspace?.id])
+  
+  const handleRefresh = async () => {
+    if (!selectedWorkspace?.id) return
+    
+    setIsRefreshing(true)
+    try {
+      const response = await fetch(`/api/deliverability/stats?workspace_id=${selectedWorkspace.id}&period=30d`)
+      if (response.ok) {
+        const data = await response.json()
+        setStats(data)
+      }
+    } catch (error) {
+      console.error('Error refreshing stats:', error)
+    } finally {
+      setIsRefreshing(false)
+    }
+  }
 
   const handleSpamCheck = async () => {
     setIsLoading(true)
@@ -148,13 +199,21 @@ export function DeliverabilityDashboard() {
             <Download className="h-4 w-4 mr-2" />
             Export Report
           </Button>
-          <Button>
-            <RefreshCw className="h-4 w-4 mr-2" />
+          <Button onClick={handleRefresh} disabled={isRefreshing}>
+            <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             Refresh Data
           </Button>
         </div>
       </div>
 
+      {/* Show loading state for initial load */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-12">
+          <RefreshCw className="h-8 w-8 animate-spin text-muted-foreground" />
+          <span className="ml-3 text-muted-foreground">Loading deliverability data...</span>
+        </div>
+      ) : (
+        <>
       {/* Overview Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <Card>
@@ -303,13 +362,8 @@ export function DeliverabilityDashboard() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {[
-                  { domain: 'gmail.com', sent: 4250, delivered: 4195, bounced: 45, rate: 98.7 },
-                  { domain: 'outlook.com', sent: 2100, delivered: 2034, bounced: 56, rate: 96.9 },
-                  { domain: 'yahoo.com', sent: 1850, delivered: 1782, bounced: 58, rate: 96.3 },
-                  { domain: 'company.com', sent: 980, delivered: 956, bounced: 18, rate: 97.6 },
-                  { domain: 'others', sent: 1270, delivered: 1156, bounced: 68, rate: 91.0 }
-                ].map((domain, index) => (
+                {(stats.domainPerformance || []).length > 0 ? (
+                  stats.domainPerformance?.map((domain, index) => (
                   <div key={index} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center space-x-4">
                       <div className="font-medium">{domain.domain}</div>
@@ -322,7 +376,14 @@ export function DeliverabilityDashboard() {
                       <Progress value={domain.rate} className="w-24" />
                     </div>
                   </div>
-                ))}
+                ))
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No email data available yet</p>
+                    <p className="text-sm mt-2">Start sending campaigns to see domain performance metrics</p>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -672,27 +733,27 @@ export function DeliverabilityDashboard() {
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold">{suppressionStats.totalSuppressed.toLocaleString()}</div>
+                  <div className="text-2xl font-bold">{(stats.suppressionStats?.totalSuppressed || 0).toLocaleString()}</div>
                   <div className="text-sm text-muted-foreground">Total Suppressed</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">{suppressionStats.hardBounces.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-red-600">{(stats.suppressionStats?.hardBounces || 0).toLocaleString()}</div>
                   <div className="text-sm text-muted-foreground">Hard Bounces</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-yellow-600">{suppressionStats.softBounces.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-yellow-600">{(stats.suppressionStats?.softBounces || 0).toLocaleString()}</div>
                   <div className="text-sm text-muted-foreground">Soft Bounces</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">{suppressionStats.complaints.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-orange-600">{(stats.suppressionStats?.complaints || 0).toLocaleString()}</div>
                   <div className="text-sm text-muted-foreground">Complaints</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">{suppressionStats.unsubscribes.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-blue-600">{(stats.suppressionStats?.unsubscribes || 0).toLocaleString()}</div>
                   <div className="text-sm text-muted-foreground">Unsubscribes</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-gray-600">{suppressionStats.manual.toLocaleString()}</div>
+                  <div className="text-2xl font-bold text-gray-600">{(stats.suppressionStats?.manual || 0).toLocaleString()}</div>
                   <div className="text-sm text-muted-foreground">Manual</div>
                 </div>
               </div>
@@ -781,6 +842,8 @@ export function DeliverabilityDashboard() {
           </div>
         </TabsContent>
       </Tabs>
+      </>
+      )}
     </div>
   )
 }

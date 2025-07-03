@@ -18,11 +18,12 @@ import { WorkspaceSwitcher } from './workspace-switcher'
 
 export function Header() {
   const router = useRouter()
-  const { user, dbUser } = useAuthStore()
+  const { user, dbUser, reset } = useAuthStore()
   const supabase = createClient()
 
   const handleSignOut = async () => {
     await supabase.auth.signOut()
+    reset() // Clear the auth store
     router.push('/login')
   }
 
@@ -63,7 +64,7 @@ export function Header() {
               </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => router.push('/settings/profile')}>
+            <DropdownMenuItem onClick={() => router.push('/settings')}>
               <User className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>

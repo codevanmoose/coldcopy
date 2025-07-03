@@ -73,7 +73,11 @@
       "Bash(aws iam create-user:*)",
       "Bash(pip3 install:*)",
       "Bash(aws ses send-email:*)",
-      "Bash(aws ses verify-email-identity:*)"
+      "Bash(aws ses verify-email-identity:*)",
+      "Bash(open https://coldcopy.cc)",
+      "Bash(open https://coldcopy.cc/login)",
+      "Bash(npm ls:*)",
+      "Bash(aws ses describe-configuration-sets:*)"
     ],
     "deny": []
   }
