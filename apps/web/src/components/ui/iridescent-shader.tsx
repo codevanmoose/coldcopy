@@ -243,7 +243,7 @@ export function IridescenceShader({
     <div ref={containerRef} className={`relative overflow-hidden ${className}`}>
       <canvas
         ref={canvasRef}
-        className="w-full h-full block"
+        className="absolute inset-0 w-full h-full block pointer-events-none"
         style={{ width: '100%', height: '100%' }}
       />
     </div>
