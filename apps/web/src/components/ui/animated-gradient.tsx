@@ -10,9 +10,9 @@ export function AnimatedGradient({ className = '' }: AnimatedGradientProps) {
       {/* Base animated gradient */}
       <div className="absolute inset-0" 
            style={{ 
-             background: 'linear-gradient(45deg, #6366f1, #8b5cf6, #a855f7, #d946ef, #ec4899, #06b6d4)',
-             backgroundSize: '200% 200%',
-             animation: 'gradient-shift 8s ease-in-out infinite',
+             background: 'linear-gradient(125deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #667eea 100%)',
+             backgroundSize: '400% 400%',
+             animation: 'gradient-shift 15s ease infinite',
            }} />
       
       {/* Animated overlay gradients with custom animations */}

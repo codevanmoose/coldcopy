@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { WebGLShader } from '@/components/ui/webgl-shader'
+import { AnimatedGradient } from '@/components/ui/animated-gradient'
 import { PlatformStats } from '@/components/platform-stats'
 import { ArrowRight, CheckCircle2, Zap, Shield, TrendingUp, Users, Mail, Brain, Menu } from 'lucide-react'
 
@@ -43,8 +43,8 @@ export default function Home() {
 
       {/* Hero Section */}
       <section className="relative min-h-screen overflow-hidden">
-        {/* Shader Background */}
-        <WebGLShader />
+        {/* Animated Gradient Background */}
+        <AnimatedGradient />
         
         {/* Dark overlay for better text readability */}
         <div className="absolute inset-0 bg-black/20"></div>
@@ -74,17 +74,17 @@ export default function Home() {
             
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
-              <button className="hover:from-violet-600 hover:to-purple-700 transition-all duration-200 transform hover:scale-105 shadow-violet-500/25 font-semibold text-white bg-gradient-to-r from-orange-400 to-pink-400 rounded-lg px-8 py-4 shadow-lg">
-                <Link href="/signup" className="flex items-center">
+              <Link href="/signup">
+                <Button className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white font-semibold px-8 py-6 text-lg rounded-full shadow-lg shadow-purple-500/25 transition-all duration-200 transform hover:scale-105">
                   Start Free Trial
                   <ArrowRight className="ml-2 h-5 w-5" />
-                </Link>
-              </button>
-              <button className="px-8 py-4 bg-white/10 backdrop-blur-sm border border-white/20 text-white font-semibold rounded-lg hover:bg-white/20 transition-all duration-200">
-                <Link href="/demo">
+                </Button>
+              </Link>
+              <Link href="/demo">
+                <Button variant="outline" className="px-8 py-6 bg-white/10 backdrop-blur-sm border border-white/20 text-white font-semibold hover:bg-white/20 transition-all duration-200 text-lg rounded-full">
                   Watch Demo
-                </Link>
-              </button>
+                </Button>
+              </Link>
             </div>
             
             {/* Features Grid */}
