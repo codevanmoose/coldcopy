@@ -75,7 +75,7 @@ export default function Home() {
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-16">
               <Link href="/signup">
-                <Button className="bg-gradient-to-r from-violet-500 to-purple-600 hover:from-violet-600 hover:to-purple-700 text-white font-semibold px-8 py-6 text-lg rounded-full shadow-lg shadow-purple-500/25 transition-all duration-200 transform hover:scale-105">
+                <Button className="bg-gradient-to-r from-orange-400 to-pink-400 hover:from-orange-500 hover:to-pink-500 text-white font-semibold px-8 py-6 text-lg rounded-full shadow-lg shadow-orange-500/25 transition-all duration-200 transform hover:scale-105">
                   Start Free Trial
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
