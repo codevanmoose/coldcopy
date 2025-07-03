@@ -8,9 +8,10 @@ export function AnimatedGradient({ className = '' }: AnimatedGradientProps) {
   return (
     <div className={`relative ${className}`}>
       {/* Base animated gradient */}
-      <div className="absolute inset-0 bg-gradient-to-br from-purple-900 via-blue-900 to-indigo-900 animate-gradient-shift" 
+      <div className="absolute inset-0 animate-gradient-shift" 
            style={{ 
              backgroundImage: 'linear-gradient(45deg, #6366f1, #8b5cf6, #a855f7, #d946ef, #ec4899, #06b6d4)',
+             backgroundSize: '200% 200%',
            }} />
       
       {/* Animated overlay gradients with custom animations */}
