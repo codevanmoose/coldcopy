@@ -21,12 +21,22 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    const { data: workspaces, error } = await supabase
+    const { data: workspaceData, error } = await supabase
       .rpc('get_user_workspaces', { user_id: user.id })
 
     if (error) {
+      console.error('RPC error:', error)
       throw error
     }
+
+    // Transform the response to match expected format
+    const workspaces = workspaceData?.map((w: any) => ({
+      id: w.workspace_id,
+      name: w.workspace_name,
+      slug: w.workspace_slug,
+      role: w.role,
+      is_default: w.is_default
+    })) || []
 
     return NextResponse.json({ workspaces })
   } catch (error) {
