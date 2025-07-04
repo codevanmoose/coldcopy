@@ -38,17 +38,17 @@ export function MarketingNav() {
   }, [])
 
   return (
-    <nav className="border-b bg-white">
+    <nav className="border-b border-white/10">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="text-2xl font-bold text-primary">
+        <Link href="/" className="text-2xl font-bold text-white">
           ColdCopy
         </Link>
         
         <div className="flex items-center gap-6">
-          <Link href="/pricing" className="text-sm font-medium hover:text-primary">
+          <Link href="/pricing" className="text-sm font-medium text-white/80 hover:text-white transition-colors">
             Pricing
           </Link>
-          <Link href="/features" className="text-sm font-medium hover:text-primary">
+          <Link href="/features" className="text-sm font-medium text-white/80 hover:text-white transition-colors">
             Features
           </Link>
           
@@ -68,10 +68,10 @@ export function MarketingNav() {
           ) : (
             // User is not logged in
             <>
-              <Link href="/login" className="text-sm font-medium hover:text-primary">
+              <Link href="/login" className="text-sm font-medium text-white/80 hover:text-white transition-colors">
                 Login
               </Link>
-              <Button asChild size="sm">
+              <Button asChild size="sm" className="bg-white text-black hover:bg-white/90">
                 <Link href="/signup">Get Started</Link>
               </Button>
             </>
