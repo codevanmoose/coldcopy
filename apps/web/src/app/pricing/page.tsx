@@ -77,7 +77,7 @@ export default function PricingPage() {
             <Link href="/pricing" className="hover:text-white transition-colors">
               Pricing
             </Link>
-            <Link href="/features" className="hover:text-white transition-colors">
+            <Link href="/#features" className="hover:text-white transition-colors">
               Features
             </Link>
             <Link href="/login" className="hover:text-white transition-colors">
@@ -249,7 +249,7 @@ export default function PricingPage() {
             <div>
               <h4 className="text-white font-normal text-sm mb-4">Product</h4>
               <ul className="space-y-2">
-                <li><Link href="/features" className="text-gray-400 hover:text-white text-sm font-extralight">Features</Link></li>
+                <li><Link href="/#features" className="text-gray-400 hover:text-white text-sm font-extralight">Features</Link></li>
                 <li><Link href="/pricing" className="text-gray-400 hover:text-white text-sm font-extralight">Pricing</Link></li>
                 <li><Link href="/integrations" className="text-gray-400 hover:text-white text-sm font-extralight">Integrations</Link></li>
                 <li><Link href="/api" className="text-gray-400 hover:text-white text-sm font-extralight">API</Link></li>

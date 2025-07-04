@@ -1,13 +1,33 @@
+'use client'
+
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { AnimatedGradient } from '@/components/ui/animated-gradient'
 import { PlatformStats } from '@/components/platform-stats'
-import { ArrowRight, CheckCircle2, Zap, Shield, TrendingUp, Users, Mail, Brain, Menu } from 'lucide-react'
-
-// Enable ISR with 60 second revalidation
-export const revalidate = 60
+import { 
+  ArrowRight, 
+  CheckCircle2, 
+  Zap, 
+  Shield, 
+  TrendingUp, 
+  Users, 
+  Mail, 
+  Brain, 
+  Menu,
+  Globe,
+  BarChart3,
+  Palette,
+  Workflow,
+  MessageSquare,
+  Target,
+  RefreshCw,
+  Lock
+} from 'lucide-react'
 
 export default function Home() {
+  const scrollToSection = (sectionId: string) => {
+    document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' })
+  }
   return (
     <div className="bg-black font-['Inter'] overflow-x-hidden">
       {/* Navigation */}
@@ -21,9 +41,9 @@ export default function Home() {
             <Link href="/pricing" className="hover:text-white transition-colors">
               Pricing
             </Link>
-            <Link href="/features" className="hover:text-white transition-colors">
+            <button onClick={() => scrollToSection('features')} className="hover:text-white transition-colors">
               Features
-            </Link>
+            </button>
             <Link href="/login" className="hover:text-white transition-colors">
               Login
             </Link>
@@ -172,54 +192,117 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Features Grid */}
-      <section className="py-20 px-6 lg:px-24 bg-gradient-to-b from-black to-gray-900">
-        <div className="max-w-6xl mx-auto">
+      {/* Features Section */}
+      <section id="features" className="py-20 px-6 lg:px-24 bg-gradient-to-b from-black to-gray-900">
+        <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <h2 className="text-4xl font-bold text-white mb-4">
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-4">
               Everything You Need to Scale Outbound
             </h2>
-            <p className="text-xl text-white/70">
+            <p className="text-xl text-white/70 max-w-3xl mx-auto">
               From first touch to closed deal. All in one platform.
             </p>
           </div>
           
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <FeatureCard 
-              title="AI Email Writer"
-              description="Generate personalized emails in seconds with GPT-4 and Claude"
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <FeatureDetailCard
+              icon={Brain}
+              title="Dual AI Email Writer"
+              description="Leverage both GPT-4 and Claude to generate personalized emails that sound human, not robotic."
+              features={[
+                'Switch between AI models for different writing styles',
+                'Context-aware personalization from LinkedIn and company data',
+                'Smart tone adjustment based on recipient profile',
+                'Built-in spam score checker'
+              ]}
             />
-            <FeatureCard 
-              title="Smart Sequences"
-              description="Multi-step campaigns that stop when prospects reply"
+            <FeatureDetailCard
+              icon={Users}
+              title="Shared Team Inbox"
+              description="Collaborate seamlessly with your team on all prospect conversations in one unified inbox."
+              features={[
+                'Real-time collaboration with message threading',
+                'Assign conversations to team members',
+                'Internal notes and mentions',
+                'Conversation history and context'
+              ]}
             />
-            <FeatureCard 
+            <FeatureDetailCard
+              icon={Globe}
+              title="Multi-Channel Outreach"
+              description="Reach prospects where they are with integrated email, LinkedIn, and Twitter campaigns."
+              features={[
+                'Unified campaign across all channels',
+                'Channel-specific message optimization',
+                'Automatic channel switching based on response',
+                'Cross-channel analytics'
+              ]}
+            />
+            <FeatureDetailCard
+              icon={Target}
               title="Lead Enrichment"
-              description="Find emails, phone numbers, and company insights automatically"
+              description="Automatically enrich leads with data from multiple sources for better personalization."
+              features={[
+                'Find verified email addresses',
+                'Company technographics and insights',
+                'Social media profiles and activity',
+                'Intent signals and buying indicators'
+              ]}
             />
-            <FeatureCard 
-              title="CRM Sync"
-              description="Two-way sync with Salesforce, HubSpot, and Pipedrive"
+            <FeatureDetailCard
+              icon={Workflow}
+              title="Smart Sequences"
+              description="Create multi-step campaigns that adapt based on prospect behavior and engagement."
+              features={[
+                'Conditional branching based on actions',
+                'A/B testing for subject lines and content',
+                'Automatic stop on reply or meeting booked',
+                'Time zone optimized sending'
+              ]}
             />
-            <FeatureCard 
-              title="Team Inbox"
-              description="Collaborate on replies without stepping on toes"
+            <FeatureDetailCard
+              icon={BarChart3}
+              title="Advanced Analytics"
+              description="Get deep insights into campaign performance with real-time analytics and reporting."
+              features={[
+                'Campaign performance dashboards',
+                'Reply sentiment analysis',
+                'Team member performance metrics',
+                'Custom report builder'
+              ]}
             />
-            <FeatureCard 
-              title="Email Warm-up"
-              description="Build sender reputation with our 10,000+ inbox network"
+            <FeatureDetailCard
+              icon={Shield}
+              title="Enterprise Security"
+              description="Bank-level security with GDPR compliance and advanced permission controls."
+              features={[
+                'SOC 2 Type II compliant',
+                'End-to-end encryption',
+                'Role-based access control',
+                'Audit logs and compliance reports'
+              ]}
             />
-            <FeatureCard 
-              title="A/B Testing"
-              description="Test subjects, copy, and send times automatically"
+            <FeatureDetailCard
+              icon={Palette}
+              title="White-Label Ready"
+              description="Make ColdCopy your own with custom branding and client portals."
+              features={[
+                'Custom domain and branding',
+                'Client-specific workspaces',
+                'Branded email templates',
+                'API access for custom integrations'
+              ]}
             />
-            <FeatureCard 
-              title="Deliverability Suite"
-              description="Spam testing, domain monitoring, and inbox placement"
-            />
-            <FeatureCard 
-              title="White Label"
-              description="Custom domains and branding for agencies"
+            <FeatureDetailCard
+              icon={RefreshCw}
+              title="CRM Integration"
+              description="Seamlessly sync with HubSpot, Salesforce, and other popular CRMs."
+              features={[
+                'Two-way data synchronization',
+                'Automatic activity logging',
+                'Custom field mapping',
+                'Deal and pipeline updates'
+              ]}
             />
           </div>
         </div>
@@ -305,7 +388,7 @@ export default function Home() {
             <div>
               <h4 className="font-semibold mb-4 text-white">Product</h4>
               <ul className="space-y-2 text-sm text-white/60">
-                <li><Link href="/features" className="hover:text-white transition-colors">Features</Link></li>
+                <li><button onClick={() => scrollToSection('features')} className="hover:text-white transition-colors">Features</button></li>
                 <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
                 <li><Link href="/integrations" className="hover:text-white transition-colors">Integrations</Link></li>
                 <li><Link href="/api" className="hover:text-white transition-colors">API</Link></li>
@@ -346,6 +429,42 @@ function FeatureCard({ title, description }: { title: string; description: strin
     <div className="p-6 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg hover:bg-white/10 transition">
       <h3 className="text-lg font-semibold mb-2 text-white">{title}</h3>
       <p className="text-white/70 text-sm">{description}</p>
+    </div>
+  )
+}
+
+function FeatureDetailCard({ 
+  icon: Icon, 
+  title, 
+  description, 
+  features 
+}: { 
+  icon: any; 
+  title: string; 
+  description: string;
+  features: string[];
+}) {
+  return (
+    <div className="group relative p-8 rounded-2xl bg-gradient-to-br from-gray-900/50 to-black border border-gray-800 hover:border-indigo-500/50 transition-all duration-300">
+      <div className="absolute inset-0 bg-gradient-to-br from-indigo-900/0 to-purple-900/0 group-hover:from-indigo-900/10 group-hover:to-purple-900/10 rounded-2xl transition-all duration-300"></div>
+      
+      <div className="relative z-10">
+        <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300">
+          <Icon className="w-7 h-7 text-white" />
+        </div>
+        
+        <h3 className="text-2xl font-semibold mb-3 text-white">{title}</h3>
+        <p className="text-gray-400 mb-6">{description}</p>
+        
+        <ul className="space-y-2">
+          {features.map((feature, idx) => (
+            <li key={idx} className="flex items-start text-sm text-gray-300">
+              <CheckCircle2 className="w-4 h-4 text-indigo-400 mr-2 mt-0.5 flex-shrink-0" />
+              {feature}
+            </li>
+          ))}
+        </ul>
+      </div>
     </div>
   )
 }
