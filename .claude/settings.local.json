@@ -81,7 +81,9 @@
       "Bash(cd:*)",
       "WebFetch(domain:aurachat.io)",
       "Bash(open https://www.coldcopy.cc)",
-      "Bash(open test-gradient.html)"
+      "Bash(open test-gradient.html)",
+      "Bash(cp:*)",
+      "Bash(git reset:*)"
     ],
     "deny": []
   }

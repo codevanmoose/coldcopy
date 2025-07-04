@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { AnimatedGradient } from '@/components/ui/animated-gradient'
@@ -7,6 +8,7 @@ import { PlatformStats } from '@/components/platform-stats'
 import { 
   ArrowRight, 
   CheckCircle2, 
+  Check,
   Zap, 
   Shield, 
   TrendingUp, 
@@ -25,9 +27,67 @@ import {
 } from 'lucide-react'
 
 export default function Home() {
+  const [isYearly, setIsYearly] = useState(false)
+  
   const scrollToSection = (sectionId: string) => {
     document.getElementById(sectionId)?.scrollIntoView({ behavior: 'smooth' })
   }
+  
+  const plans = [
+    {
+      name: 'Starter',
+      description: 'Perfect for small teams getting started',
+      monthlyPrice: 29,
+      yearlyPrice: 279,
+      features: [
+        'Up to 500 emails/month',
+        '50 AI email generations',
+        '1 team member',
+        'Basic email tracking',
+        'Email support'
+      ],
+      cta: 'Start free trial',
+      href: '/signup?plan=starter',
+      featured: false
+    },
+    {
+      name: 'Professional',
+      description: 'Ideal for growing sales teams',
+      monthlyPrice: 99,
+      yearlyPrice: 950,
+      features: [
+        'Up to 5,000 emails/month',
+        '500 AI email generations',
+        '5 team members',
+        'Advanced analytics',
+        'CRM integrations',
+        'LinkedIn integration',
+        'Priority support'
+      ],
+      cta: 'Start free trial',
+      href: '/signup?plan=pro',
+      featured: true
+    },
+    {
+      name: 'Enterprise',
+      description: 'For large-scale organizations',
+      monthlyPrice: 299,
+      yearlyPrice: 2870,
+      features: [
+        'Unlimited emails',
+        'Unlimited AI generations',
+        'Unlimited team members',
+        'White-label options',
+        'Custom integrations',
+        'Dedicated account manager',
+        '24/7 phone support',
+        'SLA guarantee'
+      ],
+      cta: 'Contact sales',
+      href: '/contact-sales',
+      featured: false
+    }
+  ]
   return (
     <div className="bg-black font-['Inter'] overflow-x-hidden">
       {/* Navigation */}
@@ -38,9 +98,9 @@ export default function Home() {
             <span className="text-xl font-bold text-white">ColdCopy</span>
           </div>
           <div className="hidden md:flex space-x-8 text-white/80">
-            <Link href="/pricing" className="hover:text-white transition-colors">
+            <button onClick={() => scrollToSection('pricing')} className="hover:text-white transition-colors">
               Pricing
-            </Link>
+            </button>
             <button onClick={() => scrollToSection('features')} className="hover:text-white transition-colors">
               Features
             </button>
@@ -308,6 +368,97 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Pricing Section */}
+      <section id="pricing" className="py-20 px-6 lg:px-24 bg-black relative overflow-hidden">
+        {/* Background elements */}
+        <div className="absolute top-40 left-20 w-96 h-96 bg-indigo-900/20 rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-20 w-96 h-96 bg-purple-900/20 rounded-full blur-3xl"></div>
+        
+        <div className="max-w-7xl mx-auto relative z-10">
+          {/* Section Header */}
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">
+              Simple, transparent <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">pricing</span>
+            </h2>
+            <p className="text-gray-300 text-xl max-w-2xl mx-auto">
+              Start with a 14-day free trial. No credit card required. Scale as you grow.
+            </p>
+          </div>
+          
+          {/* Pricing Toggle */}
+          <div className="flex justify-center items-center mb-12">
+            <span className={`mr-3 ${!isYearly ? 'text-white' : 'text-gray-400'}`}>Monthly</span>
+            <button
+              onClick={() => setIsYearly(!isYearly)}
+              className="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full bg-gray-800"
+            >
+              <span
+                className={`absolute left-0 w-6 h-6 transition duration-100 ease-in-out transform bg-indigo-500 rounded-full ${
+                  isYearly ? 'translate-x-6' : ''
+                }`}
+              />
+            </button>
+            <span className={`ml-3 ${isYearly ? 'text-white' : 'text-gray-400'}`}>
+              Yearly <span className="text-xs text-indigo-400">(Save 20%)</span>
+            </span>
+          </div>
+          
+          {/* Pricing Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {plans.map((plan) => (
+              <div
+                key={plan.name}
+                className={`p-8 rounded-2xl border transition-all flex flex-col h-full relative ${
+                  plan.featured
+                    ? 'bg-gradient-to-br from-indigo-900/40 to-black border-indigo-500/30 hover:border-indigo-500/60'
+                    : 'bg-gradient-to-br from-gray-900 to-black border-gray-800 hover:border-indigo-500/30'
+                }`}
+              >
+                {plan.featured && (
+                  <div className="absolute top-0 right-8 bg-gradient-to-r from-indigo-500 to-purple-500 text-white text-xs font-semibold px-3 py-1 rounded-b-md">
+                    MOST POPULAR
+                  </div>
+                )}
+                <div className="mb-8">
+                  <h3 className="text-xl font-semibold mb-2">{plan.name}</h3>
+                  <p className="text-gray-400 text-sm mb-4">{plan.description}</p>
+                  <div className="flex items-baseline">
+                    <span className="text-4xl font-bold">
+                      ${isYearly ? Math.floor(plan.yearlyPrice / 12) : plan.monthlyPrice}
+                    </span>
+                    <span className="text-gray-400 ml-2">/month</span>
+                  </div>
+                  {isYearly && (
+                    <p className="text-sm text-gray-400 mt-1">
+                      ${plan.yearlyPrice} billed annually
+                    </p>
+                  )}
+                </div>
+                <ul className="space-y-3 mb-8 flex-grow">
+                  {plan.features.map((feature, index) => (
+                    <li key={index} className="flex items-start text-gray-300">
+                      <Check className="w-5 h-5 mr-2 text-indigo-400 flex-shrink-0 mt-0.5" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+                <Link href={plan.href} className="w-full">
+                  <Button
+                    className={`w-full font-semibold rounded-md px-6 py-3 transition-all ${
+                      plan.featured
+                        ? 'bg-gradient-to-r from-indigo-500 to-purple-500 text-white hover:opacity-90'
+                        : 'bg-transparent border border-gray-700 hover:bg-white/5'
+                    }`}
+                  >
+                    {plan.cta}
+                  </Button>
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ROI Section */}
       <section className="py-20 px-6 lg:px-24 bg-black">
         <div className="max-w-4xl mx-auto text-center">
@@ -359,11 +510,13 @@ export default function Home() {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>
-            <Link href="/pricing">
-              <Button variant="outline" className="border-white text-white hover:bg-white hover:text-purple-600 font-semibold px-8 py-4 text-lg">
-                View Pricing
-              </Button>
-            </Link>
+            <Button 
+              onClick={() => scrollToSection('pricing')}
+              variant="outline" 
+              className="border-white text-white hover:bg-white hover:text-purple-600 font-semibold px-8 py-4 text-lg cursor-pointer"
+            >
+              View Pricing
+            </Button>
           </div>
           <p className="mt-6 text-sm opacity-75">
             No credit card required • 5 minute setup • Cancel anytime
@@ -389,7 +542,7 @@ export default function Home() {
               <h4 className="font-semibold mb-4 text-white">Product</h4>
               <ul className="space-y-2 text-sm text-white/60">
                 <li><button onClick={() => scrollToSection('features')} className="hover:text-white transition-colors">Features</button></li>
-                <li><Link href="/pricing" className="hover:text-white transition-colors">Pricing</Link></li>
+                <li><button onClick={() => scrollToSection('pricing')} className="hover:text-white transition-colors">Pricing</button></li>
                 <li><Link href="/integrations" className="hover:text-white transition-colors">Integrations</Link></li>
                 <li><Link href="/api" className="hover:text-white transition-colors">API</Link></li>
               </ul>
