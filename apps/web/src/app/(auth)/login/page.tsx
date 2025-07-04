@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
@@ -23,9 +23,29 @@ type LoginForm = z.infer<typeof loginSchema>
 export default function SimpleLoginPage() {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
+  const [isCheckingAuth, setIsCheckingAuth] = useState(true)
   
   // Initialize Supabase client on each render (safe for client components)
   const supabase = createClient()
+
+  // Check if user is already authenticated
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession()
+        if (session?.user) {
+          router.push('/dashboard')
+          return
+        }
+      } catch (error) {
+        console.error('Error checking auth status:', error)
+      } finally {
+        setIsCheckingAuth(false)
+      }
+    }
+
+    checkAuthStatus()
+  }, [router, supabase.auth])
 
   const {
     register,
@@ -54,6 +74,17 @@ export default function SimpleLoginPage() {
     } catch (err) {
       setError('An unexpected error occurred')
     }
+  }
+
+  // Show loading while checking authentication
+  if (isCheckingAuth) {
+    return (
+      <Card>
+        <CardContent className="flex items-center justify-center p-8">
+          <Loader2 className="h-6 w-6 animate-spin" />
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
