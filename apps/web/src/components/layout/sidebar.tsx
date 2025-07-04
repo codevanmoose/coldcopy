@@ -31,7 +31,6 @@ const navigation = [
   { name: 'Enterprise Leads', href: '/leads/dynamics', icon: Briefcase },
   { name: 'Analytics', href: '/analytics', icon: BarChart3 },
   { name: 'Sales Intelligence', href: '/intelligence', icon: Brain },
-  { name: 'Privacy', href: '/privacy', icon: Shield },
   { name: 'Settings', href: '/settings', icon: Settings },
   { name: 'Test API', href: '/test-api', icon: Activity }, // Temporary for testing
 ]
