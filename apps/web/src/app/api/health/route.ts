@@ -12,6 +12,11 @@ export async function GET(request: NextRequest) {
     status: 'ok', 
     timestamp: new Date().toISOString(),
     region: process.env.VERCEL_REGION || 'unknown',
+    env: {
+      hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+      hasSupabaseKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      nodeEnv: process.env.NODE_ENV,
+    }
   }, { headers })
 }
 
