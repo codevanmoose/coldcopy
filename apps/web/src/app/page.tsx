@@ -381,7 +381,7 @@ export default function Home() {
               Simple, transparent <span className="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">pricing</span>
             </h2>
             <p className="text-gray-300 text-xl max-w-2xl mx-auto">
-              Start with a 14-day free trial. No credit card required. Scale as you grow.
+              Starting at just $23/month. 14-day free trial. No credit card required.
             </p>
           </div>
           
@@ -424,15 +424,17 @@ export default function Home() {
                   <p className="text-gray-400 text-sm mb-4">{plan.description}</p>
                   <div className="flex items-baseline">
                     <span className="text-4xl font-bold">
-                      ${isYearly ? Math.floor(plan.yearlyPrice / 12) : plan.monthlyPrice}
+                      ${Math.floor(plan.yearlyPrice / 12)}
                     </span>
                     <span className="text-gray-400 ml-2">/month</span>
                   </div>
-                  {isYearly && (
-                    <p className="text-sm text-gray-400 mt-1">
-                      ${plan.yearlyPrice} billed annually
-                    </p>
-                  )}
+                  <p className="text-sm text-gray-400 mt-1">
+                    {isYearly ? (
+                      <>${plan.yearlyPrice} billed annually</>
+                    ) : (
+                      <>or ${plan.monthlyPrice}/month billed monthly</>
+                    )}
+                  </p>
                 </div>
                 <ul className="space-y-3 mb-8 flex-grow">
                   {plan.features.map((feature, index) => (
