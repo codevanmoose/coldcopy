@@ -390,11 +390,11 @@ export default function Home() {
             <span className={`mr-3 ${!isYearly ? 'text-white' : 'text-gray-400'}`}>Monthly</span>
             <button
               onClick={() => setIsYearly(!isYearly)}
-              className="relative inline-block w-12 h-6 transition duration-200 ease-in-out rounded-full bg-gray-800"
+              className="relative inline-flex items-center w-14 h-7 transition duration-200 ease-in-out rounded-full bg-gray-800"
             >
               <span
-                className={`absolute left-0 w-6 h-6 transition duration-100 ease-in-out transform bg-indigo-500 rounded-full ${
-                  isYearly ? 'translate-x-6' : ''
+                className={`absolute w-5 h-5 transition duration-100 ease-in-out transform bg-indigo-500 rounded-full ${
+                  isYearly ? 'translate-x-7' : 'translate-x-1'
                 }`}
               />
             </button>
