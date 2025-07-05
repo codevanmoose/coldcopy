@@ -1,0 +1,17 @@
+{
+  "startTime": "2025-07-05T06:14:58.957Z",
+  "tests": [],
+  "summary": {
+    "total": 0,
+    "passed": 0,
+    "failed": 0,
+    "skipped": 0
+  },
+  "errors": [
+    "page.waitForLoadState: Timeout 30000ms exceeded."
+  ],
+  "warnings": [],
+  "performance": {},
+  "endTime": "2025-07-05T06:15:30.478Z",
+  "duration": 31521
+}

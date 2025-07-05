@@ -14,94 +14,9 @@
   "dir": "ltr",
   "icons": [
     {
-      "src": "/icon-72.png",
-      "sizes": "72x72",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-96.png",
-      "sizes": "96x96",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-128.png",
-      "sizes": "128x128",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-144.png",
-      "sizes": "144x144",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-152.png",
-      "sizes": "152x152",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-192.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-384.png",
-      "sizes": "384x384",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-512.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/icon-192-maskable.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "/icon-512-maskable.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
-  ],
-  "screenshots": [
-    {
-      "src": "/screenshot-mobile-1.png",
-      "sizes": "375x812",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "ColdCopy Dashboard - Mobile View"
-    },
-    {
-      "src": "/screenshot-mobile-2.png",
-      "sizes": "375x812",
-      "type": "image/png",
-      "form_factor": "narrow",
-      "label": "Campaign Management - Mobile View"
-    },
-    {
-      "src": "/screenshot-desktop-1.png",
-      "sizes": "1280x800",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "ColdCopy Dashboard - Desktop View"
-    },
-    {
-      "src": "/screenshot-desktop-2.png",
-      "sizes": "1280x800",
-      "type": "image/png",
-      "form_factor": "wide",
-      "label": "Analytics Dashboard - Desktop View"
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon"
     }
   ],
   "shortcuts": [
@@ -109,53 +24,25 @@
       "name": "Dashboard",
       "short_name": "Dashboard",
       "description": "View your campaign overview and statistics",
-      "url": "/dashboard",
-      "icons": [
-        {
-          "src": "/shortcut-dashboard.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
-      ]
+      "url": "/dashboard"
     },
     {
       "name": "New Campaign",
       "short_name": "New Campaign",
       "description": "Create a new email campaign",
-      "url": "/campaigns/new",
-      "icons": [
-        {
-          "src": "/shortcut-campaign.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
-      ]
+      "url": "/campaigns/new"
     },
     {
       "name": "Leads",
       "short_name": "Leads",
       "description": "Manage your contact database",
-      "url": "/leads",
-      "icons": [
-        {
-          "src": "/shortcut-leads.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
-      ]
+      "url": "/leads"
     },
     {
       "name": "Analytics",
       "short_name": "Analytics",
       "description": "View performance analytics",
-      "url": "/analytics",
-      "icons": [
-        {
-          "src": "/shortcut-analytics.png",
-          "sizes": "96x96",
-          "type": "image/png"
-        }
-      ]
+      "url": "/analytics"
     }
   ],
   "share_target": {

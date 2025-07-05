@@ -11,9 +11,18 @@
     "build": "npm run build --workspaces",
     "lint": "npm run lint --workspaces",
     "test": "npm run test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:headed": "playwright test --headed",
+    "test:quick": "node test-coldcopy-comprehensive.js",
+    "test:admin": "node test-admin-login.js",
+    "test:full": "node test-full-platform.js",
+    "playwright:install": "playwright install"
   },
   "devDependencies": {
+    "@playwright/test": "^1.53.2",
     "@types/node": "^20.14.0",
     "typescript": "^5.4.0"
   },
