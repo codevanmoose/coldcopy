@@ -54,7 +54,15 @@ export default function NewCampaignPage() {
   const { workspace } = useAuthStore()
   const [currentStep, setCurrentStep] = useState(1)
   const [isCreating, setIsCreating] = useState(false)
-  const [sequences, setSequences] = useState<EmailSequence[]>([])
+  // Initialize with one empty sequence for better UX
+  const [sequences, setSequences] = useState<EmailSequence[]>([{
+    id: Date.now().toString(),
+    subject: '',
+    body: '',
+    delayDays: 0,
+    delayHours: 0,
+    condition: { type: 'always' }
+  }])
   const [selectedLeads, setSelectedLeads] = useState<string[]>([])
   const [scheduleSettings, setScheduleSettings] = useState({
     startDate: new Date().toISOString().split('T')[0],

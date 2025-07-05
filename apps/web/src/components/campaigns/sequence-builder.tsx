@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -63,7 +63,10 @@ export function CampaignSequenceBuilder({
   onSequencesChange,
   campaignType 
 }: SequenceBuilderProps) {
-  const [expandedItems, setExpandedItems] = useState<string[]>(['0'])
+  // Initialize expanded items to include all sequences by default
+  const [expandedItems, setExpandedItems] = useState<string[]>(
+    sequences.map((_, index) => index.toString())
+  )
 
   const addSequence = () => {
     const newSequence: EmailSequence = {
@@ -75,7 +78,8 @@ export function CampaignSequenceBuilder({
       condition: campaignType === 'sequence' ? { type: 'no_reply' } : undefined,
     }
     onSequencesChange([...sequences, newSequence])
-    setExpandedItems([...expandedItems, (sequences.length).toString()])
+    // Ensure new sequence is expanded
+    setExpandedItems([...expandedItems, sequences.length.toString()])
   }
 
   const updateSequence = (index: number, updates: Partial<EmailSequence>) => {
@@ -129,17 +133,12 @@ export function CampaignSequenceBuilder({
     return parts.length > 0 ? `Wait ${parts.join(' and ')}` : 'No delay'
   }
 
-  // For one-off campaigns, ensure only one sequence
-  if (campaignType === 'one-off' && sequences.length === 0) {
-    const initialSequence: EmailSequence = {
-      id: Date.now().toString(),
-      subject: '',
-      body: '',
-      delayDays: 0,
-      delayHours: 0,
+  // React to sequences length changes to ensure expanded state is maintained
+  React.useEffect(() => {
+    if (sequences.length > 0 && expandedItems.length === 0) {
+      setExpandedItems(sequences.map((_, index) => index.toString()))
     }
-    onSequencesChange([initialSequence])
-  }
+  }, [sequences.length, expandedItems.length])
 
   return (
     <div className="space-y-4">
