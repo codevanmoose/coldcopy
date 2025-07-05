@@ -17,7 +17,8 @@ class ApiClient {
   private defaultHeaders: Record<string, string>
 
   constructor(options: ApiClientOptions = {}) {
-    this.baseUrl = options.baseUrl || process.env.NEXT_PUBLIC_API_URL || 'https://api.coldcopy.cc'
+    // Use relative URLs for Next.js API routes
+    this.baseUrl = options.baseUrl || '/api'
     this.defaultHeaders = {
       'Content-Type': 'application/json',
       ...options.headers,
@@ -49,7 +50,10 @@ class ApiClient {
     const timer = logger.startTimer(`API ${method} ${path}`)
     
     try {
-      const url = new URL(path, this.baseUrl)
+      // Handle relative URLs for Next.js API routes
+      const url = path.startsWith('http') 
+        ? new URL(path) 
+        : new URL(this.baseUrl + path, typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000')
       
       // Add query params if provided
       if (options.params) {
