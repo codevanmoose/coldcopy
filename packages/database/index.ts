@@ -1,4 +1,6 @@
 export type UserRole = 'super_admin' | 'workspace_admin' | 'workspace_member'
+export type LeadStatus = 'new' | 'contacted' | 'replied' | 'qualified' | 'unqualified' | 'unsubscribed'
+export type CampaignStatus = 'draft' | 'active' | 'paused' | 'completed' | 'archived'
 
 export interface User {
   id: string
@@ -45,7 +47,7 @@ export interface Lead {
   linkedin_url?: string
   twitter_url?: string
   phone?: string
-  status: 'new' | 'contacted' | 'responded' | 'qualified' | 'converted' | 'lost'
+  status: LeadStatus
   score?: number
   tags: string[]
   notes?: string
@@ -59,7 +61,7 @@ export interface Campaign {
   workspace_id: string
   name: string
   type: 'one_time' | 'sequence'
-  status: 'draft' | 'active' | 'paused' | 'completed' | 'archived'
+  status: CampaignStatus
   from_name: string
   from_email: string
   subject: string

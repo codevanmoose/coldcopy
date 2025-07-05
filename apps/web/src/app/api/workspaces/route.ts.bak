@@ -21,36 +21,24 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Direct query instead of RPC
-    const { data: memberships, error } = await supabase
-      .from('workspace_members')
-      .select(`
-        workspace_id,
-        role,
-        is_default,
-        workspaces (
-          id,
-          name,
-          slug
-        )
-      `)
-      .eq('user_id', user.id)
+    const { data: workspaceData, error } = await supabase
+      .rpc('get_user_workspaces', { user_id: user.id })
 
     if (error) {
-      console.error('Query error:', error)
+      console.error('RPC error:', error)
       throw error
     }
 
     // Transform the response to match expected format
-    const workspaces = memberships?.map((m: any) => ({
-      workspace_id: m.workspace_id,
-      workspace_name: m.workspaces?.name || 'Unnamed Workspace',
-      workspace_slug: m.workspaces?.slug || 'default',
-      role: m.role,
-      is_default: m.is_default
+    const workspaces = workspaceData?.map((w: any) => ({
+      id: w.workspace_id,
+      name: w.workspace_name,
+      slug: w.workspace_slug,
+      role: w.role,
+      is_default: w.is_default
     })) || []
 
-    return NextResponse.json({ data: workspaces })
+    return NextResponse.json({ workspaces })
   } catch (error) {
     console.error('Get workspaces error:', error)
     return NextResponse.json(
