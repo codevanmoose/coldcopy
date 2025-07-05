@@ -84,7 +84,9 @@
       "Bash(open test-gradient.html)",
       "Bash(cp:*)",
       "Bash(git reset:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Bash(cd:*)",
+      "Bash(gtimeout:*)"
     ],
     "deny": []
   }
