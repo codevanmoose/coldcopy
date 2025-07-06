@@ -30,21 +30,53 @@ export default function SignupPage() {
 
   // Check if user is already authenticated
   useEffect(() => {
+    let mounted = true
+    let subscription: any
+
     const checkAuthStatus = async () => {
       try {
+        // Add a small delay for Safari to properly initialize cookies
+        const userAgent = navigator.userAgent
+        const isSafari = /^((?!chrome|android).)*safari/i.test(userAgent) || 
+                        /iPad|iPhone|iPod/.test(userAgent)
+        
+        if (isSafari) {
+          // Safari needs time for cookies to be available after hydration
+          await new Promise(resolve => setTimeout(resolve, 150))
+        }
+        
+        // Set up auth state listener first (more reliable in Safari)
+        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
+          if (mounted && session?.user) {
+            router.push('/dashboard')
+          }
+        })
+        subscription = authListener
+        
+        // Then check current session
         const { data: { session } } = await supabase.auth.getSession()
-        if (session?.user) {
+        if (mounted && session?.user) {
           router.push('/dashboard')
           return
         }
       } catch (error) {
         console.error('Error checking auth status:', error)
       } finally {
-        setIsCheckingAuth(false)
+        if (mounted) {
+          setIsCheckingAuth(false)
+        }
       }
     }
 
     checkAuthStatus()
+
+    // Cleanup function
+    return () => {
+      mounted = false
+      if (subscription?.subscription) {
+        subscription.subscription.unsubscribe()
+      }
+    }
   }, [router, supabase.auth])
 
   const {
