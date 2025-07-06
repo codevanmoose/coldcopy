@@ -116,12 +116,6 @@ export function Sidebar() {
         <div className="border-t border-border p-4">
           <div className="space-y-2">
             <Link
-              href="/privacy"
-              className="block text-xs text-muted-foreground hover:text-foreground transition-colors"
-            >
-              Privacy Center
-            </Link>
-            <Link
               href="/privacy-policy"
               className="block text-xs text-muted-foreground hover:text-foreground transition-colors"
             >
