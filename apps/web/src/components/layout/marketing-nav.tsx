@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { User } from '@supabase/supabase-js'
+import { Mail } from 'lucide-react'
 
 export function MarketingNav() {
   const [user, setUser] = useState<User | null>(null)
@@ -40,8 +41,9 @@ export function MarketingNav() {
   return (
     <nav className="border-b border-white/10">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-        <Link href="/" className="text-2xl font-bold text-white">
-          ColdCopy
+        <Link href="/" className="flex items-center space-x-2">
+          <Mail className="h-6 w-6 text-primary" />
+          <span className="text-2xl font-bold text-white">ColdCopy</span>
         </Link>
         
         <div className="flex items-center gap-6">
