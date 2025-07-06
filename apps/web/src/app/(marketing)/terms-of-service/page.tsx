@@ -1,7 +1,6 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
 import { BackToDashboardButton } from '@/components/ui/back-to-dashboard-button'
-import { Mail } from 'lucide-react'
 
 // Enable ISR with 86400 second (24 hours) revalidation for legal pages
 export const revalidate = 86400
@@ -17,26 +16,6 @@ export default function TermsOfServicePage() {
 
   return (
     <div className="min-h-screen bg-black">
-      {/* Header */}
-      <header className="border-b border-gray-800">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <Link href="/" className="flex items-center space-x-2">
-              <Mail className="h-6 w-6 text-blue-600" />
-              <span className="text-xl font-bold text-white">ColdCopy</span>
-            </Link>
-            <nav className="flex items-center space-x-6">
-              <Link href="/login" className="text-gray-300 hover:text-white transition-colors">
-                Login
-              </Link>
-              <Link href="/signup" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition-colors">
-                Get Started
-              </Link>
-            </nav>
-          </div>
-        </div>
-      </header>
-      
       <div className="container mx-auto px-4 py-12 max-w-4xl">
       <BackToDashboardButton />
       <h1 className="text-4xl font-bold mb-8 text-white">Terms of Service</h1>
@@ -336,33 +315,7 @@ export default function TermsOfServicePage() {
           </Link>
         </div>
       </div>
-    </div>
-      
-      {/* Footer */}
-      <footer className="border-t border-gray-800 mt-16">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center space-x-2 mb-4 md:mb-0">
-              <Mail className="h-5 w-5 text-blue-600" />
-              <span className="text-lg font-semibold text-white">ColdCopy</span>
-            </div>
-            <div className="flex space-x-6 text-sm">
-              <Link href="/privacy-policy" className="text-gray-400 hover:text-white transition-colors">
-                Privacy Policy
-              </Link>
-              <Link href="/terms-of-service" className="text-gray-400 hover:text-white transition-colors">
-                Terms of Service
-              </Link>
-              <Link href="/contact" className="text-gray-400 hover:text-white transition-colors">
-                Contact
-              </Link>
-            </div>
-          </div>
-          <div className="mt-4 text-center text-sm text-gray-500">
-            © {new Date().getFullYear()} ColdCopy. All rights reserved.
-          </div>
-        </div>
-      </footer>
+      </div>
     </div>
   )
 }
