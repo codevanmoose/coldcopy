@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     const { data: profile } = await supabase
       .from('user_profiles')
       .select('workspace_id')
-      .eq('user_id', user.id)
+      .eq('id', user.id)
       .single()
 
     if (!profile?.workspace_id) {
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
     const { data: profile } = await supabase
       .from('user_profiles')
       .select('workspace_id')
-      .eq('user_id', user.id)
+      .eq('id', user.id)
       .single()
 
     if (!profile?.workspace_id) {
@@ -125,7 +125,7 @@ export async function DELETE(request: NextRequest) {
     const { data: profile } = await supabase
       .from('user_profiles')
       .select('workspace_id')
-      .eq('user_id', user.id)
+      .eq('id', user.id)
       .single()
 
     if (!profile?.workspace_id) {

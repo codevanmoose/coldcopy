@@ -3,9 +3,15 @@
 const { createClient } = require('@supabase/supabase-js');
 require('dotenv').config({ path: './apps/web/.env.production' });
 
-// Configuration
-const ADMIN_EMAIL = 'jaspervanmoose@gmail.com';
-const ADMIN_PASSWORD = 'okkenbollen33';
+// Configuration - Use environment variables for security
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || process.env.COLDCOPY_ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || process.env.COLDCOPY_ADMIN_PASSWORD;
+
+if (!ADMIN_EMAIL || !ADMIN_PASSWORD) {
+  console.error('❌ Missing admin credentials. Please set ADMIN_EMAIL and ADMIN_PASSWORD environment variables.');
+  console.error('Example: ADMIN_EMAIL=admin@coldcopy.cc ADMIN_PASSWORD=SecurePassword123! node setup-admin.js');
+  process.exit(1);
+}
 
 // Get Supabase credentials from environment
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -108,10 +114,11 @@ async function setupAdmin() {
     }
 
     // Step 3: Update user profile metadata
+    const adminName = process.env.ADMIN_NAME || 'Admin User';
     const { error: profileError } = await supabase
       .from('user_profiles')
       .update({ 
-        full_name: 'Jasper Van Moose',
+        full_name: adminName,
         metadata: { 
           is_admin: true,
           setup_date: new Date().toISOString()

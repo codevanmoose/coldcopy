@@ -42,7 +42,7 @@ export async function GET(request: NextRequest) {
     const { data: profile } = await supabase
       .from('user_profiles')
       .select('workspace_id')
-      .eq('user_id', user.id)
+      .eq('id', user.id)
       .single()
 
     let existingIntegrations = []

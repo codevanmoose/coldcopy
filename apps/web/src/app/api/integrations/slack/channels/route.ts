@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     const { data: profile } = await supabase
       .from('user_profiles')
       .select('workspace_id')
-      .eq('user_id', user.id)
+      .eq('id', user.id)
       .single()
 
     if (!profile?.workspace_id) {
@@ -105,8 +105,8 @@ export async function POST(request: NextRequest) {
     // Get user's workspace
     const { data: profile } = await supabase
       .from('user_profiles')
-      .select('workspace_id, first_name, last_name')
-      .eq('user_id', user.id)
+      .select('workspace_id')
+      .eq('id', user.id)
       .single()
 
     if (!profile?.workspace_id) {

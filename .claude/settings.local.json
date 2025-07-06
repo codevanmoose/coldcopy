@@ -87,7 +87,8 @@
       "Bash(cd:*)",
       "Bash(cd:*)",
       "Bash(gtimeout:*)",
-      "Bash(rg:*)"
+      "Bash(rg:*)",
+      "Bash(ADMIN_EMAIL=admin@coldcopy.cc ADMIN_PASSWORD=ColdCopy2025Admin! ADMIN_NAME=\"ColdCopy Admin\" node setup-admin.js)"
     ],
     "deny": []
   }

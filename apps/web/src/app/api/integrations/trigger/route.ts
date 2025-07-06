@@ -29,8 +29,8 @@ export async function POST(request: NextRequest) {
     if (!workspaceId) {
       const { data: profile } = await supabase
         .from('user_profiles')
-        .select('workspace_id')
-        .eq('user_id', user.id)
+      .select('workspace_id')
+      .eq('id', user.id)
         .single()
 
       if (!profile?.workspace_id) {

@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
     const { data: profile } = await supabase
       .from('user_profiles')
       .select('workspace_id')
-      .eq('user_id', user.id)
+      .eq('id', user.id)
       .single()
 
     if (!profile?.workspace_id) {
@@ -36,8 +36,8 @@ export async function GET(request: NextRequest) {
       // Get all referrals for workspace (admin only)
       const { data: userProfile } = await supabase
         .from('user_profiles')
-        .select('role')
-        .eq('user_id', user.id)
+      .select('workspace_id')
+      .eq('id', user.id)
         .single()
 
       if (!['workspace_admin', 'super_admin'].includes(userProfile?.role)) {
@@ -151,8 +151,8 @@ export async function PUT(request: NextRequest) {
     // Check if user has permission to update this referral
     const { data: profile } = await supabase
       .from('user_profiles')
-      .select('workspace_id, role')
-      .eq('user_id', user.id)
+      .select('workspace_id')
+      .eq('id', user.id)
       .single()
 
     if (!profile?.workspace_id) {

@@ -33,6 +33,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.50.3",
     "dotenv": "^17.0.1",
+    "glob": "^11.0.3",
     "playwright": "^1.53.2"
   }
 }
