@@ -41,8 +41,8 @@ export default function SimpleLoginPage() {
                         /iPad|iPhone|iPod/.test(userAgent)
         
         if (isSafari) {
-          // Safari needs time for cookies to be available after hydration
-          await new Promise(resolve => setTimeout(resolve, 150))
+          // Safari needs more time for cookies to be available after hydration
+          await new Promise(resolve => setTimeout(resolve, 300))
         }
         
         // Set up auth state listener first (more reliable in Safari)

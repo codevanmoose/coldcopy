@@ -15,7 +15,51 @@ export function createClient() {
 
   return createBrowserClient(
     supabaseUrl,
-    supabaseAnonKey
+    supabaseAnonKey,
+    {
+      cookies: {
+        // Custom cookie options for Safari compatibility
+        get(name) {
+          // Ensure we're in the browser
+          if (typeof window === 'undefined') return null
+          
+          const cookies = document.cookie.split(';')
+          const cookie = cookies.find(c => c.trim().startsWith(`${name}=`))
+          return cookie ? decodeURIComponent(cookie.split('=')[1]) : null
+        },
+        set(name, value, options) {
+          if (typeof window === 'undefined') return
+          
+          let cookieString = `${name}=${encodeURIComponent(value)}`
+          
+          // Safari-friendly cookie options
+          if (options?.maxAge) {
+            cookieString += `; Max-Age=${options.maxAge}`
+          }
+          if (options?.expires) {
+            cookieString += `; Expires=${options.expires.toUTCString()}`
+          }
+          // Use 'lax' for Safari compatibility
+          cookieString += `; SameSite=${options?.sameSite || 'lax'}`
+          cookieString += '; Path=/'
+          
+          // Only set Secure in production
+          if (window.location.protocol === 'https:') {
+            cookieString += '; Secure'
+          }
+          
+          document.cookie = cookieString
+        },
+        remove(name, options) {
+          if (typeof window === 'undefined') return
+          
+          let cookieString = `${name}=; Max-Age=0`
+          cookieString += `; Path=${options?.path || '/'}`
+          
+          document.cookie = cookieString
+        }
+      }
+    }
   )
 }
 
