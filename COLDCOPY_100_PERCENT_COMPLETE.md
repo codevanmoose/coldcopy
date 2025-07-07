@@ -24,8 +24,8 @@ ColdCopy is now **FULLY PRODUCTION READY** and can accept real customers TODAY!
    - Ready for production data
 
 4. **Admin User Created** ✅
-   - Email: `admin@coldcopy.cc`
-   - Password: `ColdCopy#2025`
+   - Email: `jaspervanmoose@gmail.com`
+   - Password: Use your existing password
    - Role: super_admin
    - Login tested and working!
 
@@ -38,8 +38,8 @@ ColdCopy is now **FULLY PRODUCTION READY** and can accept real customers TODAY!
 
 ### Admin Access:
 - **URL**: https://www.coldcopy.cc/login
-- **Email**: admin@coldcopy.cc
-- **Password**: ColdCopy#2025
+- **Email**: jaspervanmoose@gmail.com
+- **Password**: Use your existing password
 
 ### Platform Status:
 - **Frontend**: ✅ Live at https://www.coldcopy.cc
