@@ -31,7 +31,6 @@ export default function SimpleLoginPage() {
   // Check if user is already authenticated
   useEffect(() => {
     let mounted = true
-    let subscription: any
 
     const checkAuthStatus = async () => {
       try {
@@ -45,18 +44,10 @@ export default function SimpleLoginPage() {
           await new Promise(resolve => setTimeout(resolve, 300))
         }
         
-        // Set up auth state listener first (more reliable in Safari)
-        const { data: authListener } = supabase.auth.onAuthStateChange((event, session) => {
-          if (mounted && session?.user) {
-            router.push('/dashboard')
-          }
-        })
-        subscription = authListener
-        
-        // Then check current session
+        // Check current session
         const { data: { session } } = await supabase.auth.getSession()
         if (mounted && session?.user) {
-          router.push('/dashboard')
+          window.location.href = '/dashboard'
           return
         }
       } catch (error) {
@@ -73,11 +64,8 @@ export default function SimpleLoginPage() {
     // Cleanup function
     return () => {
       mounted = false
-      if (subscription?.subscription) {
-        subscription.subscription.unsubscribe()
-      }
     }
-  }, [router, supabase.auth])
+  }, [])
 
   const {
     register,
@@ -90,20 +78,33 @@ export default function SimpleLoginPage() {
   const onSubmit = async (data: LoginForm) => {
     try {
       setError(null)
-      const { error } = await supabase.auth.signInWithPassword({
+      console.log('Attempting login for:', data.email)
+      
+      const { data: authData, error } = await supabase.auth.signInWithPassword({
         email: data.email,
         password: data.password,
       })
 
+      console.log('Auth response:', { error, user: authData?.user?.email })
+
       if (error) {
+        console.error('Login error:', error)
         setError(error.message)
         return
       }
 
+      if (!authData?.user) {
+        console.error('No user data returned')
+        setError('Login failed - no user data')
+        return
+      }
+
       // Redirect to dashboard on success
-      router.push('/dashboard')
-      router.refresh()
+      console.log('Login successful, redirecting...')
+      // Use window.location for a full page reload to ensure proper session setup
+      window.location.href = '/dashboard'
     } catch (err) {
+      console.error('Unexpected error:', err)
       setError('An unexpected error occurred')
     }
   }
