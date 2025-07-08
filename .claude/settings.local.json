@@ -91,7 +91,8 @@
       "Bash(ADMIN_EMAIL=admin@coldcopy.cc ADMIN_PASSWORD=ColdCopy2025Admin! ADMIN_NAME=\"ColdCopy Admin\" node setup-admin.js)",
       "Bash(cd:*)",
       "Bash(tail:*)",
-      "Bash(ADMIN_EMAIL=jaspervanmoose@gmail.com ADMIN_PASSWORD=okkenbollen33 node setup-admin.js)"
+      "Bash(ADMIN_EMAIL=jaspervanmoose@gmail.com ADMIN_PASSWORD=okkenbollen33 node setup-admin.js)",
+      "Bash(ADMIN_EMAIL=jaspervanmoose@gmail.com ADMIN_PASSWORD=SecurePass123! node setup-admin.js)"
     ],
     "deny": []
   }

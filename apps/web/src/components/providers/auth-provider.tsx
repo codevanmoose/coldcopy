@@ -18,9 +18,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.user) {
         setUser(session.user)
         
-        // Fetch user details from database
+        // Fetch user details from user_profiles
         const { data: dbUser } = await supabase
-          .from('users')
+          .from('user_profiles')
           .select('*')
           .eq('id', session.user.id)
           .single()
@@ -28,15 +28,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (dbUser) {
           setDbUser(dbUser as DBUser)
           
-          // Fetch workspace details
-          const { data: workspace } = await supabase
-            .from('workspaces')
-            .select('*')
-            .eq('id', dbUser.workspace_id)
+          // Fetch workspace through workspace_members
+          const { data: member } = await supabase
+            .from('workspace_members')
+            .select('workspace_id')
+            .eq('user_id', session.user.id)
             .single()
           
-          if (workspace) {
-            setWorkspace(workspace as Workspace)
+          if (member) {
+            const { data: workspace } = await supabase
+              .from('workspaces')
+              .select('*')
+              .eq('id', member.workspace_id)
+              .single()
+            
+            if (workspace) {
+              setWorkspace(workspace as Workspace)
+            }
           }
         }
         
@@ -52,9 +60,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (session?.user) {
         setUser(session.user)
         
-        // Fetch user details from database
+        // Fetch user details from user_profiles
         supabase
-          .from('users')
+          .from('user_profiles')
           .select('*')
           .eq('id', session.user.id)
           .single()
@@ -62,17 +70,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             if (dbUser) {
               setDbUser(dbUser as DBUser)
               
-              // Fetch workspace details
+              // Fetch workspace through workspace_members
               supabase
-                .from('workspaces')
-                .select('*')
-                .eq('id', dbUser.workspace_id)
+                .from('workspace_members')
+                .select('workspace_id')
+                .eq('user_id', session.user.id)
                 .single()
-                .then(({ data: workspace }) => {
-                  if (workspace) {
-                    setWorkspace(workspace as Workspace)
+                .then(({ data: member }) => {
+                  if (member) {
+                    supabase
+                      .from('workspaces')
+                      .select('*')
+                      .eq('id', member.workspace_id)
+                      .single()
+                      .then(({ data: workspace }) => {
+                        if (workspace) {
+                          setWorkspace(workspace as Workspace)
+                        }
+                        setIsLoading(false)
+                      })
+                  } else {
+                    setIsLoading(false)
                   }
-                  setIsLoading(false)
                 })
             } else {
               setIsLoading(false)
