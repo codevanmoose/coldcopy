@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { corsHeaders } from '@/lib/cors'
 
 // GET /api/workspaces/[workspaceId]/analytics/overview
 export async function GET(
@@ -8,8 +7,11 @@ export async function GET(
   context: { params: Promise<{ workspaceId: string }> }
 ) {
   const { workspaceId } = await context.params
-  const origin = request.headers.get('origin')
-  const headers = corsHeaders(origin)
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  }
   
   try {
     const supabase = await createClient()
@@ -206,7 +208,10 @@ export async function GET(
 
 // OPTIONS handler for CORS
 export async function OPTIONS(request: NextRequest) {
-  const origin = request.headers.get('origin')
-  const headers = corsHeaders(origin)
+  const headers = {
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  }
   return new NextResponse(null, { status: 200, headers })
 }
