@@ -53,16 +53,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get workspace_id from user metadata or session
-    const { data: profile } = await supabase
-      .from('user_profiles')
+    // Get workspace_id from workspace_members
+    const { data: membership } = await supabase
+      .from('workspace_members')
       .select('workspace_id')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
+      .eq('is_default', true)
       .single()
 
-    if (!profile?.workspace_id) {
+    if (!membership?.workspace_id) {
       return NextResponse.json({ error: 'No workspace found' }, { status: 400 })
     }
+
+    const workspaceId = membership.workspace_id
 
     const { searchParams } = new URL(request.url)
     const category = searchParams.get('category')
@@ -91,11 +94,10 @@ export async function GET(request: NextRequest) {
         updated_at,
         created_by,
         user_profiles!email_templates_created_by_fkey (
-          first_name,
-          last_name
+          full_name
         )
       `)
-      .or(`workspace_id.eq.${profile.workspace_id},is_public.eq.true`)
+      .or(`workspace_id.eq.${workspaceId},is_public.eq.true`)
       .order('updated_at', { ascending: false })
 
     // Apply filters
@@ -137,9 +139,7 @@ export async function GET(request: NextRequest) {
       thumbnail: template.thumbnail,
       usageCount: template.usage_count || 0,
       lastModified: template.updated_at,
-      author: template.user_profiles 
-        ? `${template.user_profiles.first_name} ${template.user_profiles.last_name}`.trim() 
-        : 'Unknown',
+      author: template.user_profiles?.full_name || 'Unknown',
       isFavorite: false // TODO: Implement favorites
     }))
 
@@ -147,7 +147,7 @@ export async function GET(request: NextRequest) {
     const { count } = await supabase
       .from('email_templates')
       .select('*', { count: 'exact', head: true })
-      .or(`workspace_id.eq.${profile.workspace_id},is_public.eq.true`)
+      .or(`workspace_id.eq.${workspaceId},is_public.eq.true`)
 
     return NextResponse.json({
       templates: transformedTemplates,
@@ -171,16 +171,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get workspace_id from user metadata or session
-    const { data: profile } = await supabase
-      .from('user_profiles')
+    // Get workspace_id from workspace_members
+    const { data: membership } = await supabase
+      .from('workspace_members')
       .select('workspace_id')
-      .eq('id', user.id)
+      .eq('user_id', user.id)
+      .eq('is_default', true)
       .single()
 
-    if (!profile?.workspace_id) {
+    if (!membership?.workspace_id) {
       return NextResponse.json({ error: 'No workspace found' }, { status: 400 })
     }
+
+    const workspaceId = membership.workspace_id
 
     const body: EmailTemplate = await request.json()
 
@@ -239,7 +242,7 @@ export async function POST(request: NextRequest) {
       is_public: body.isPublic || false,
       tags: body.tags || [],
       thumbnail: body.thumbnail || null,
-      workspace_id: profile.workspace_id,
+      workspace_id: workspaceId,
       created_by: user.id,
       usage_count: 0
     }

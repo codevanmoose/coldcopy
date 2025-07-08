@@ -195,6 +195,22 @@ export const api = {
     },
   },
 
+  // Templates
+  templates: {
+    list: (params?: any) => 
+      apiClient.get('/templates', params),
+    get: (id: string) => 
+      apiClient.get(`/templates/${id}`),
+    create: (data: any) => 
+      apiClient.post('/templates', data),
+    update: (id: string, data: any) => 
+      apiClient.patch(`/templates/${id}`, data),
+    delete: (id: string) => 
+      apiClient.delete(`/templates/${id}`),
+    duplicate: (id: string, name?: string) => 
+      apiClient.post(`/templates/${id}/duplicate`, { name }),
+  },
+
   // Campaigns
   campaigns: {
     list: (workspaceId: string, params?: any) => 
