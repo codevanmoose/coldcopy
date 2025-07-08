@@ -16,83 +16,73 @@ import {
   Send,
   MousePointerClick,
   MessageSquare,
-  UserPlus
+  UserPlus,
+  Loader2
 } from 'lucide-react'
 
-const stats = [
-  {
-    title: 'Total Leads',
-    value: '2,451',
-    change: '+12.5%',
-    icon: Users,
-    trend: 'up',
-  },
-  {
-    title: 'Emails Sent',
-    value: '8,234',
-    change: '+23.1%',
-    icon: Send,
-    trend: 'up',
-  },
-  {
-    title: 'Open Rate',
-    value: '42.3%',
-    change: '+2.4%',
-    icon: Mail,
-    trend: 'up',
-  },
-  {
-    title: 'Reply Rate',
-    value: '8.7%',
-    change: '-0.8%',
-    icon: MessageSquare,
-    trend: 'down',
-  },
-]
-
-const recentActivity = [
-  {
-    id: 1,
-    type: 'reply',
-    lead: 'John Doe',
-    company: 'Acme Inc',
-    campaign: 'Q4 Outreach',
-    time: '5 minutes ago',
-  },
-  {
-    id: 2,
-    type: 'opened',
-    lead: 'Jane Smith',
-    company: 'TechCorp',
-    campaign: 'Product Launch',
-    time: '15 minutes ago',
-  },
-  {
-    id: 3,
-    type: 'clicked',
-    lead: 'Mike Johnson',
-    company: 'StartupXYZ',
-    campaign: 'Q4 Outreach',
-    time: '1 hour ago',
-  },
-  {
-    id: 4,
-    type: 'new_lead',
-    lead: 'Sarah Williams',
-    company: 'BigCo',
-    campaign: 'Product Launch',
-    time: '2 hours ago',
-  },
-]
+interface AnalyticsData {
+  overview: {
+    total_leads: number
+    leads_this_month: number
+    leads_growth: number
+    emails_sent: number
+    emails_this_month: number
+    emails_growth: number
+    open_rate: number
+    open_rate_change: number
+    reply_rate: number
+    reply_rate_change: number
+    total_campaigns: number
+    active_campaigns: number
+    campaigns_this_month: number
+  }
+  recent_activity: Array<{
+    id: string
+    type: string
+    title: string
+    description: string
+    time: string
+    icon: string
+  }>
+  campaign_performance: Array<{
+    id: string
+    name: string
+    status: string
+    emails_sent: number
+    open_rate: number
+    reply_rate: number
+  }>
+}
 
 export default function DashboardPage() {
   const { workspace } = useWorkspace()
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [isNewUser, setIsNewUser] = useState(false)
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null)
+  const [isLoadingAnalytics, setIsLoadingAnalytics] = useState(false)
 
   useEffect(() => {
-    checkIfNewUser()
+    if (workspace?.id) {
+      checkIfNewUser()
+      fetchAnalytics()
+    }
   }, [workspace?.id])
+
+  const fetchAnalytics = async () => {
+    if (!workspace?.id) return
+
+    setIsLoadingAnalytics(true)
+    try {
+      const response = await api.analytics.overview(workspace.id)
+      if (response.data) {
+        setAnalytics(response.data)
+      }
+    } catch (error) {
+      console.error('Error fetching analytics:', error)
+    } finally {
+      setIsLoadingAnalytics(false)
+    }
+  }
 
   const checkIfNewUser = async () => {
     if (!workspace?.id) return
@@ -122,6 +112,53 @@ export default function DashboardPage() {
     }
   }
 
+  // Generate stats from analytics data
+  const getStatsFromAnalytics = () => {
+    if (!analytics) return []
+
+    return [
+      {
+        title: 'Total Leads',
+        value: analytics.overview.total_leads.toLocaleString(),
+        change: `+${analytics.overview.leads_growth}%`,
+        icon: Users,
+        trend: analytics.overview.leads_growth >= 0 ? 'up' : 'down',
+      },
+      {
+        title: 'Emails Sent',
+        value: analytics.overview.emails_sent.toLocaleString(),
+        change: `+${analytics.overview.emails_growth}%`,
+        icon: Send,
+        trend: analytics.overview.emails_growth >= 0 ? 'up' : 'down',
+      },
+      {
+        title: 'Open Rate',
+        value: `${analytics.overview.open_rate}%`,
+        change: `${analytics.overview.open_rate_change >= 0 ? '+' : ''}${analytics.overview.open_rate_change}%`,
+        icon: Mail,
+        trend: analytics.overview.open_rate_change >= 0 ? 'up' : 'down',
+      },
+      {
+        title: 'Reply Rate',
+        value: `${analytics.overview.reply_rate}%`,
+        change: `${analytics.overview.reply_rate_change >= 0 ? '+' : ''}${analytics.overview.reply_rate_change}%`,
+        icon: MessageSquare,
+        trend: analytics.overview.reply_rate_change >= 0 ? 'up' : 'down',
+      },
+    ]
+  }
+
+  const formatActivityTime = (timeString: string) => {
+    const time = new Date(timeString)
+    const now = new Date()
+    const diffInMinutes = Math.floor((now.getTime() - time.getTime()) / (1000 * 60))
+    
+    if (diffInMinutes < 1) return 'Just now'
+    if (diffInMinutes < 60) return `${diffInMinutes} minutes ago`
+    if (diffInMinutes < 1440) return `${Math.floor(diffInMinutes / 60)} hours ago`
+    return `${Math.floor(diffInMinutes / 1440)} days ago`
+  }
+
   return (
     <>
       {isNewUser && (
@@ -143,25 +180,42 @@ export default function DashboardPage() {
       <OnboardingWidget />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <Card key={stat.title}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                {stat.title}
-              </CardTitle>
-              <stat.icon className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stat.value}</div>
-              <p className={cn(
-                "text-xs",
-                stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
-              )}>
-                {stat.change} from last month
-              </p>
-            </CardContent>
-          </Card>
-        ))}
+        {isLoadingAnalytics ? (
+          // Loading state
+          [...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="h-4 w-20 bg-muted animate-pulse rounded" />
+                <div className="h-4 w-4 bg-muted animate-pulse rounded" />
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 w-16 bg-muted animate-pulse rounded mb-1" />
+                <div className="h-3 w-24 bg-muted animate-pulse rounded" />
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          // Real data
+          getStatsFromAnalytics().map((stat) => (
+            <Card key={stat.title}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">
+                  {stat.title}
+                </CardTitle>
+                <stat.icon className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stat.value}</div>
+                <p className={cn(
+                  "text-xs",
+                  stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                )}>
+                  {stat.change} from last month
+                </p>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -173,44 +227,45 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Q4 Outreach</p>
-                  <p className="text-xs text-muted-foreground">
-                    324 emails sent · 45% open rate
-                  </p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Target className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">Active</span>
-                </div>
+            {isLoadingAnalytics ? (
+              <div className="space-y-4">
+                {[...Array(3)].map((_, i) => (
+                  <div key={i} className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <div className="h-4 w-24 bg-muted animate-pulse rounded" />
+                      <div className="h-3 w-32 bg-muted animate-pulse rounded" />
+                    </div>
+                    <div className="h-6 w-16 bg-muted animate-pulse rounded" />
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Product Launch</p>
-                  <p className="text-xs text-muted-foreground">
-                    189 emails sent · 38% open rate
-                  </p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Target className="h-4 w-4 text-primary" />
-                  <span className="text-sm font-medium">Active</span>
-                </div>
+            ) : analytics?.campaign_performance?.length ? (
+              <div className="space-y-4">
+                {analytics.campaign_performance.map((campaign) => (
+                  <div key={campaign.id} className="flex items-center justify-between">
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">{campaign.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {campaign.emails_sent} emails sent · {campaign.open_rate}% open rate
+                      </p>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Target className={cn(
+                        "h-4 w-4",
+                        campaign.status === 'active' ? 'text-primary' : 'text-yellow-600'
+                      )} />
+                      <span className="text-sm font-medium capitalize">{campaign.status}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium">Re-engagement</p>
-                  <p className="text-xs text-muted-foreground">
-                    567 emails scheduled
-                  </p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Target className="h-4 w-4 text-yellow-600" />
-                  <span className="text-sm font-medium">Scheduled</span>
-                </div>
+            ) : (
+              <div className="text-center py-8">
+                <Target className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">No campaigns yet</p>
+                <p className="text-xs text-muted-foreground">Create your first campaign to see performance data</p>
               </div>
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -222,32 +277,44 @@ export default function DashboardPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {recentActivity.map((activity) => (
-                <div key={activity.id} className="flex items-center space-x-4">
-                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
-                    {activity.type === 'reply' && <MessageSquare className="h-4 w-4 text-primary" />}
-                    {activity.type === 'opened' && <Mail className="h-4 w-4 text-primary" />}
-                    {activity.type === 'clicked' && <MousePointerClick className="h-4 w-4 text-primary" />}
-                    {activity.type === 'new_lead' && <UserPlus className="h-4 w-4 text-primary" />}
+            {isLoadingAnalytics ? (
+              <div className="space-y-4">
+                {[...Array(4)].map((_, i) => (
+                  <div key={i} className="flex items-center space-x-4">
+                    <div className="h-8 w-8 bg-muted animate-pulse rounded-full" />
+                    <div className="flex-1 space-y-1">
+                      <div className="h-4 w-full bg-muted animate-pulse rounded" />
+                      <div className="h-3 w-24 bg-muted animate-pulse rounded" />
+                    </div>
                   </div>
-                  <div className="flex-1 space-y-1">
-                    <p className="text-sm">
-                      <span className="font-medium">{activity.lead}</span>
-                      {activity.type === 'reply' && ' replied to'}
-                      {activity.type === 'opened' && ' opened'}
-                      {activity.type === 'clicked' && ' clicked a link in'}
-                      {activity.type === 'new_lead' && ' was added to'}
-                      {' '}
-                      <span className="text-muted-foreground">{activity.campaign}</span>
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {activity.company} · {activity.time}
-                    </p>
+                ))}
+              </div>
+            ) : analytics?.recent_activity?.length ? (
+              <div className="space-y-4">
+                {analytics.recent_activity.slice(0, 4).map((activity) => (
+                  <div key={activity.id} className="flex items-center space-x-4">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10">
+                      {activity.icon === 'message-square' && <MessageSquare className="h-4 w-4 text-primary" />}
+                      {activity.icon === 'mail' && <Mail className="h-4 w-4 text-primary" />}
+                      {activity.icon === 'target' && <Target className="h-4 w-4 text-primary" />}
+                      {activity.icon === 'user-plus' && <UserPlus className="h-4 w-4 text-primary" />}
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <p className="text-sm font-medium">{activity.title}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {activity.description} · {formatActivityTime(activity.time)}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <MessageSquare className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">No recent activity</p>
+                <p className="text-xs text-muted-foreground">Activity will appear here as you use the platform</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
