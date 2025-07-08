@@ -5,29 +5,46 @@ export async function GET() {
   try {
     const supabase = createClient()
 
-    // Get all-time platform statistics
-    const [
-      { data: campaigns, error: campaignsError },
-      { data: emails, error: emailsError },
-      { data: leads, error: leadsError },
-      { data: workspaces, error: workspacesError }
-    ] = await Promise.all([
-      supabase.from('campaigns').select('id, created_at').order('created_at', { ascending: false }),
-      supabase.from('email_events').select('event_type, created_at').order('created_at', { ascending: false }),
-      supabase.from('leads').select('id, created_at').order('created_at', { ascending: false }),
-      supabase.from('workspaces').select('id, created_at').order('created_at', { ascending: false })
-    ])
+    // Get all-time platform statistics (handle missing tables gracefully)
+    let campaigns, emails, leads, workspaces;
+    
+    try {
+      const [
+        { data: campaignData, error: campaignsError },
+        { data: emailData, error: emailsError },
+        { data: leadData, error: leadsError },
+        { data: workspaceData, error: workspacesError }
+      ] = await Promise.all([
+        supabase.from('campaigns').select('id, created_at').order('created_at', { ascending: false }),
+        supabase.from('email_sends').select('sent_at, opened_at, replied_at, created_at').order('created_at', { ascending: false }),
+        supabase.from('leads').select('id, created_at').order('created_at', { ascending: false }),
+        supabase.from('workspaces').select('id, created_at').order('created_at', { ascending: false })
+      ])
 
-    if (campaignsError || emailsError || leadsError || workspacesError) {
-      console.error('Database error:', { campaignsError, emailsError, leadsError, workspacesError })
-      return NextResponse.json({ error: 'Failed to fetch platform stats' }, { status: 500 })
+      campaigns = campaignData || [];
+      emails = emailData || [];
+      leads = leadData || [];
+      workspaces = workspaceData || [];
+      
+      // Log any database errors but continue with empty data
+      if (campaignsError) console.warn('Campaigns table error:', campaignsError);
+      if (emailsError) console.warn('Email sends table error:', emailsError);
+      if (leadsError) console.warn('Leads table error:', leadsError);
+      if (workspacesError) console.warn('Workspaces table error:', workspacesError);
+      
+    } catch (error) {
+      console.warn('Database query error, using fallback data:', error);
+      campaigns = [];
+      emails = [];
+      leads = [];
+      workspaces = [];
     }
 
-    // Calculate email metrics
+    // Calculate email metrics (using email_sends table structure)
     const totalEmails = emails?.length || 0
-    const deliveredEmails = emails?.filter(e => e.event_type === 'delivered').length || 0
-    const openedEmails = emails?.filter(e => e.event_type === 'opened').length || 0
-    const repliedEmails = emails?.filter(e => e.event_type === 'replied').length || 0
+    const deliveredEmails = emails?.filter(e => e.sent_at).length || 0
+    const openedEmails = emails?.filter(e => e.opened_at).length || 0
+    const repliedEmails = emails?.filter(e => e.replied_at).length || 0
 
     // Calculate conversion rates
     const deliveryRate = totalEmails > 0 ? (deliveredEmails / totalEmails) * 100 : 0

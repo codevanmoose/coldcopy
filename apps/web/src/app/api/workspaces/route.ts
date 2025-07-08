@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { requireAuth } from '@/lib/supabase/api-auth'
 import { z } from 'zod'
 import { onWorkspaceCreated } from '@/lib/demo-content'
 
@@ -11,15 +12,12 @@ const createWorkspaceSchema = z.object({
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = await createClient()
-    
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
+    const authResult = await requireAuth(request)
+    if (authResult.error) {
+      return NextResponse.json(authResult.error, { status: authResult.status })
     }
+    
+    const { supabase, user } = authResult
 
     // Direct query instead of RPC
     const { data: memberships, error } = await supabase
@@ -61,18 +59,15 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const authResult = await requireAuth(request)
+    if (authResult.error) {
+      return NextResponse.json(authResult.error, { status: authResult.status })
+    }
+    
+    const { supabase, user } = authResult
+    
     const body = await request.json()
     const { name, slug, skipDemoContent } = createWorkspaceSchema.parse(body)
-
-    const supabase = await createClient()
-    
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
 
     // Check if slug is already taken
     const { data: existingWorkspace } = await supabase

@@ -11,6 +11,28 @@ const { chromium } = require('playwright');
   let passedTests = 0;
   let failedTests = 0;
   const testResults = [];
+  const consoleErrors = [];
+  const apiErrors = [];
+  
+  // Monitor console errors
+  page.on('console', msg => {
+    if (msg.type() === 'error') {
+      consoleErrors.push(msg.text());
+      console.log(`🔍 Console Error: ${msg.text()}`);
+    }
+  });
+  
+  // Monitor API responses
+  page.on('response', response => {
+    if (response.url().includes('/api/') && response.status() >= 400) {
+      apiErrors.push({
+        url: response.url(),
+        status: response.status(),
+        statusText: response.statusText()
+      });
+      console.log(`🔍 API Error: ${response.url()} - ${response.status()} ${response.statusText()}`);
+    }
+  });
   
   // Helper function to run tests
   async function runTest(testName, testFn) {
@@ -56,7 +78,7 @@ const { chromium } = require('playwright');
     // Test 4: Admin Login
     await runTest('Admin Login Flow', async () => {
       await page.fill('input[type="email"]', 'jaspervanmoose@gmail.com');
-      await page.fill('input[type="password"]', 'ColdCopyAdmin2024!');
+      await page.fill('input[type="password"]', 'ColdCopy2025!');
       await page.click('button[type="submit"]');
       
       // Wait for either dashboard or loading state
@@ -147,17 +169,36 @@ const { chromium } = require('playwright');
     
     // Test 10: API Health Check
     await runTest('API Health Check', async () => {
-      const response = await page.request.get('https://coldcopy.cc/api/workspaces');
+      const apiEndpoints = [
+        '/api/workspaces',
+        '/api/leads',
+        '/api/templates',
+        '/api/campaigns',
+        '/api/analytics/overview'
+      ];
       
-      if (response.status() === 500) {
-        throw new Error('API returning 500 errors - likely environment variables not configured');
+      let apiErrors = [];
+      
+      for (const endpoint of apiEndpoints) {
+        try {
+          const response = await page.request.get(`https://coldcopy.cc${endpoint}`);
+          
+          if (response.status() === 500) {
+            apiErrors.push(`${endpoint}: 500 Internal Server Error`);
+          } else if (response.status() === 401) {
+            console.log(`${endpoint}: 401 Unauthorized (expected for some endpoints)`);
+          } else if (response.status() >= 400) {
+            apiErrors.push(`${endpoint}: ${response.status()} Error`);
+          } else {
+            console.log(`${endpoint}: ${response.status()} OK`);
+          }
+        } catch (error) {
+          apiErrors.push(`${endpoint}: ${error.message}`);
+        }
       }
       
-      if (response.status() === 401) {
-        // 401 is expected for unauthenticated requests
-        console.log('API returned 401 (expected for unauthenticated request)');
-      } else if (response.status() >= 400) {
-        throw new Error(`API returned ${response.status()} status`);
+      if (apiErrors.length > 0) {
+        throw new Error(`API Errors: ${apiErrors.join(', ')}`);
       }
     });
     
@@ -200,6 +241,27 @@ const { chromium } = require('playwright');
         console.log(`   Error: ${result.error}`);
       }
     });
+    
+    // Error Summary
+    if (consoleErrors.length > 0) {
+      console.log(`\n🔍 CONSOLE ERRORS FOUND (${consoleErrors.length}):`);
+      consoleErrors.slice(0, 10).forEach(error => {
+        console.log(`   - ${error}`);
+      });
+      if (consoleErrors.length > 10) {
+        console.log(`   ... and ${consoleErrors.length - 10} more errors`);
+      }
+    }
+    
+    if (apiErrors.length > 0) {
+      console.log(`\n🔍 API ERRORS FOUND (${apiErrors.length}):`);
+      apiErrors.slice(0, 10).forEach(error => {
+        console.log(`   - ${error.url} - ${error.status} ${error.statusText}`);
+      });
+      if (apiErrors.length > 10) {
+        console.log(`   ... and ${apiErrors.length - 10} more errors`);
+      }
+    }
     
     // Final assessment
     if (failedTests === 0) {

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { requireAuth } from '@/lib/supabase/api-auth'
 import { corsHeaders } from '@/lib/cors'
 
 // Remove edge runtime to avoid global object issues
@@ -15,13 +16,12 @@ export async function GET(
   const headers = corsHeaders(origin)
   
   try {
-    const supabase = await createClient()
-    
-    // Verify user has access to workspace
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers })
+    const authResult = await requireAuth(request)
+    if (authResult.error) {
+      return NextResponse.json(authResult.error, { status: authResult.status, headers })
     }
+    
+    const { supabase, user } = authResult
     
     // Check workspace membership
     const { data: member } = await supabase
@@ -155,13 +155,12 @@ export async function POST(
   const headers = corsHeaders(origin)
   
   try {
-    const supabase = await createClient()
-    
-    // Verify user has access to workspace
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers })
+    const authResult = await requireAuth(request)
+    if (authResult.error) {
+      return NextResponse.json(authResult.error, { status: authResult.status, headers })
     }
+    
+    const { supabase, user } = authResult
     
     // Check workspace membership with write permission
     const { data: member } = await supabase
