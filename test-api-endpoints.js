@@ -13,7 +13,7 @@ const fetch = require('node-fetch');
     },
     body: JSON.stringify({
       email: 'jaspervanmoose@gmail.com',
-      password: 'ColdCopyAdmin2024!'
+      password: 'ColdCopy2025!'
     })
   });
   

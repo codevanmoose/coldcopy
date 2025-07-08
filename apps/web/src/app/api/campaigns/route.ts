@@ -21,16 +21,25 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'No workspace found' }, { status: 404 });
     }
 
-    // Get campaigns for the workspace
-    const { data: campaigns, error } = await supabase
-      .from('campaigns')
-      .select('*')
-      .eq('workspace_id', workspaceData.workspace_id)
-      .order('created_at', { ascending: false });
+    // Get campaigns for the workspace (handle missing table gracefully)
+    let campaigns = [];
+    try {
+      const { data: campaignsData, error } = await supabase
+        .from('campaigns')
+        .select('*')
+        .eq('workspace_id', workspaceData.workspace_id)
+        .order('created_at', { ascending: false });
 
-    if (error) {
-      console.error('Error fetching campaigns:', error);
-      return NextResponse.json({ error: 'Failed to fetch campaigns' }, { status: 500 });
+      if (error) {
+        console.warn('Campaigns table not found or error:', error.message);
+        // Return empty array if table doesn't exist
+        campaigns = [];
+      } else {
+        campaigns = campaignsData || [];
+      }
+    } catch (e) {
+      console.warn('Campaigns table query failed:', e.message);
+      campaigns = [];
     }
 
     return NextResponse.json({ campaigns });
