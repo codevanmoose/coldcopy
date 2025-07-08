@@ -28,9 +28,10 @@ export default function DashboardLayout({
 }
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
-  const { isLoading } = useAuthStore()
+  const { isLoading, isHydrated } = useAuthStore()
 
-  if (isLoading) {
+  // Show loading while the auth store is hydrating or loading user data
+  if (!isHydrated || isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
