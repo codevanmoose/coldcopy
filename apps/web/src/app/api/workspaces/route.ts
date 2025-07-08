@@ -27,11 +27,10 @@ export async function GET(request: NextRequest) {
       .select(`
         workspace_id,
         role,
-        is_default,
         workspaces (
           id,
           name,
-          slug
+          domain
         )
       `)
       .eq('user_id', user.id)
@@ -45,9 +44,9 @@ export async function GET(request: NextRequest) {
     const workspaces = memberships?.map((m: any) => ({
       workspace_id: m.workspace_id,
       workspace_name: m.workspaces?.name || 'Unnamed Workspace',
-      workspace_slug: m.workspaces?.slug || 'default',
+      workspace_slug: m.workspaces?.domain || 'default',
       role: m.role,
-      is_default: m.is_default
+      is_default: false // Default to false since column doesn't exist
     })) || []
 
     return NextResponse.json({ data: workspaces })
