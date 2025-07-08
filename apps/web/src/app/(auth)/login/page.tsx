@@ -47,7 +47,7 @@ export default function SimpleLoginPage() {
         // Check current session
         const { data: { session } } = await supabase.auth.getSession()
         if (mounted && session?.user) {
-          window.location.href = '/dashboard'
+          router.push('/dashboard')
           return
         }
       } catch (error) {
@@ -101,8 +101,12 @@ export default function SimpleLoginPage() {
 
       // Redirect to dashboard on success
       console.log('Login successful, redirecting...')
-      // Use window.location for a full page reload to ensure proper session setup
-      window.location.href = '/dashboard'
+      
+      // Small delay to ensure auth state is updated
+      await new Promise(resolve => setTimeout(resolve, 100))
+      
+      // Use Next.js router for faster navigation
+      router.push('/dashboard')
     } catch (err) {
       console.error('Unexpected error:', err)
       setError('An unexpected error occurred')

@@ -16,33 +16,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     const fetchUserData = async (userId: string) => {
       try {
-        // Fetch user details from user_profiles
-        const { data: dbUser } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .eq('id', userId)
-          .single()
-        
-        if (mounted && dbUser) {
-          setDbUser(dbUser as DBUser)
-          
-          // Fetch workspace through workspace_members
-          const { data: member } = await supabase
+        // Optimized: Fetch user and workspace data in parallel
+        const [userResponse, memberResponse] = await Promise.all([
+          supabase
+            .from('user_profiles')
+            .select('*')
+            .eq('id', userId)
+            .single(),
+          supabase
             .from('workspace_members')
-            .select('workspace_id')
+            .select(`
+              workspace_id,
+              workspaces!inner (*)
+            `)
             .eq('user_id', userId)
+            .eq('is_default', true)
             .single()
+        ])
+        
+        if (mounted) {
+          if (userResponse.data) {
+            setDbUser(userResponse.data as DBUser)
+          }
           
-          if (mounted && member) {
-            const { data: workspace } = await supabase
-              .from('workspaces')
-              .select('*')
-              .eq('id', member.workspace_id)
-              .single()
-            
-            if (mounted && workspace) {
-              setWorkspace(workspace as Workspace)
-            }
+          if (memberResponse.data?.workspaces) {
+            setWorkspace(memberResponse.data.workspaces as Workspace)
           }
         }
       } catch (error) {
@@ -76,12 +74,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Check initial session - this is critical for page refresh
     const checkInitialSession = async () => {
-      // Wait for hydration to complete before checking session
-      if (!isHydrated) {
-        // Wait a bit for zustand to hydrate
-        await new Promise(resolve => setTimeout(resolve, 100))
-      }
-
       try {
         const { data: { session }, error } = await supabase.auth.getSession()
         
@@ -108,20 +100,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     }
 
-    // Only check session after hydration
-    if (isHydrated) {
-      checkInitialSession()
-    } else {
-      // Mark as hydrated if not already
-      setHydrated()
-      checkInitialSession()
+    // Initialize auth state
+    const initializeAuth = async () => {
+      // Ensure hydration is marked complete
+      if (!isHydrated) {
+        setHydrated()
+      }
+      
+      // Small delay to ensure client-side hydration is complete
+      await new Promise(resolve => setTimeout(resolve, 50))
+      
+      if (mounted) {
+        await checkInitialSession()
+      }
     }
+
+    initializeAuth()
 
     return () => {
       mounted = false
       subscription.unsubscribe()
     }
-  }, [supabase, setUser, setDbUser, setWorkspace, setIsLoading, reset, router])
+  }, [isHydrated]) // Simplified dependencies to avoid re-runs
 
   return <>{children}</>
 }
