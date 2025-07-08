@@ -15,6 +15,7 @@ import {
 import { Bell, Search, User, LogOut, Settings } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { WorkspaceSwitcher } from './workspace-switcher'
+import { GlobalSearch } from '@/components/search/global-search'
 
 export function Header() {
   const router = useRouter()
@@ -31,13 +32,8 @@ export function Header() {
     <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b bg-background px-4 lg:px-8">
       <div className="flex flex-1 items-center gap-4">
         <WorkspaceSwitcher />
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Search leads, campaigns..."
-            className="pl-10 w-full"
-          />
+        <div className="flex-1 max-w-md">
+          <GlobalSearch placeholder="Search leads, campaigns, templates..." />
         </div>
       </div>
       

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { TrialOnboarding } from '@/components/onboarding/trial-onboarding'
 import { OnboardingWidget } from '@/components/onboarding/onboarding-widget'
@@ -178,6 +179,73 @@ export default function DashboardPage() {
 
       {/* Onboarding Widget */}
       <OnboardingWidget />
+
+      {/* Quick Actions */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card className="group hover:shadow-md transition-shadow cursor-pointer">
+          <Link href="/campaigns/new">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Target className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Create Campaign</h3>
+                  <p className="text-sm text-muted-foreground">Start a new email campaign</p>
+                </div>
+              </div>
+            </CardContent>
+          </Link>
+        </Card>
+
+        <Card className="group hover:shadow-md transition-shadow cursor-pointer">
+          <Link href="/leads">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-2 bg-blue-500/10 rounded-lg">
+                  <UserPlus className="h-6 w-6 text-blue-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Add Leads</h3>
+                  <p className="text-sm text-muted-foreground">Import or add new leads</p>
+                </div>
+              </div>
+            </CardContent>
+          </Link>
+        </Card>
+
+        <Card className="group hover:shadow-md transition-shadow cursor-pointer">
+          <Link href="/templates">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-2 bg-purple-500/10 rounded-lg">
+                  <Mail className="h-6 w-6 text-purple-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">Create Template</h3>
+                  <p className="text-sm text-muted-foreground">Design email templates</p>
+                </div>
+              </div>
+            </CardContent>
+          </Link>
+        </Card>
+
+        <Card className="group hover:shadow-md transition-shadow cursor-pointer">
+          <Link href="/analytics">
+            <CardContent className="p-6">
+              <div className="flex items-center space-x-4">
+                <div className="p-2 bg-green-500/10 rounded-lg">
+                  <TrendingUp className="h-6 w-6 text-green-500" />
+                </div>
+                <div>
+                  <h3 className="font-semibold">View Analytics</h3>
+                  <p className="text-sm text-muted-foreground">Track performance</p>
+                </div>
+              </div>
+            </CardContent>
+          </Link>
+        </Card>
+      </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {isLoadingAnalytics ? (

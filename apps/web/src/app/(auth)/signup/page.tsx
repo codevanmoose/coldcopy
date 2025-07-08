@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Mail, Lock, User, Building, Loader2 } from 'lucide-react'
+import { Mail, Lock, User, Building, Loader2, CheckCircle2 } from 'lucide-react'
 
 const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -26,7 +26,17 @@ export default function SignupPage() {
   const router = useRouter()
   const [error, setError] = useState<string | null>(null)
   const [isCheckingAuth, setIsCheckingAuth] = useState(true)
+  const [selectedPlan, setSelectedPlan] = useState<string | null>(null)
   const supabase = createClient()
+
+  // Extract plan from URL parameters
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const plan = urlParams.get('plan')
+    if (plan) {
+      setSelectedPlan(plan)
+    }
+  }, [])
 
   // Check if user is already authenticated
   useEffect(() => {
@@ -144,6 +154,17 @@ export default function SignupPage() {
           {error && (
             <div className="p-3 text-sm text-destructive bg-destructive/10 rounded-md">
               {error}
+            </div>
+          )}
+          {selectedPlan && (
+            <div className="p-3 text-sm bg-primary/10 rounded-md border border-primary/20">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+                <span className="font-medium">Selected Plan: {selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)}</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                You'll be able to configure your subscription after creating your account.
+              </p>
             </div>
           )}
           <div className="space-y-2">
