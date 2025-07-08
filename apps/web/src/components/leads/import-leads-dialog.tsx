@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { api } from '@/lib/api-client'
 import { Button } from '@/components/ui/button'
@@ -59,8 +59,10 @@ export function ImportLeadsDialog({
   const [progress, setProgress] = useState(0)
   const [validation, setValidation] = useState<ValidationResult | null>(null)
   const [existingEmails, setExistingEmails] = useState<Set<string>>(new Set())
+  const [isDragOver, setIsDragOver] = useState(false)
   
   const queryClient = useQueryClient()
+  const fileInputRef = useRef<HTMLInputElement>(null)
 
   const validateEmail = (email: string): boolean => {
     const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -147,9 +149,11 @@ export function ImportLeadsDialog({
     return { valid, invalid, duplicates }
   }
 
-  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const selectedFile = e.target.files?.[0]
-    if (!selectedFile) return
+  const processFile = useCallback(async (selectedFile: File) => {
+    if (!selectedFile.name.endsWith('.csv')) {
+      toast.error('Please upload a CSV file')
+      return
+    }
 
     setFile(selectedFile)
     setParsing(true)
@@ -172,6 +176,36 @@ export function ImportLeadsDialog({
     })
   }, [workspaceId])
 
+  const handleFileChange = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0]
+    if (!selectedFile) return
+    await processFile(selectedFile)
+  }, [processFile])
+
+  const handleDrop = useCallback(async (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragOver(false)
+    
+    const files = Array.from(e.dataTransfer.files)
+    const csvFile = files.find(file => file.name.endsWith('.csv'))
+    
+    if (csvFile) {
+      await processFile(csvFile)
+    } else {
+      toast.error('Please drop a CSV file')
+    }
+  }, [processFile])
+
+  const handleDragOver = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragOver(true)
+  }, [])
+
+  const handleDragLeave = useCallback((e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault()
+    setIsDragOver(false)
+  }, [])
+
   const handleImport = async () => {
     if (!validation || validation.valid.length === 0) return
 
@@ -189,27 +223,33 @@ export function ImportLeadsDialog({
       let imported = 0
       
       for (const batch of batches) {
-        const leadsToInsert = batch.map(lead => ({
-          email: lead.email.toLowerCase(),
-          first_name: lead.first_name || null,
-          last_name: lead.last_name || null,
-          company: lead.company || null,
-          title: lead.title || null,
-          tags: lead.tags || [],
-          status: 'new' as const,
-          custom_fields: {},
-        }))
+        const promises = batch.map(lead => 
+          api.leads.create(workspaceId, {
+            email: lead.email.toLowerCase(),
+            first_name: lead.first_name || undefined,
+            last_name: lead.last_name || undefined,
+            company: lead.company || undefined,
+            title: lead.title || undefined,
+            tags: lead.tags || [],
+            custom_fields: {},
+          })
+        )
 
-        const response = await api.leads.create(workspaceId, { leads: leadsToInsert })
-
-        if (response.error) {
-          console.error('Import error:', response.error)
-          toast.error(`Failed to import batch: ${response.error}`)
-          break
+        const results = await Promise.allSettled(promises)
+        
+        // Count successful imports
+        const successful = results.filter(result => result.status === 'fulfilled' && !result.value.error).length
+        const failed = results.length - successful
+        
+        if (failed > 0) {
+          console.warn(`${failed} leads failed to import in this batch`)
         }
 
-        imported += batch.length
+        imported += successful
         setProgress((imported / validation.valid.length) * 100)
+        
+        // Add a small delay between batches to avoid overwhelming the API
+        await new Promise(resolve => setTimeout(resolve, 100))
       }
 
       queryClient.invalidateQueries({ queryKey: ['leads'] })
@@ -245,27 +285,40 @@ export function ImportLeadsDialog({
 
         <div className="space-y-4">
           {!file && (
-            <div className="border-2 border-dashed rounded-lg p-8 text-center">
-              <FileSpreadsheet className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+            <div 
+              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors ${
+                isDragOver 
+                  ? 'border-primary bg-primary/5' 
+                  : 'border-muted-foreground/25 hover:border-muted-foreground/50'
+              }`}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+            >
+              <FileSpreadsheet className={`h-12 w-12 mx-auto mb-4 ${
+                isDragOver ? 'text-primary' : 'text-muted-foreground'
+              }`} />
               <p className="text-sm text-muted-foreground mb-4">
-                Upload a CSV file with your leads data
+                {isDragOver 
+                  ? 'Drop your CSV file here' 
+                  : 'Drag & drop a CSV file or click to browse'
+                }
               </p>
               <div className="flex items-center justify-center gap-4">
-                <label htmlFor="file-upload">
-                  <input
-                    id="file-upload"
-                    type="file"
-                    accept=".csv"
-                    onChange={handleFileChange}
-                    className="sr-only"
-                  />
-                  <Button variant="outline" asChild>
-                    <span className="cursor-pointer">
-                      <Upload className="mr-2 h-4 w-4" />
-                      Choose File
-                    </span>
-                  </Button>
-                </label>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept=".csv"
+                  onChange={handleFileChange}
+                  className="sr-only"
+                />
+                <Button 
+                  variant="outline" 
+                  onClick={() => fileInputRef.current?.click()}
+                >
+                  <Upload className="mr-2 h-4 w-4" />
+                  Choose File
+                </Button>
                 <Button variant="ghost" onClick={downloadTemplate}>
                   <Download className="mr-2 h-4 w-4" />
                   Download Template
@@ -277,8 +330,22 @@ export function ImportLeadsDialog({
           {file && (
             <Alert>
               <FileSpreadsheet className="h-4 w-4" />
-              <AlertDescription>
-                Selected file: {file.name}
+              <AlertDescription className="flex items-center justify-between">
+                <span>Selected file: {file.name}</span>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={() => {
+                    setFile(null)
+                    setValidation(null)
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = ''
+                    }
+                  }}
+                  disabled={parsing || importing}
+                >
+                  Change File
+                </Button>
               </AlertDescription>
             </Alert>
           )}
