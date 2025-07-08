@@ -1,9 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { corsHeaders } from '@/lib/cors'
+import { z } from 'zod'
 
-// Remove edge runtime to avoid global object issues
-// export const runtime = 'edge'
+const createLeadSchema = z.object({
+  email: z.string().email(),
+  first_name: z.string().optional(),
+  last_name: z.string().optional(),
+  company: z.string().optional(),
+  title: z.string().optional(),
+  phone: z.string().optional(),
+  website: z.string().optional(),
+  location: z.string().optional(),
+  industry: z.string().optional(),
+  tags: z.array(z.string()).default([]),
+  custom_fields: z.record(z.any()).default({}),
+})
 
 // GET /api/workspaces/[workspaceId]/leads
 export async function GET(
@@ -17,73 +29,51 @@ export async function GET(
   try {
     const supabase = await createClient()
     
-    // Verify user has access to workspace
+    // Check authentication
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers })
     }
-    
-    // Check workspace membership
+
+    // Check workspace access
     const { data: member } = await supabase
       .from('workspace_members')
-      .select('id')
+      .select('role')
       .eq('workspace_id', workspaceId)
       .eq('user_id', user.id)
       .single()
-      
+
     if (!member) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403, headers })
     }
-    
-    // Parse query parameters
-    const { searchParams } = new URL(request.url)
+
+    // Get search query from URL params
+    const searchParams = request.nextUrl.searchParams
     const search = searchParams.get('search')
-    const status = searchParams.get('status')
-    const tags = searchParams.get('tags')?.split(',').filter(Boolean)
-    const limit = parseInt(searchParams.get('limit') || '50')
-    const offset = parseInt(searchParams.get('offset') || '0')
-    
+
     // Build query
     let query = supabase
       .from('leads')
-      .select('*', { count: 'exact' })
+      .select('*')
       .eq('workspace_id', workspaceId)
       .order('created_at', { ascending: false })
-      .range(offset, offset + limit - 1)
-    
-    // Apply filters
+
+    // Add search filter if provided
     if (search) {
       query = query.or(`email.ilike.%${search}%,first_name.ilike.%${search}%,last_name.ilike.%${search}%,company.ilike.%${search}%`)
     }
-    
-    if (status) {
-      query = query.eq('status', status)
-    }
-    
-    if (tags && tags.length > 0) {
-      query = query.contains('tags', tags)
-    }
-    
-    const { data: leads, error, count } = await query
-    
+
+    const { data: leads, error } = await query
+
     if (error) {
       console.error('Error fetching leads:', error)
-      return NextResponse.json({ error: error.message }, { status: 400, headers })
+      return NextResponse.json({ error: 'Failed to fetch leads' }, { status: 500, headers })
     }
-    
-    return NextResponse.json({ 
-      data: leads,
-      total: count,
-      limit,
-      offset 
-    }, { headers })
-    
+
+    return NextResponse.json(leads || [], { headers })
   } catch (error) {
-    console.error('Error in leads GET:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500, headers }
-    )
+    console.error('Leads GET error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers })
   }
 }
 
@@ -99,95 +89,81 @@ export async function POST(
   try {
     const supabase = await createClient()
     
-    // Verify user has access to workspace
+    // Check authentication
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401, headers })
     }
-    
-    // Check workspace membership with write permission
+
+    // Check workspace access
     const { data: member } = await supabase
       .from('workspace_members')
       .select('role')
       .eq('workspace_id', workspaceId)
       .eq('user_id', user.id)
       .single()
-      
+
     if (!member) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403, headers })
     }
-    
-    // Parse request body
+
+    // Parse and validate request body
     const body = await request.json()
-    const {
-      email,
-      first_name,
-      last_name,
-      company,
-      title,
-      phone,
-      linkedin_url,
-      twitter_url,
-      website,
-      tags = [],
-      custom_fields = {},
-      status = 'new'
-    } = body
-    
-    // Validate required fields
-    if (!email) {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400, headers })
+    const validatedData = createLeadSchema.parse(body)
+
+    // Check for duplicate email in workspace
+    const { data: existing } = await supabase
+      .from('leads')
+      .select('id')
+      .eq('workspace_id', workspaceId)
+      .eq('email', validatedData.email)
+      .single()
+
+    if (existing) {
+      return NextResponse.json(
+        { error: 'A lead with this email already exists' },
+        { status: 409, headers }
+      )
     }
-    
+
     // Create lead
     const { data: lead, error } = await supabase
       .from('leads')
       .insert({
+        ...validatedData,
         workspace_id: workspaceId,
-        email: email.toLowerCase(),
-        first_name,
-        last_name,
-        company,
-        title,
-        status,
-        tags,
-        custom_fields: {
-          ...custom_fields,
-          phone,
-          linkedin_url,
-          twitter_url,
-          website
-        }
+        status: 'new',
+        score: 0,
       })
       .select()
       .single()
-    
+
     if (error) {
-      if (error.code === '23505') { // Unique constraint violation
-        return NextResponse.json({ error: 'Lead with this email already exists' }, { status: 409, headers })
-      }
       console.error('Error creating lead:', error)
-      return NextResponse.json({ error: error.message }, { status: 400, headers })
+      return NextResponse.json({ error: 'Failed to create lead' }, { status: 500, headers })
     }
-    
-    // Log audit event
+
+    // Create audit log
     await supabase.from('audit_logs').insert({
       workspace_id: workspaceId,
       user_id: user.id,
-      action: 'lead.created',
+      action: 'lead_created',
       resource_type: 'lead',
       resource_id: lead.id,
-      metadata: { email }
+      metadata: { email: lead.email },
     })
-    
-    return NextResponse.json({ data: lead }, { status: 201, headers })
-    
+
+    return NextResponse.json(lead, { headers })
   } catch (error) {
-    console.error('Error in leads POST:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500, headers }
-    )
+    if (error instanceof z.ZodError) {
+      return NextResponse.json(
+        { error: 'Invalid request data', details: error.errors },
+        { status: 400, headers }
+      )
+    }
+
+    console.error('Lead creation error:', error)
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500, headers })
   }
 }
 
