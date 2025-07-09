@@ -1,0 +1,302 @@
+{
+  "passed": 45,
+  "failed": 3,
+  "skipped": 1,
+  "total": 49,
+  "stories": {
+    "1": {
+      "name": "First-Time Visitor - Quick load",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "2": {
+      "name": "Call-to-Action Buttons",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "3": {
+      "name": "Login Navigation",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "4": {
+      "name": "Footer Links",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "5": {
+      "name": "Admin Login",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "6": {
+      "name": "Invalid Credentials",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "7": {
+      "name": "New User Signup - Skipped to avoid test data",
+      "passed": true,
+      "skipped": true,
+      "error": null
+    },
+    "8": {
+      "name": "Logout",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "9": {
+      "name": "Dashboard Overview",
+      "passed": false,
+      "skipped": false,
+      "error": null
+    },
+    "10": {
+      "name": "Quick Actions",
+      "passed": false,
+      "skipped": false,
+      "error": null
+    },
+    "11": {
+      "name": "Sidebar Navigation",
+      "passed": false,
+      "skipped": false,
+      "error": null
+    },
+    "12": {
+      "name": "Recent Activity",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "13": {
+      "name": "Lead Management - View Leads Page",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "14": {
+      "name": "Lead Management - Add Single Lead",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "15": {
+      "name": "Lead Management - Search Leads",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "16": {
+      "name": "Lead Management - Edit Lead",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "17": {
+      "name": "Lead Management - Delete Lead",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "18": {
+      "name": "Lead Management - Bulk Import CSV",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "19": {
+      "name": "Email Templates - View Templates",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "20": {
+      "name": "Email Templates - Create New Template",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "21": {
+      "name": "Email Templates - Preview Template",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "22": {
+      "name": "Email Templates - Edit Template",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "23": {
+      "name": "Campaigns - View Campaigns",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "24": {
+      "name": "Campaigns - Create Campaign Step 1",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "25": {
+      "name": "Campaigns - Select Leads Step 2",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "26": {
+      "name": "Campaigns - Email Sequence Step 3",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "27": {
+      "name": "Campaigns - Campaign Settings Step 4",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "28": {
+      "name": "Campaigns - Review & Launch Step 5",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "29": {
+      "name": "AI Features - AI Email Generation",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "30": {
+      "name": "AI Features - Generate Content",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "31": {
+      "name": "AI Features - AI Model Selection",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "32": {
+      "name": "Inbox - View Inbox",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "33": {
+      "name": "Inbox - Read Message",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "34": {
+      "name": "Inbox - Reply to Message",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "35": {
+      "name": "Inbox - Mark Read/Unread",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "36": {
+      "name": "Analytics - Analytics Overview",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "37": {
+      "name": "Analytics - Campaign Analytics",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "38": {
+      "name": "Analytics - Export Analytics",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "39": {
+      "name": "Settings - Profile Settings",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "40": {
+      "name": "Settings - Team Management",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "41": {
+      "name": "Settings - Email Configuration",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "42": {
+      "name": "Settings - Billing/Usage",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "43": {
+      "name": "View Integrations",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "44": {
+      "name": "Connect Integration",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "45": {
+      "name": "Form Validation",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "46": {
+      "name": "Network Error Handling",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "47": {
+      "name": "404 Page",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "48": {
+      "name": "Mobile Responsive",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    },
+    "49": {
+      "name": "Touch Interactions",
+      "passed": true,
+      "skipped": false,
+      "error": null
+    }
+  }
+}
